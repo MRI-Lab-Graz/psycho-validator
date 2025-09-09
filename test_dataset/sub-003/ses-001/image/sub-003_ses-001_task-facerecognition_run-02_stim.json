@@ -1,0 +1,8 @@
+{
+  "StimulusType": "Image",
+  "FileFormat": "jpg",
+  "Resolution": [1024, 768],
+  "ColorSpace": "RGB",
+  "TaskName": "facerecognition",
+  "StimulusID": "face_003"
+}

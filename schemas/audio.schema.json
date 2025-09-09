@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Audio-BIDS",
+  "description": "Schema for audio stimulus metadata",
+  "type": "object",
+  "properties": {
+    "StimulusType": {
+      "type": "string",
+      "enum": ["Audio"],
+      "description": "Must be 'Audio' for audio stimuli"
+    },
+    "FileFormat": {
+      "type": "string",
+      "enum": ["wav", "mp3", "flac"],
+      "description": "Allowed audio formats"
+    },
+    "SampleRate": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Audio sample rate in Hz"
+    },
+    "Duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Duration of the audio in seconds"
+    },
+    "Channels": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of audio channels (1=mono, 2=stereo, etc.)"
+    },
+    "TaskName": {
+      "type": "string",
+      "description": "Experimental task name (free text)"
+    },
+    "StimulusID": {
+      "type": "string",
+      "description": "Unique ID to cross-reference stimuli with responses"
+    },
+    "PresentedWith": {
+      "type": "string",
+      "description": "Software/hardware used for presentation"
+    }
+  },
+  "required": ["StimulusType", "FileFormat", "SampleRate", "Duration", "TaskName"]
+}

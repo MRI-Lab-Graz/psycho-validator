@@ -1,0 +1,9 @@
+{
+  "StimulusType": "Image",
+  "FileFormat": "png",
+  "Resolution": [800, 600],
+  "ColorSpace": "RGB",
+  "TaskName": "facerecognition",
+  "StimulusID": "face_001",
+  "PresentedWith": "PsychoPy 2023.1"
+}

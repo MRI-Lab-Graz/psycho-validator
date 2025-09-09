@@ -1,0 +1,4 @@
+participant_id	age	sex	group
+sub-001	25	F	control
+sub-002	28	M	experimental
+sub-003	22	F	experimental

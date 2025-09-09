@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Movie-BIDS",
+  "description": "Schema for movie stimulus metadata",
+  "type": "object",
+  "properties": {
+    "StimulusType": {
+      "type": "string",
+      "enum": ["Movie"],
+      "description": "Must be 'Movie' for movie stimuli"
+    },
+    "FileFormat": {
+      "type": "string",
+      "enum": ["mp4", "avi", "mov"],
+      "description": "Allowed movie formats"
+    },
+    "Resolution": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Video width × height in pixels"
+    },
+    "Duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Duration of the movie in seconds"
+    },
+    "FrameRate": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Frame rate in frames per second"
+    },
+    "TaskName": {
+      "type": "string",
+      "description": "Experimental task name (free text)"
+    },
+    "StimulusID": {
+      "type": "string",
+      "description": "Unique ID to cross-reference stimuli with responses"
+    },
+    "PresentedWith": {
+      "type": "string",
+      "description": "Software/hardware used for presentation"
+    }
+  },
+  "required": ["StimulusType", "FileFormat", "Resolution", "Duration", "TaskName"]
+}

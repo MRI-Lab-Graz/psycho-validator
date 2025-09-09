@@ -1,0 +1,10 @@
+{
+  "StimulusType": "Movie",
+  "FileFormat": "mp4",
+  "Resolution": [1920, 1080],
+  "Duration": 120.0,
+  "FrameRate": 24.0,
+  "TaskName": "moviewatch",
+  "StimulusID": "movie_001",
+  "PresentedWith": "VLC Media Player"
+}
