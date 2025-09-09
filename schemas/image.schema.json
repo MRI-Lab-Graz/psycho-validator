@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Image-BIDS",
+  "description": "Schema for image stimulus metadata",
+  "type": "object",
+  "properties": {
+    "StimulusType": {
+      "type": "string",
+      "enum": ["Image"],
+      "description": "Must be 'Image' for image stimuli"
+    },
+    "FileFormat": {
+      "type": "string",
+      "enum": ["png", "jpg", "jpeg", "tiff"],
+      "description": "Allowed image formats"
+    },
+    "Resolution": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Image width × height in pixels"
+    },
+    "ColorSpace": {
+      "type": "string",
+      "enum": ["RGB", "Grayscale", "YCbCr"],
+      "description": "Color space used in the image"
+    },
+    "TaskName": {
+      "type": "string",
+      "description": "Experimental task name (free text)"
+    },
+    "StimulusID": {
+      "type": "string",
+      "description": "Unique ID to cross-reference stimuli with responses"
+    },
+    "PresentedWith": {
+      "type": "string",
+      "description": "Software/hardware used for presentation"
+    }
+  },
+  "required": ["StimulusType", "FileFormat", "Resolution", "TaskName"]
+}
