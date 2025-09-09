@@ -1,0 +1,10 @@
+{
+  "StimulusType": "Audio",
+  "FileFormat": "wav",
+  "SampleRate": 44100,
+  "Duration": 3.0,
+  "Channels": 1,
+  "TaskName": "listening",
+  "StimulusID": "audio_001",
+  "PresentedWith": "PsychoPy"
+}

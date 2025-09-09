@@ -10,7 +10,15 @@ This tool validates datasets containing psychological/psychophysical stimuli and
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
 - **JSON schema validation**: Validates sidecar metadata files against modality-specific schemas
 - **Flexible structure**: Supports both session-based and direct subject organization
-- **Comprehensive reporting**: Clear error messages with emoji indicators and exit codes
+- **Cross-subject consistency checking**: Warns when subjects have inconsistent modalities or tasks (critical for scientific datasets)
+- **Comprehensive reporting**: 
+  - Dataset summary with subject/session counts
+  - Modality breakdown with file counts
+  - Task detection and listing
+  - File statistics (data files vs sidecars)
+  - Cross-subject consistency warnings
+  - Clear error and warning categorization
+  - Exit codes for automation
 
 ## Directory Structure
 
@@ -59,10 +67,71 @@ Each stimulus file must have a corresponding `.json` sidecar file with the same 
 python psycho-validator.py /path/to/dataset
 ```
 
-### Verbose output:
+### Verbose output (shows scanning details):
 ```bash
 python psycho-validator.py /path/to/dataset -v
 ```
+
+### Example Output:
+
+For a valid dataset:
+```
+🔍 Validating dataset: valid_test_dataset/
+
+============================================================
+🗂️  DATASET SUMMARY
+============================================================
+📁 Dataset: valid_test_dataset
+👥 Subjects: 2
+📋 Sessions: No session structure detected
+
+🎯 MODALITIES (2 found):
+  ✅ audio: 2 files
+  ✅ image: 2 files
+
+📝 TASKS (2 found):
+  • listening
+  • recognition
+
+📄 FILES:
+  • Data files: 2
+  • Sidecar files: 2
+  • Total files: 4
+
+============================================================
+✅ VALIDATION RESULTS
+============================================================
+🎉 No issues found! Dataset is valid.
+```
+
+For a dataset with issues:
+```
+============================================================
+🔍 VALIDATION RESULTS
+============================================================
+
+🔴 ERRORS (1):
+   1. Missing sidecar for test_dataset/sub-003/image/invalid-file.jpg
+
+� WARNINGS (3):
+   1. Subject sub-003 session ses-001 missing audio data
+   2. Subject sub-003 session ses-001 missing task soundrecognition
+   3. Mixed session structure: 2 subjects have sessions, 1 don't
+
+�📊 SUMMARY: 1 errors, 3 warnings
+❌ Dataset validation failed due to errors.
+```
+
+## Consistency Checking
+
+The validator performs cross-subject consistency checks to ensure scientific rigor:
+
+- **Modality consistency**: All subjects should have the same modalities (e.g., if one subject has both image and audio data, all should)
+- **Task consistency**: All subjects should perform the same tasks within each session
+- **Session structure**: Warns if mixing subjects with and without session directories
+- **Per-session consistency**: For multi-session studies, ensures each subject has consistent data across sessions
+
+These checks generate **warnings** (not errors) since missing data might be due to technical issues, dropouts, or valid experimental design decisions.
 
 ### Exit codes:
 - `0`: Dataset is valid

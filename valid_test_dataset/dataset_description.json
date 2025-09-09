@@ -1,0 +1,10 @@
+{
+  "Name": "Valid Psychophysiology Dataset",
+  "BIDSVersion": "1.8.0",
+  "DatasetType": "raw",
+  "Authors": [
+    "Test Author"
+  ],
+  "Description": "A valid test dataset for psychophysiology validation.",
+  "License": "CC0"
+}

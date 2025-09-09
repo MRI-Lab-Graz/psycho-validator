@@ -1,58 +1,79 @@
 #!/usr/bin/env python3
 """
-Comprehensive test script for psycho-validator
+Enhanced test script demonstrating the comprehensive validator output
 """
 
 import os
 import sys
 import subprocess
 
-def run_validator(dataset_path):
+def run_validator(dataset_path, verbose=False):
     """Run the validator and return the results"""
     try:
-        result = subprocess.run([
-            sys.executable, "psycho-validator.py", dataset_path
-        ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+        cmd = [sys.executable, "psycho-validator.py", dataset_path]
+        if verbose:
+            cmd.append("-v")
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, 
+                              cwd=os.path.dirname(os.path.abspath(__file__)))
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
         return -1, "", str(e)
 
-def test_scenarios():
-    """Test different validation scenarios"""
-    print("🧪 Testing Psycho-Validator")
-    print("=" * 50)
+def test_comprehensive_validation():
+    """Test different validation scenarios with comprehensive output"""
+    print("🧪 Enhanced Psycho-Validator Testing")
+    print("=" * 70)
     
     # Test 1: Valid dataset
-    print("\n📋 Test 1: Validating test dataset...")
-    returncode, stdout, stderr = run_validator("test_dataset")
-    
+    print("\n🟢 TEST 1: Valid Dataset")
+    print("-" * 40)
+    returncode, stdout, stderr = run_validator("valid_test_dataset")
+    print(stdout)
     if returncode == 0:
-        print("✅ Validation completed successfully")
+        print("✅ Test passed: Valid dataset correctly validated")
     else:
-        print("❌ Validation failed")
+        print("❌ Test failed: Valid dataset should pass validation")
     
-    if stdout:
-        print("Output:")
-        print(stdout)
-    
-    if stderr:
-        print("Errors:")
-        print(stderr)
-    
-    # Test 2: Missing dataset
-    print("\n📋 Test 2: Testing with non-existent dataset...")
-    returncode, stdout, stderr = run_validator("non_existent_dataset")
-    
+    # Test 2: Dataset with errors
+    print("\n🔴 TEST 2: Dataset with Validation Errors")
+    print("-" * 40)
+    returncode, stdout, stderr = run_validator("test_dataset")
+    print(stdout)
     if returncode != 0:
-        print("✅ Correctly failed for non-existent dataset")
+        print("✅ Test passed: Errors correctly detected")
     else:
-        print("❌ Should have failed for non-existent dataset")
+        print("❌ Test failed: Should have detected validation errors")
     
-    print("\n🎯 Summary:")
-    print("- The validator should detect naming convention violations")
-    print("- Missing sidecar files should be reported as errors")
-    print("- Schema validation should catch missing required fields")
-    print("- Valid files should pass without issues")
+    # Test 3: Verbose mode
+    print("\n🔍 TEST 3: Verbose Mode")
+    print("-" * 40)
+    returncode, stdout, stderr = run_validator("valid_test_dataset", verbose=True)
+    if "📁 Scanning for modalities:" in stdout:
+        print("✅ Test passed: Verbose mode working correctly")
+    else:
+        print("❌ Test failed: Verbose mode not working")
+    
+    # Test 4: Non-existent dataset
+    print("\n❌ TEST 4: Non-existent Dataset")
+    print("-" * 40)
+    returncode, stdout, stderr = run_validator("non_existent_dataset")
+    if returncode != 0:
+        print("✅ Test passed: Correctly failed for non-existent dataset")
+    else:
+        print("❌ Test failed: Should fail for non-existent dataset")
+    
+    print("\n" + "="*70)
+    print("🎯 SUMMARY OF VALIDATOR FEATURES:")
+    print("  ✅ Comprehensive dataset statistics")
+    print("  ✅ Subject and session counting")
+    print("  ✅ Modality detection and file counting")
+    print("  ✅ Task extraction and listing")
+    print("  ✅ File categorization (data vs sidecar)")
+    print("  ✅ Schema validation status")
+    print("  ✅ Structured error and warning reporting")
+    print("  ✅ Proper exit codes for automation")
+    print("  ✅ Verbose mode for debugging")
 
 if __name__ == "__main__":
-    test_scenarios()
+    test_comprehensive_validation()
