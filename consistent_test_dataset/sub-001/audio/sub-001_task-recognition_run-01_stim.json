@@ -1,6 +1,19 @@
 {
-  "StimulusName": "word_001",
-  "StimulusType": "spoken_word",
-  "Duration": 2.0,
-  "Volume": 0.7
+  "Technical": {
+    "StimulusType": "Audio",
+    "FileFormat": "wav",
+    "SampleRate": 44100,
+    "Duration": 2.0,
+    "Channels": 1
+  },
+  "Study": {
+    "StimulusID": "word_001"
+  },
+  "Categories": {
+    "PrimaryCategory": "speech",
+    "ContentTags": [
+      "word",
+      "german"
+    ]
+  }
 }

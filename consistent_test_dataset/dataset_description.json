@@ -1,8 +1,0 @@
-{
-  "Name": "Consistent Test Dataset",
-  "Description": "A perfectly consistent dataset for testing the psycho-validator",
-  "Authors": [
-    "Psycho-Validator Demo"
-  ],
-  "Version": "1.0.0"
-}

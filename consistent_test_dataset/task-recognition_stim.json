@@ -1,0 +1,14 @@
+{
+  "Study": {
+    "StudyID": "STUDY_2024_001",
+    "TaskName": "recognition"
+  },
+  "Categories": {
+    "StudyDomain": "cognitive"
+  },
+  "Metadata": {
+    "Creator": "Psycho-Validator Demo Team",
+    "CreationDate": "2024-01-15",
+    "License": "CC-BY"
+  }
+}

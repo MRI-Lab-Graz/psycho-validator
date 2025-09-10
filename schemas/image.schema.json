@@ -4,7 +4,7 @@
   "description": "Schema for image stimulus metadata with technical and study parameters",
   "type": "object",
   "properties": {
-    "_Technical": {
+    "Technical": {
       "type": "object",
       "description": "Technical file properties",
       "properties": {
@@ -34,17 +34,11 @@
           "type": "integer",
           "minimum": 0,
           "description": "File size in bytes"
-        },
-        "CompressionQuality": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 100,
-          "description": "Compression quality (0-100, higher = better quality)"
         }
       },
       "required": ["StimulusType", "FileFormat", "Resolution", "ColorSpace"]
     },
-    "_Study": {
+    "Study": {
       "type": "object",
       "description": "Study-related parameters",
       "properties": {
@@ -56,38 +50,18 @@
           "type": "string",
           "description": "Experimental task name"
         },
-        "Condition": {
-          "type": "string",
-          "description": "Experimental condition (e.g., 'control', 'treatment', 'baseline')"
-        },
         "StimulusID": {
           "type": "string",
           "description": "Unique ID to cross-reference stimuli with responses"
         },
-        "TrialType": {
+        "Condition": {
           "type": "string",
-          "enum": ["target", "distractor", "filler", "practice", "catch"],
-          "description": "Type of trial this stimulus is used in"
-        },
-        "ExpectedResponse": {
-          "type": "string",
-          "enum": ["yes", "no", "left", "right", "keypress", "free_response"],
-          "description": "Expected type of participant response"
-        },
-        "PresentationDuration": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Presentation duration in seconds (0 = until response)"
-        },
-        "ISI": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Inter-stimulus interval in seconds"
+          "description": "Experimental condition (e.g., 'control', 'treatment', 'baseline')"
         }
       },
       "required": ["StudyID", "TaskName", "StimulusID"]
     },
-    "_Categories": {
+    "Categories": {
       "type": "object",
       "description": "Classification and categorization",
       "properties": {
@@ -96,62 +70,20 @@
           "enum": ["faces", "objects", "scenes", "words", "symbols", "patterns", "other"],
           "description": "Primary content category"
         },
-        "SecondaryCategory": {
-          "type": "string",
-          "description": "More specific subcategory (free text for now)"
-        },
-        "ContentTags": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Searchable tags describing image content"
-        },
         "StudyDomain": {
           "type": "string",
           "enum": ["cognitive", "social", "clinical", "developmental", "neuroscience", "perception"],
           "description": "Primary research domain"
         },
-        "Paradigm": {
-          "type": "string",
-          "enum": ["attention", "memory", "perception", "emotion", "decision-making", "learning", "other"],
-          "description": "Experimental paradigm"
+        "ContentTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Searchable tags describing image content"
         }
       },
       "required": ["PrimaryCategory", "StudyDomain"]
     },
-    "_Presentation": {
-      "type": "object",
-      "description": "Presentation and hardware requirements",
-      "properties": {
-        "PresentedWith": {
-          "type": "string",
-          "description": "Software/hardware used for presentation"
-        },
-        "ScreenDistance": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Viewing distance in cm"
-        },
-        "VisualAngle": {
-          "type": "array",
-          "items": { "type": "number", "minimum": 0 },
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "Visual angle in degrees [horizontal, vertical]"
-        },
-        "RequiredScreenSize": {
-          "type": "array",
-          "items": { "type": "integer", "minimum": 1 },
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "Minimum screen resolution required [width, height]"
-        },
-        "CalibrationRequired": {
-          "type": "boolean",
-          "description": "Whether screen calibration is required"
-        }
-      }
-    },
-    "_Metadata": {
+    "Metadata": {
       "type": "object",
       "description": "Administrative metadata",
       "properties": {
@@ -164,28 +96,14 @@
           "format": "date",
           "description": "Date when stimulus was created (YYYY-MM-DD)"
         },
-        "LastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last modification timestamp"
-        },
-        "Version": {
-          "type": "string",
-          "description": "Version of this stimulus"
-        },
         "License": {
           "type": "string",
           "enum": ["CC0", "CC-BY", "CC-BY-SA", "proprietary", "restricted"],
           "description": "Usage license"
-        },
-        "AccessLevel": {
-          "type": "string",
-          "enum": ["public", "institutional", "restricted", "private"],
-          "description": "Access level for this stimulus"
         }
       },
       "required": ["Creator", "CreationDate"]
     }
   },
-  "required": ["_Technical", "_Study", "_Categories", "_Metadata"]
+  "required": ["Technical", "Study", "Categories", "Metadata"]
 }

@@ -4,7 +4,7 @@
   "description": "Schema for audio stimulus metadata with technical and study parameters",
   "type": "object",
   "properties": {
-    "_Technical": {
+    "Technical": {
       "type": "object",
       "description": "Technical audio properties",
       "properties": {
@@ -33,25 +33,11 @@
           "minimum": 1,
           "maximum": 8,
           "description": "Number of audio channels (1=mono, 2=stereo, etc.)"
-        },
-        "BitDepth": {
-          "type": "integer",
-          "enum": [16, 24, 32],
-          "description": "Audio bit depth"
-        },
-        "FileSize": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "File size in bytes"
-        },
-        "Codec": {
-          "type": "string",
-          "description": "Audio codec used (e.g., PCM, MP3, AAC)"
         }
       },
       "required": ["StimulusType", "FileFormat", "SampleRate", "Duration", "Channels"]
     },
-    "_Study": {
+    "Study": {
       "type": "object",
       "description": "Study-related parameters",
       "properties": {
@@ -63,39 +49,14 @@
           "type": "string",
           "description": "Experimental task name"
         },
-        "Condition": {
-          "type": "string",
-          "description": "Experimental condition (e.g., 'control', 'treatment', 'baseline')"
-        },
         "StimulusID": {
           "type": "string",
           "description": "Unique ID to cross-reference stimuli with responses"
-        },
-        "TrialType": {
-          "type": "string",
-          "enum": ["target", "distractor", "filler", "practice", "catch"],
-          "description": "Type of trial this stimulus is used in"
-        },
-        "ExpectedResponse": {
-          "type": "string",
-          "enum": ["yes", "no", "left", "right", "keypress", "free_response", "verbal"],
-          "description": "Expected type of participant response"
-        },
-        "PresentationVolume": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Presentation volume (0.0 to 1.0)"
-        },
-        "ISI": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Inter-stimulus interval in seconds"
         }
       },
       "required": ["StudyID", "TaskName", "StimulusID"]
     },
-    "_Categories": {
+    "Categories": {
       "type": "object",
       "description": "Classification and categorization",
       "properties": {
@@ -104,66 +65,20 @@
           "enum": ["speech", "music", "noise", "tone", "nature_sounds", "artificial_sounds", "other"],
           "description": "Primary content category"
         },
-        "SecondaryCategory": {
-          "type": "string",
-          "description": "More specific subcategory (e.g., 'word', 'sentence', 'classical_music')"
-        },
-        "ContentTags": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Searchable tags describing audio content"
-        },
-        "Language": {
-          "type": "string",
-          "description": "Language of speech content (ISO 639-1 code, e.g., 'en', 'de')"
-        },
         "StudyDomain": {
           "type": "string",
           "enum": ["cognitive", "social", "clinical", "developmental", "neuroscience", "perception"],
           "description": "Primary research domain"
         },
-        "Paradigm": {
-          "type": "string",
-          "enum": ["attention", "memory", "perception", "emotion", "decision-making", "learning", "language", "other"],
-          "description": "Experimental paradigm"
-        },
-        "EmotionalValence": {
-          "type": "string",
-          "enum": ["positive", "negative", "neutral", "mixed"],
-          "description": "Emotional valence of the audio stimulus"
+        "ContentTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Searchable tags describing audio content"
         }
       },
       "required": ["PrimaryCategory", "StudyDomain"]
     },
-    "_Presentation": {
-      "type": "object",
-      "description": "Presentation and hardware requirements",
-      "properties": {
-        "PresentedWith": {
-          "type": "string",
-          "description": "Software/hardware used for presentation"
-        },
-        "HeadphonesRequired": {
-          "type": "boolean",
-          "description": "Whether headphones are required for presentation"
-        },
-        "SpeakerSetup": {
-          "type": "string",
-          "enum": ["mono", "stereo", "surround", "headphones"],
-          "description": "Required speaker setup"
-        },
-        "CalibrationRequired": {
-          "type": "boolean",
-          "description": "Whether audio calibration is required"
-        },
-        "BackgroundNoise": {
-          "type": "string",
-          "enum": ["silent", "controlled", "natural"],
-          "description": "Background noise conditions"
-        }
-      }
-    },
-    "_Metadata": {
+    "Metadata": {
       "type": "object",
       "description": "Administrative metadata",
       "properties": {
@@ -176,28 +91,14 @@
           "format": "date",
           "description": "Date when stimulus was created (YYYY-MM-DD)"
         },
-        "LastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last modification timestamp"
-        },
-        "Version": {
-          "type": "string",
-          "description": "Version of this stimulus"
-        },
         "License": {
           "type": "string",
           "enum": ["CC0", "CC-BY", "CC-BY-SA", "proprietary", "restricted"],
           "description": "Usage license"
-        },
-        "AccessLevel": {
-          "type": "string",
-          "enum": ["public", "institutional", "restricted", "private"],
-          "description": "Access level for this stimulus"
         }
       },
       "required": ["Creator", "CreationDate"]
     }
   },
-  "required": ["_Technical", "_Study", "_Categories", "_Metadata"]
+  "required": ["Technical", "Study", "Categories", "Metadata"]
 }

@@ -38,132 +38,152 @@ def create_sidecar_json(filepath, metadata):
     with open(filepath, 'w') as f:
         json.dump(metadata, f, indent=2)
 
-def create_dataset_files(base_dir, files_to_create):
-    """Create dataset files and their sidecars"""
-    for file_info in files_to_create:
-        filepath = os.path.join(base_dir, file_info["path"])
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        
-        if file_info["type"] == "image":
-            width, height = file_info["size"]
-            create_dummy_image(filepath, width, height)
-            print(f"Created dummy image: {filepath}")
-            
-            # Create sidecar JSON
-            sidecar_path = os.path.splitext(filepath)[0] + ".json"
-            metadata = {
-                "StimulusName": file_info.get("stimulus_name", "test_stimulus"),
-                "StimulusType": file_info.get("stimulus_type", "photograph"),
-                "ImageType": file_info.get("image_type", "color"),
-                "Resolution": [width, height],
-                "IsFamiliar": file_info.get("is_familiar", False)
-            }
-            create_sidecar_json(sidecar_path, metadata)
-            print(f"Created sidecar: {sidecar_path}")
-        
-        elif file_info["type"] == "audio":
-            duration = file_info["duration"]
-            create_dummy_audio(filepath, duration)
-            print(f"Created dummy audio: {filepath}")
-            
-            # Create sidecar JSON
-            sidecar_path = os.path.splitext(filepath)[0] + ".json"
-            metadata = {
-                "StimulusName": file_info.get("stimulus_name", "test_audio"),
-                "StimulusType": file_info.get("stimulus_type", "tone"),
-                "Duration": duration,
-                "Volume": file_info.get("volume", 0.8)
-            }
-            create_sidecar_json(sidecar_path, metadata)
-            print(f"Created sidecar: {sidecar_path}")
-
-def create_dataset_description(base_dir, name, description):
-    """Create dataset_description.json"""
-    filepath = os.path.join(base_dir, "dataset_description.json")
-    os.makedirs(base_dir, exist_ok=True)
-    metadata = {
-        "Name": name,
-        "Description": description,
-        "Authors": ["Psycho-Validator Demo"],
-        "Version": "1.0.0"
-    }
+def create_sidecar_json(filepath, metadata):
+    """Create a JSON sidecar file with metadata"""
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as f:
         json.dump(metadata, f, indent=2)
-    print(f"Created dataset description: {filepath}")
 
 def main():
     # Create consistent test dataset (no errors, no warnings)
     print("Creating consistent_test_dataset...")
-    consistent_files = [
-        {
-            "path": "sub-001/image/sub-001_task-recognition_run-01_stim.png",
-            "type": "image",
-            "size": (800, 600),
-            "stimulus_name": "face_001",
-            "stimulus_type": "photograph",
-            "image_type": "color",
-            "is_familiar": True
+    
+    # Create directories
+    os.makedirs("consistent_test_dataset/sub-001/image", exist_ok=True)
+    os.makedirs("consistent_test_dataset/sub-001/audio", exist_ok=True)
+    os.makedirs("consistent_test_dataset/sub-002/image", exist_ok=True)
+    os.makedirs("consistent_test_dataset/sub-002/audio", exist_ok=True)
+    
+    # Create inheritance file
+    inheritance_metadata = {
+        "Study": {
+            "StudyID": "STUDY_2024_001",
+            "TaskName": "recognition"
         },
-        {
-            "path": "sub-001/audio/sub-001_task-recognition_run-01_stim.wav",
-            "type": "audio",
-            "duration": 2.0,
-            "stimulus_name": "word_001",
-            "stimulus_type": "spoken_word",
-            "volume": 0.7
+        "Categories": {
+            "StudyDomain": "cognitive"
         },
-        {
-            "path": "sub-002/image/sub-002_task-recognition_run-01_stim.png",
-            "type": "image",
-            "size": (800, 600),
-            "stimulus_name": "face_002",
-            "stimulus_type": "photograph",
-            "image_type": "color",
-            "is_familiar": False
-        },
-        {
-            "path": "sub-002/audio/sub-002_task-recognition_run-01_stim.wav",
-            "type": "audio",
-            "duration": 2.0,
-            "stimulus_name": "word_002",
-            "stimulus_type": "spoken_word",
-            "volume": 0.7
+        "Metadata": {
+            "Creator": "Psycho-Validator Demo Team",
+            "CreationDate": "2024-01-15",
+            "License": "CC-BY"
         }
-    ]
+    }
+    create_sidecar_json("consistent_test_dataset/task-recognition_stim.json", inheritance_metadata)
     
-    create_dataset_description("consistent_test_dataset", "Consistent Test Dataset", 
-                             "A perfectly consistent dataset for testing the psycho-validator")
-    create_dataset_files("consistent_test_dataset", consistent_files)
-    
-    # Create original test dataset files (with errors)
-    print("\nCreating additional test_dataset files...")
-    test_files = [
-        {
-            "path": "sub-001/ses-001/image/sub-001_ses-001_task-facerecognition_run-01_stim.png",
-            "type": "image",
-            "size": (800, 600),
-            "stimulus_name": "face_test",
-            "stimulus_type": "photograph",
-            "image_type": "color"
+    # Subject 1 files
+    sub1_image_metadata = {
+        "Technical": {
+            "StimulusType": "Image",
+            "FileFormat": "png",
+            "Resolution": [800, 600],
+            "ColorSpace": "RGB"
         },
-        {
-            "path": "sub-001/ses-001/audio/sub-001_ses-001_task-soundrecognition_run-01_stim.wav",
-            "type": "audio",
-            "duration": 2.5,
-            "stimulus_name": "sound_test",
-            "stimulus_type": "sound_effect"
+        "Study": {
+            "StimulusID": "face_001"
         },
-        {
-            "path": "sub-003/ses-001/image/sub-003_ses-001_task-facerecognition_run-02_stim.jpg",
-            "type": "image",
-            "size": (1024, 768),
-            "stimulus_name": "face_test2",
-            "stimulus_type": "photograph",
-            "image_type": "color"
+        "Categories": {
+            "PrimaryCategory": "faces",
+            "ContentTags": ["human", "neutral_expression"]
         }
-    ]
+    }
     
-    create_dataset_files("test_dataset", test_files)
+    sub1_audio_metadata = {
+        "Technical": {
+            "StimulusType": "Audio",
+            "FileFormat": "wav",
+            "SampleRate": 44100,
+            "Duration": 2.0,
+            "Channels": 1
+        },
+        "Study": {
+            "StimulusID": "word_001"
+        },
+        "Categories": {
+            "PrimaryCategory": "speech",
+            "ContentTags": ["word", "german"]
+        }
+    }
+    
+    # Subject 2 files (consistent structure)
+    sub2_image_metadata = {
+        "Technical": {
+            "StimulusType": "Image",
+            "FileFormat": "png",
+            "Resolution": [800, 600],
+            "ColorSpace": "RGB"
+        },
+        "Study": {
+            "StimulusID": "face_002"
+        },
+        "Categories": {
+            "PrimaryCategory": "faces",
+            "ContentTags": ["human", "smiling"]
+        }
+    }
+    
+    sub2_audio_metadata = {
+        "Technical": {
+            "StimulusType": "Audio",
+            "FileFormat": "wav",
+            "SampleRate": 44100,
+            "Duration": 2.0,
+            "Channels": 1
+        },
+        "Study": {
+            "StimulusID": "word_002"
+        },
+        "Categories": {
+            "PrimaryCategory": "speech",
+            "ContentTags": ["word", "german"]
+        }
+    }
+    
+    # Create files and metadata
+    create_dummy_image("consistent_test_dataset/sub-001/image/sub-001_task-recognition_run-01_stim.png", 800, 600)
+    create_sidecar_json("consistent_test_dataset/sub-001/image/sub-001_task-recognition_run-01_stim.json", sub1_image_metadata)
+    
+    create_dummy_audio("consistent_test_dataset/sub-001/audio/sub-001_task-recognition_run-01_stim.wav", 2.0)
+    create_sidecar_json("consistent_test_dataset/sub-001/audio/sub-001_task-recognition_run-01_stim.json", sub1_audio_metadata)
+    
+    create_dummy_image("consistent_test_dataset/sub-002/image/sub-002_task-recognition_run-01_stim.png", 800, 600)
+    create_sidecar_json("consistent_test_dataset/sub-002/image/sub-002_task-recognition_run-01_stim.json", sub2_image_metadata)
+    
+    create_dummy_audio("consistent_test_dataset/sub-002/audio/sub-002_task-recognition_run-01_stim.wav", 2.0)
+    create_sidecar_json("consistent_test_dataset/sub-002/audio/sub-002_task-recognition_run-01_stim.json", sub2_audio_metadata)
+    
+    print("✅ Consistent dataset created with inheritance!")
+    
+    # Original test files for comparison
+    print("\nCreating test_dataset files for error demonstration...")
+    
+    # These will have problems to show validator functionality
+    problematic_metadata = {
+        "Technical": {
+            "StimulusType": "Image",
+            "FileFormat": "png",
+            "Resolution": [800, 600]
+            # Missing required ColorSpace
+        },
+        "Study": {
+            "StudyID": "STUDY_2024_002",
+            "TaskName": "facerecognition",
+            "StimulusID": "face_test"
+        },
+        "Categories": {
+            "PrimaryCategory": "faces",
+            "StudyDomain": "social"
+        },
+        "Metadata": {
+            "Creator": "Demo",
+            "CreationDate": "2024-01-15"
+        }
+    }
+    
+    # Create some problematic files
+    os.makedirs("test_dataset/sub-001/ses-001/image", exist_ok=True)
+    create_dummy_image("test_dataset/sub-001/ses-001/image/sub-001_ses-001_task-facerecognition_run-01_stim.png", 800, 600)
+    create_sidecar_json("test_dataset/sub-001/ses-001/image/sub-001_ses-001_task-facerecognition_run-01_stim.json", problematic_metadata)
 
 if __name__ == "__main__":
     try:

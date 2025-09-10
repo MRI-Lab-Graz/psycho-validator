@@ -1,10 +1,21 @@
 {
-  "StimulusName": "face_001",
-  "StimulusType": "photograph",
-  "ImageType": "color",
-  "Resolution": [
-    800,
-    600
-  ],
-  "IsFamiliar": true
+  "Technical": {
+    "StimulusType": "Image",
+    "FileFormat": "png",
+    "Resolution": [
+      800,
+      600
+    ],
+    "ColorSpace": "RGB"
+  },
+  "Study": {
+    "StimulusID": "face_001"
+  },
+  "Categories": {
+    "PrimaryCategory": "faces",
+    "ContentTags": [
+      "human",
+      "neutral_expression"
+    ]
+  }
 }

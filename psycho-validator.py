@@ -41,23 +41,183 @@ def load_schema(name):
 SCHEMAS = {m: load_schema(m) for m in MODALITY_PATTERNS}
 
 # ----------------------------
-# Helper: validate sidecar JSON
+# Inherited Metadata System
 # ----------------------------
-def validate_sidecar(file_path, schema):
+def collect_inherited_metadata(file_path, root_dir):
+    """Collect metadata that should be inherited from parent directories"""
+    inherited_data = {}
+    
+    # Get relative path from root
+    rel_path = os.path.relpath(file_path, root_dir)
+    path_parts = rel_path.split(os.sep)
+    
+    # Build list of potential inheritance paths
+    inheritance_paths = []
+    current_path = root_dir
+    
+    # Add dataset-level inheritance
+    inheritance_paths.append(os.path.join(root_dir, "task-*_stim.json"))
+    
+    # Walk up the directory tree
+    for i, part in enumerate(path_parts[:-1]):  # exclude filename
+        current_path = os.path.join(current_path, part)
+        
+        # Look for generic inheritance files
+        inheritance_patterns = [
+            os.path.join(current_path, "*_stim.json"),
+            os.path.join(current_path, "stim.json")
+        ]
+        
+        # Add subject-specific inheritance
+        if part.startswith("sub-"):
+            inheritance_patterns.append(os.path.join(current_path, f"{part}_stim.json"))
+        
+        inheritance_paths.extend(inheritance_patterns)
+    
+    # Collect metadata from inheritance files (most general to most specific)
+    for pattern in inheritance_paths:
+        if "*" in pattern:
+            import glob
+            matching_files = glob.glob(pattern)
+        else:
+            matching_files = [pattern] if os.path.exists(pattern) else []
+        
+        for inheritance_file in matching_files:
+            if os.path.exists(inheritance_file):
+                try:
+                    with open(inheritance_file) as f:
+                        inheritance_data = json.load(f)
+                    # Merge with existing inherited data (later files override earlier ones)
+                    inherited_data.update(inheritance_data)
+                except (json.JSONDecodeError, IOError):
+                    continue
+    
+    return inherited_data
+
+def merge_metadata(inherited_data, sidecar_data):
+    """Merge inherited metadata with sidecar metadata (sidecar takes precedence)"""
+    merged = inherited_data.copy()
+    
+    def deep_merge(base_dict, override_dict):
+        """Recursively merge dictionaries"""
+        for key, value in override_dict.items():
+            if key in base_dict and isinstance(base_dict[key], dict) and isinstance(value, dict):
+                deep_merge(base_dict[key], value)
+            else:
+                base_dict[key] = value
+    
+    deep_merge(merged, sidecar_data)
+    return merged
+
+# ----------------------------
+# Participants.tsv Integration
+# ----------------------------
+def load_participants_info(root_dir):
+    """Load and parse participants.tsv file"""
+    participants_path = os.path.join(root_dir, "participants.tsv")
+    participants_info = {}
+    
+    if not os.path.exists(participants_path):
+        return participants_info, ["Missing participants.tsv file"]
+    
+    issues = []
+    try:
+        with open(participants_path, 'r') as f:
+            lines = f.readlines()
+        
+        if not lines:
+            issues.append("participants.tsv is empty")
+            return participants_info, issues
+        
+        # Parse header
+        header = lines[0].strip().split('\t')
+        if 'participant_id' not in header:
+            issues.append("participants.tsv missing required 'participant_id' column")
+            return participants_info, issues
+        
+        participant_id_idx = header.index('participant_id')
+        
+        # Parse data rows
+        for line_num, line in enumerate(lines[1:], 2):
+            if line.strip():  # Skip empty lines
+                values = line.strip().split('\t')
+                if len(values) > participant_id_idx:
+                    participant_id = values[participant_id_idx]
+                    
+                    # Create participant info dict
+                    participant_data = {}
+                    for i, value in enumerate(values):
+                        if i < len(header):
+                            participant_data[header[i]] = value
+                    
+                    participants_info[participant_id] = participant_data
+                else:
+                    issues.append(f"participants.tsv line {line_num}: insufficient columns")
+    
+    except Exception as e:
+        issues.append(f"Error reading participants.tsv: {e}")
+    
+    return participants_info, issues
+
+def validate_participants_consistency(stats, participants_info):
+    """Validate consistency between found subjects and participants.tsv"""
+    issues = []
+    
+    if not participants_info:
+        return issues  # Already handled in load_participants_info
+    
+    # Convert subject IDs to participant_id format (sub-001 -> sub-001)
+    found_subjects = set(stats.subjects)
+    listed_participants = set(participants_info.keys())
+    
+    # Check for subjects in data but not in participants.tsv
+    missing_in_participants = found_subjects - listed_participants
+    for subject in missing_in_participants:
+        issues.append(("WARNING", f"Subject {subject} found in data but not listed in participants.tsv"))
+    
+    # Check for participants listed but not found in data
+    missing_in_data = listed_participants - found_subjects
+    for participant in missing_in_data:
+        issues.append(("WARNING", f"Participant {participant} listed in participants.tsv but no data found"))
+    
+    return issues
+
+# ----------------------------
+# Helper: validate sidecar JSON (enhanced with inheritance)
+# ----------------------------
+def validate_sidecar(file_path, schema, root_dir):
     sidecar = file_path.replace(os.path.splitext(file_path)[1], ".json")
     issues = []
+    
     if not os.path.exists(sidecar):
         issues.append(("ERROR", f"Missing sidecar for {file_path}"))
-    else:
-        try:
-            with open(sidecar) as f:
-                meta = json.load(f)
-            if schema:
-                validate(instance=meta, schema=schema)
-        except ValidationError as e:
-            issues.append(("ERROR", f"{sidecar} schema error: {e.message}"))
-        except json.JSONDecodeError:
-            issues.append(("ERROR", f"{sidecar} is not valid JSON"))
+        return issues
+    
+    try:
+        # Load sidecar data
+        with open(sidecar) as f:
+            sidecar_data = json.load(f)
+        
+        # Collect inherited metadata
+        inherited_data = collect_inherited_metadata(file_path, root_dir)
+        
+        # Merge inherited and sidecar metadata
+        complete_metadata = merge_metadata(inherited_data, sidecar_data)
+        
+        # Validate against schema
+        if schema:
+            validate(instance=complete_metadata, schema=schema)
+            
+        # Store complete metadata for potential future use
+        # (could be used for database export, cross-file validation, etc.)
+        
+    except ValidationError as e:
+        issues.append(("ERROR", f"{sidecar} schema error: {e.message}"))
+    except json.JSONDecodeError:
+        issues.append(("ERROR", f"{sidecar} is not valid JSON"))
+    except Exception as e:
+        issues.append(("ERROR", f"Error processing {sidecar}: {e}"))
+    
     return issues
 
 # ----------------------------
@@ -227,25 +387,30 @@ def validate_dataset(root_dir):
     if not os.path.exists(dataset_desc_path):
         issues.append(("ERROR", "Missing dataset_description.json"))
     
-    participants_path = os.path.join(root_dir, "participants.tsv")
-    if not os.path.exists(participants_path):
-        issues.append(("WARNING", "Missing participants.tsv"))
+    # 2. Load and validate participants.tsv
+    participants_info, participant_issues = load_participants_info(root_dir)
+    for issue in participant_issues:
+        issues.append(("WARNING", issue))
 
-    # 2. Walk through subject directories
+    # 3. Walk through subject directories
     for item in os.listdir(root_dir):
         item_path = os.path.join(root_dir, item)
         if os.path.isdir(item_path) and item.startswith("sub-"):
             # This is a subject directory
-            subject_issues = validate_subject(item_path, item, stats)
+            subject_issues = validate_subject(item_path, item, stats, root_dir)
             issues += subject_issues
 
-    # 3. Check cross-subject consistency
+    # 4. Check cross-subject consistency
     consistency_warnings = stats.check_consistency()
     issues += consistency_warnings
+    
+    # 5. Validate participants.tsv consistency
+    participant_consistency_issues = validate_participants_consistency(stats, participants_info)
+    issues += participant_consistency_issues
 
     return issues, stats
 
-def validate_subject(subject_dir, subject_id, stats):
+def validate_subject(subject_dir, subject_id, stats, root_dir):
     """Validate a single subject directory"""
     issues = []
     
@@ -254,25 +419,25 @@ def validate_subject(subject_dir, subject_id, stats):
         if os.path.isdir(item_path):
             if item.startswith("ses-"):
                 # Session directory
-                issues += validate_session(item_path, subject_id, item, stats)
+                issues += validate_session(item_path, subject_id, item, stats, root_dir)
             elif item in MODALITY_PATTERNS:
                 # Direct modality directory (no sessions)
-                issues += validate_modality_dir(item_path, subject_id, None, item, stats)
+                issues += validate_modality_dir(item_path, subject_id, None, item, stats, root_dir)
     
     return issues
 
-def validate_session(session_dir, subject_id, session_id, stats):
+def validate_session(session_dir, subject_id, session_id, stats, root_dir):
     """Validate a single session directory"""
     issues = []
     
     for item in os.listdir(session_dir):
         item_path = os.path.join(session_dir, item)
         if os.path.isdir(item_path) and item in MODALITY_PATTERNS:
-            issues += validate_modality_dir(item_path, subject_id, session_id, item, stats)
+            issues += validate_modality_dir(item_path, subject_id, session_id, item, stats, root_dir)
     
     return issues
 
-def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats):
+def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats, root_dir):
     """Validate files in a modality directory"""
     issues = []
     pattern = re.compile(MODALITY_PATTERNS[modality])
@@ -304,8 +469,8 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats)
                 if session_id and session_id not in fname:
                     issues.append(("ERROR", f"Filename {fname} doesn't contain session ID {session_id}"))
                 
-                # Check sidecar schema
-                issues += validate_sidecar(file_path, schema)
+                # Check sidecar schema (now with inheritance)
+                issues += validate_sidecar(file_path, schema, root_dir)
     
     return issues
 
