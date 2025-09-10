@@ -211,7 +211,7 @@
         },
         "License": {
           "type": "string",
-          "enum": ["CC0", "CC-BY", "CC-BY-SA", "proprietary", "restricted"],
+          "enum": ["CC0", "CC BY", "CC BY-NC", "CC BY-SA", "proprietary", "restricted"],
           "description": "Usage license"
         },
         "AccessLevel": {
