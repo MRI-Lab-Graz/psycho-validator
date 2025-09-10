@@ -1,10 +1,6 @@
 {
-  "StimulusType": "Audio",
-  "FileFormat": "wav",
-  "SampleRate": 44100,
+  "StimulusName": "sound_test",
+  "StimulusType": "sound_effect",
   "Duration": 2.5,
-  "Channels": 2,
-  "TaskName": "soundrecognition",
-  "StimulusID": "sound_001",
-  "PresentedWith": "PsychoPy 2023.1"
+  "Volume": 0.8
 }

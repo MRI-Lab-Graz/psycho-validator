@@ -399,6 +399,43 @@ def print_validation_results(problems):
     else:
         print("⚠️  Dataset has warnings but no critical errors.")
 
+def print_schema_info(modality):
+    """Prints a user-friendly description of a schema."""
+    schema = SCHEMAS.get(modality)
+    if not schema:
+        print(f"❌ Schema for modality '{modality}' not found.")
+        return
+
+    print("\n" + "="*60)
+    print(f"📄 SCHEMA DETAILS FOR: {modality.upper()}")
+    print("="*60)
+    
+    if "title" in schema:
+        print(f"  Title: {schema['title']}")
+    if "description" in schema:
+        print(f"  Description: {schema['description']}")
+    
+    print("\nFIELDS:")
+    
+    required_fields = schema.get("required", [])
+    
+    for prop, details in schema.get("properties", {}).items():
+        is_required = "REQUIRED" if prop in required_fields else "OPTIONAL"
+        prop_type = details.get('type', 'N/A')
+        
+        print(f"\n  - {prop} ({prop_type}) - [{is_required}]")
+        
+        if "description" in details:
+            print(f"    {details['description']}")
+        
+        if "enum" in details:
+            print(f"    Options: {', '.join(map(str, details['enum']))}")
+        
+        if "minimum" in details:
+            print(f"    Minimum: {details['minimum']}")
+        if "maximum" in details:
+            print(f"    Maximum: {details['maximum']}")
+
 # ----------------------------
 # CLI entry point
 # ----------------------------
@@ -407,10 +444,19 @@ if __name__ == "__main__":
     import sys
 
     parser = argparse.ArgumentParser(description="Psycho-Validator (BIDS-inspired)")
-    parser.add_argument("dataset", help="Path to dataset root")
+    parser.add_argument("dataset", nargs='?', default=None, help="Path to dataset root")
     parser.add_argument("-v", "--verbose", action="store_true", 
                        help="Show detailed validation information")
+    parser.add_argument("--schema-info", metavar="MODALITY",
+                       help="Display schema details for a specific modality")
     args = parser.parse_args()
+
+    if args.schema_info:
+        print_schema_info(args.schema_info)
+        sys.exit(0)
+
+    if not args.dataset:
+        parser.error("the following arguments are required: dataset")
 
     if not os.path.exists(args.dataset):
         print(f"❌ Dataset directory not found: {args.dataset}")

@@ -1,10 +1,10 @@
 {
-  "StimulusName": "face_test",
+  "StimulusName": "face_001",
   "StimulusType": "photograph",
   "ImageType": "color",
   "Resolution": [
     800,
     600
   ],
-  "IsFamiliar": false
+  "IsFamiliar": true
 }
