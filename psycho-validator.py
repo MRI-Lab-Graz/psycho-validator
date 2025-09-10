@@ -419,22 +419,37 @@ def print_schema_info(modality):
     
     required_fields = schema.get("required", [])
     
-    for prop, details in schema.get("properties", {}).items():
-        is_required = "REQUIRED" if prop in required_fields else "OPTIONAL"
-        prop_type = details.get('type', 'N/A')
+    def print_properties(properties, required_list, indent_level=0):
+        """Recursively print properties with proper indentation"""
+        indent = "  " * (indent_level + 1)
         
-        print(f"\n  - {prop} ({prop_type}) - [{is_required}]")
-        
-        if "description" in details:
-            print(f"    {details['description']}")
-        
-        if "enum" in details:
-            print(f"    Options: {', '.join(map(str, details['enum']))}")
-        
-        if "minimum" in details:
-            print(f"    Minimum: {details['minimum']}")
-        if "maximum" in details:
-            print(f"    Maximum: {details['maximum']}")
+        for prop, details in properties.items():
+            is_required = "REQUIRED" if prop in required_list else "OPTIONAL"
+            prop_type = details.get('type', 'N/A')
+            
+            print(f"\n{indent}- {prop} ({prop_type}) - [{is_required}]")
+            
+            if "description" in details:
+                print(f"{indent}  {details['description']}")
+            
+            if "enum" in details:
+                enum_values = details['enum']
+                if len(enum_values) <= 5:
+                    print(f"{indent}  Options: {', '.join(map(str, enum_values))}")
+                else:
+                    print(f"{indent}  Options: {', '.join(map(str, enum_values[:3]))}... ({len(enum_values)} total)")
+            
+            if "minimum" in details:
+                print(f"{indent}  Minimum: {details['minimum']}")
+            if "maximum" in details:
+                print(f"{indent}  Maximum: {details['maximum']}")
+            
+            # Handle nested objects
+            if prop_type == "object" and "properties" in details:
+                nested_required = details.get("required", [])
+                print_properties(details["properties"], nested_required, indent_level + 1)
+    
+    print_properties(schema.get("properties", {}), required_fields)
 
 # ----------------------------
 # CLI entry point
