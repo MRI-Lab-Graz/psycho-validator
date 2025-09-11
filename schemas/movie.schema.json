@@ -1,10 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://psycho-validator.org/schemas/movie/v1.0.0",
+  "version": "1.0.0",
   "title": "Movie Stimulus Metadata",
   "description": "Schema for movie stimulus metadata with technical and study parameters",
   "type": "object",
   "properties": {
-    "_Technical": {
+    "Technical": {
       "type": "object",
       "description": "Technical video properties",
       "properties": {
@@ -19,213 +21,96 @@
           "description": "Video file format"
         },
         "Resolution": {
-          "type": "array",
-          "items": { "type": "integer", "minimum": 1 },
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "Video width × height in pixels [width, height]"
+          "type": "object",
+          "description": "Video resolution",
+          "properties": {
+            "Width": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Width in pixels"
+            },
+            "Height": {
+              "type": "integer", 
+              "minimum": 1,
+              "description": "Height in pixels"
+            }
+          },
+          "required": ["Width", "Height"]
+        },
+        "FrameRate": {
+          "type": "number",
+          "minimum": 0.1,
+          "description": "Frames per second (fps)"
         },
         "Duration": {
           "type": "number",
           "minimum": 0,
-          "description": "Duration of the movie in seconds"
-        },
-        "FrameRate": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Frame rate in frames per second"
-        },
-        "FileSize": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "File size in bytes"
-        },
-        "VideoCodec": {
-          "type": "string",
-          "description": "Video codec used (e.g., H.264, H.265, VP9)"
-        },
-        "AudioCodec": {
-          "type": "string",
-          "description": "Audio codec used (e.g., AAC, MP3, PCM)"
-        },
-        "HasAudio": {
-          "type": "boolean",
-          "description": "Whether the movie contains an audio track"
-        },
-        "HasSubtitles": {
-          "type": "boolean",
-          "description": "Whether the movie has embedded subtitles"
+          "description": "Duration in seconds"
         }
       },
-      "required": ["StimulusType", "FileFormat", "Resolution", "Duration", "FrameRate", "HasAudio"]
+      "required": ["StimulusType", "FileFormat", "Resolution", "FrameRate", "Duration"]
     },
-    "_Study": {
+    "Study": {
       "type": "object",
-      "description": "Study-related parameters",
+      "description": "Study-specific parameters",
       "properties": {
-        "StudyID": {
+        "Task": {
           "type": "string",
-          "description": "Unique identifier for the study this stimulus belongs to"
+          "pattern": "^[a-zA-Z0-9]+$",
+          "description": "Task identifier (alphanumeric, no spaces)"
         },
-        "TaskName": {
+        "Subject": {
           "type": "string",
-          "description": "Experimental task name"
+          "pattern": "^sub-[0-9]+$",
+          "description": "Subject identifier in BIDS format (e.g., sub-001)"
         },
-        "Condition": {
+        "Run": {
           "type": "string",
-          "description": "Experimental condition (e.g., 'control', 'treatment', 'baseline')"
-        },
-        "StimulusID": {
-          "type": "string",
-          "description": "Unique ID to cross-reference stimuli with responses"
-        },
-        "TrialType": {
-          "type": "string",
-          "enum": ["target", "distractor", "filler", "practice", "catch"],
-          "description": "Type of trial this stimulus is used in"
-        },
-        "ExpectedResponse": {
-          "type": "string",
-          "enum": ["yes", "no", "left", "right", "keypress", "free_response", "rating", "continuous"],
-          "description": "Expected type of participant response"
-        },
-        "ResponseWindow": {
-          "type": "array",
-          "items": { "type": "number", "minimum": 0 },
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "Response time window [start_time, end_time] in seconds"
-        },
-        "ISI": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Inter-stimulus interval in seconds"
+          "pattern": "^run-[0-9]+$",
+          "description": "Run identifier in BIDS format (e.g., run-01)"
         }
       },
-      "required": ["StudyID", "TaskName", "StimulusID"]
+      "required": ["Task", "Subject", "Run"]
     },
-    "_Categories": {
+    "Categories": {
       "type": "object",
-      "description": "Classification and categorization",
+      "description": "Content categorization and tags",
       "properties": {
-        "PrimaryCategory": {
-          "type": "string",
-          "enum": ["social_interaction", "nature", "action", "faces", "objects", "abstract", "documentary", "other"],
-          "description": "Primary content category"
-        },
-        "SecondaryCategory": {
-          "type": "string",
-          "description": "More specific subcategory (e.g., 'conversation', 'landscape', 'sports')"
-        },
         "ContentTags": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "Searchable tags describing movie content"
-        },
-        "Language": {
-          "type": "string",
-          "description": "Language of spoken content (ISO 639-1 code, e.g., 'en', 'de')"
-        },
-        "StudyDomain": {
-          "type": "string",
-          "enum": ["cognitive", "social", "clinical", "developmental", "neuroscience", "perception"],
-          "description": "Primary research domain"
-        },
-        "Paradigm": {
-          "type": "string",
-          "enum": ["attention", "memory", "perception", "emotion", "decision-making", "learning", "social_cognition", "other"],
-          "description": "Experimental paradigm"
-        },
-        "EmotionalValence": {
-          "type": "string",
-          "enum": ["positive", "negative", "neutral", "mixed"],
-          "description": "Emotional valence of the movie stimulus"
-        },
-        "SocialContent": {
-          "type": "boolean",
-          "description": "Whether the movie contains social interactions"
-        },
-        "NumberOfActors": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of visible people/actors in the movie"
-        }
-      },
-      "required": ["PrimaryCategory", "StudyDomain"]
-    },
-    "_Presentation": {
-      "type": "object",
-      "description": "Presentation and hardware requirements",
-      "properties": {
-        "PresentedWith": {
-          "type": "string",
-          "description": "Software/hardware used for presentation"
-        },
-        "RequiredScreenSize": {
-          "type": "array",
-          "items": { "type": "integer", "minimum": 1 },
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "Minimum screen resolution required [width, height]"
-        },
-        "ViewingDistance": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Recommended viewing distance in cm"
-        },
-        "FullscreenRequired": {
-          "type": "boolean",
-          "description": "Whether fullscreen presentation is required"
-        },
-        "AudioRequired": {
-          "type": "boolean",
-          "description": "Whether audio playback is required"
-        },
-        "CalibrationRequired": {
-          "type": "boolean",
-          "description": "Whether screen/color calibration is required"
+          "items": {
+            "type": "string",
+            "enum": ["Action", "Drama", "Comedy", "Documentary", "Animation"]
+          },
+          "description": "Content category tags"
         }
       }
     },
-    "_Metadata": {
+    "Metadata": {
       "type": "object",
-      "description": "Administrative metadata",
+      "description": "Additional metadata and administrative information",
       "properties": {
-        "Creator": {
+        "SchemaVersion": {
           "type": "string",
-          "description": "Person/institution who created/owns this stimulus"
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Version of the schema used (semantic versioning)"
         },
         "CreationDate": {
           "type": "string",
           "format": "date",
-          "description": "Date when stimulus was created (YYYY-MM-DD)"
+          "description": "Date when the metadata was created (YYYY-MM-DD)"
         },
-        "LastModified": {
+        "Creator": {
           "type": "string",
-          "format": "date-time",
-          "description": "Last modification timestamp"
+          "description": "Person or system that created this metadata"
         },
-        "Version": {
+        "Description": {
           "type": "string",
-          "description": "Version of this stimulus"
-        },
-        "License": {
-          "type": "string",
-          "enum": ["CC0", "CC-BY", "CC-BY-SA", "proprietary", "restricted"],
-          "description": "Usage license"
-        },
-        "AccessLevel": {
-          "type": "string",
-          "enum": ["public", "institutional", "restricted", "private"],
-          "description": "Access level for this stimulus"
-        },
-        "CopyrightInfo": {
-          "type": "string",
-          "description": "Copyright information for the movie content"
+          "description": "Free-text description of the movie stimulus"
         }
       },
-      "required": ["Creator", "CreationDate"]
+      "required": ["SchemaVersion", "CreationDate"]
     }
   },
-  "required": ["_Technical", "_Study", "_Categories", "_Metadata"]
+  "required": ["Technical", "Study", "Metadata"]
 }

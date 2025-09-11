@@ -26,17 +26,75 @@ MODALITY_PATTERNS = {
 }
 
 # ----------------------------
-# Load modality schemas
+# Schema Versioning System
 # ----------------------------
+def parse_version(version_string):
+    """Parse semantic version string to tuple of integers"""
+    try:
+        return tuple(map(int, version_string.split('.')))
+    except:
+        return (0, 0, 0)
+
+def is_compatible_version(required_version, provided_version):
+    """Check if provided version is compatible with required version"""
+    req_major, req_minor, req_patch = parse_version(required_version)
+    prov_major, prov_minor, prov_patch = parse_version(provided_version)
+    
+    # Same major version is required for compatibility
+    if req_major != prov_major:
+        return False
+    
+    # Minor version can be higher (backward compatible)
+    if prov_minor < req_minor:
+        return False
+        
+    # Patch version can be different
+    return True
+
 def load_schema(name):
+    """Load schema with version information"""
     schema_path = os.path.join("schemas", f"{name}.schema.json")
     if os.path.exists(schema_path):
         try:
             with open(schema_path) as f:
-                return json.load(f)
+                schema = json.load(f)
+            
+            # Add schema metadata for versioning
+            schema_version = schema.get('version', '1.0.0')
+            schema['_validator_info'] = {
+                'schema_version': schema_version,
+                'modality': name,
+                'loaded_at': json.dumps({"timestamp": "runtime"})
+            }
+            return schema
         except (json.JSONDecodeError, IOError) as e:
             print(f"Warning: Could not load schema {schema_path}: {e}")
     return None
+
+def validate_schema_version(metadata, schema):
+    """Validate that metadata schema version is compatible with loaded schema"""
+    issues = []
+    
+    if not schema or '_validator_info' not in schema:
+        return issues
+    
+    schema_version = schema['_validator_info']['schema_version']
+    
+    # Check if metadata specifies a schema version
+    metadata_version = None
+    if 'Metadata' in metadata and 'SchemaVersion' in metadata['Metadata']:
+        metadata_version = metadata['Metadata']['SchemaVersion']
+    
+    if metadata_version:
+        if not is_compatible_version(schema_version, metadata_version):
+            issues.append(("WARNING", 
+                f"Schema version mismatch: metadata uses v{metadata_version}, "
+                f"validator expects v{schema_version}. Consider upgrading metadata."))
+    else:
+        issues.append(("INFO", 
+            f"No schema version specified in metadata. Using validator default v{schema_version}"))
+    
+    return issues
 
 SCHEMAS = {m: load_schema(m) for m in MODALITY_PATTERNS}
 
@@ -204,8 +262,12 @@ def validate_sidecar(file_path, schema, root_dir):
         # Merge inherited and sidecar metadata
         complete_metadata = merge_metadata(inherited_data, sidecar_data)
         
-        # Validate against schema
+        # Validate schema version compatibility
         if schema:
+            version_issues = validate_schema_version(complete_metadata, schema)
+            issues.extend(version_issues)
+            
+            # Validate against schema
             validate(instance=complete_metadata, schema=schema)
             
         # Store complete metadata for potential future use
@@ -541,6 +603,7 @@ def print_validation_results(problems):
     # Categorize problems
     errors = [msg for level, msg in problems if level == "ERROR"]
     warnings = [msg for level, msg in problems if level == "WARNING"]
+    infos = [msg for level, msg in problems if level == "INFO"]
     
     print("\n" + "="*60)
     print("🔍 VALIDATION RESULTS")
@@ -556,8 +619,13 @@ def print_validation_results(problems):
         for i, warning in enumerate(warnings, 1):
             print(f"  {i:2d}. {warning}")
     
+    if infos:
+        print(f"\n🔵 INFO ({len(infos)}):")
+        for i, info in enumerate(infos, 1):
+            print(f"  {i:2d}. {info}")
+    
     # Summary line
-    print(f"\n📊 SUMMARY: {len(errors)} errors, {len(warnings)} warnings")
+    print(f"\n📊 SUMMARY: {len(errors)} errors, {len(warnings)} warnings, {len(infos)} info")
     
     if errors:
         print("❌ Dataset validation failed due to errors.")
@@ -575,10 +643,17 @@ def print_schema_info(modality):
     print(f"📄 SCHEMA DETAILS FOR: {modality.upper()}")
     print("="*60)
     
+    # Schema metadata
     if "title" in schema:
         print(f"  Title: {schema['title']}")
     if "description" in schema:
         print(f"  Description: {schema['description']}")
+    
+    # Version information
+    version = schema.get('version', 'unknown')
+    schema_id = schema.get('$id', 'unknown')
+    print(f"  Version: {version}")
+    print(f"  Schema ID: {schema_id}")
     
     print("\nFIELDS:")
     
@@ -608,6 +683,8 @@ def print_schema_info(modality):
                 print(f"{indent}  Minimum: {details['minimum']}")
             if "maximum" in details:
                 print(f"{indent}  Maximum: {details['maximum']}")
+            if "default" in details:
+                print(f"{indent}  Default: {details['default']}")
             
             # Handle nested objects
             if prop_type == "object" and "properties" in details:
@@ -615,6 +692,25 @@ def print_schema_info(modality):
                 print_properties(details["properties"], nested_required, indent_level + 1)
     
     print_properties(schema.get("properties", {}), required_fields)
+
+def list_schema_versions():
+    """List all available schema versions"""
+    print("\n" + "="*60)
+    print("📚 AVAILABLE SCHEMA VERSIONS")
+    print("="*60)
+    
+    for modality, schema in SCHEMAS.items():
+        if schema:
+            version = schema.get('version', 'unknown')
+            schema_id = schema.get('$id', 'N/A')
+            print(f"  {modality:12} v{version:8} ({schema_id})")
+        else:
+            print(f"  {modality:12} {'ERROR':8} (Schema not found)")
+    
+    print(f"\n📋 Schema versioning follows semantic versioning (MAJOR.MINOR.PATCH)")
+    print(f"   • MAJOR: Breaking changes (incompatible)")
+    print(f"   • MINOR: New features (backward compatible)")  
+    print(f"   • PATCH: Bug fixes (backward compatible)")
 
 # ----------------------------
 # CLI entry point
@@ -629,11 +725,25 @@ if __name__ == "__main__":
                        help="Show detailed validation information")
     parser.add_argument("--schema-info", metavar="MODALITY",
                        help="Display schema details for a specific modality")
+    parser.add_argument("--list-versions", action="store_true",
+                       help="List all available schema versions")
+    parser.add_argument("--check-compatibility", nargs=2, metavar=('SCHEMA_VERSION', 'REQUIRED_VERSION'),
+                       help="Check if a schema version is compatible with a required version")
     args = parser.parse_args()
 
     if args.schema_info:
         print_schema_info(args.schema_info)
         sys.exit(0)
+    
+    if args.list_versions:
+        list_schema_versions()
+        sys.exit(0)
+    
+    if args.check_compatibility:
+        schema_version, required_version = args.check_compatibility
+        is_compat = is_compatible_version(schema_version, required_version)
+        print(f"Schema version {schema_version} {'IS' if is_compat else 'IS NOT'} compatible with required version {required_version}")
+        sys.exit(0 if is_compat else 1)
 
     if not args.dataset:
         parser.error("the following arguments are required: dataset")

@@ -64,6 +64,7 @@ def main():
             "StudyDomain": "cognitive"
         },
         "Metadata": {
+            "SchemaVersion": "1.0.0",
             "Creator": "Psycho-Validator Demo Team",
             "CreationDate": "2024-01-15",
             "License": "CC-BY"
@@ -85,6 +86,9 @@ def main():
         "Categories": {
             "PrimaryCategory": "faces",
             "ContentTags": ["human", "neutral_expression"]
+        },
+        "Metadata": {
+            "SchemaVersion": "1.0.0"
         }
     }
     
@@ -102,6 +106,9 @@ def main():
         "Categories": {
             "PrimaryCategory": "speech",
             "ContentTags": ["word", "german"]
+        },
+        "Metadata": {
+            "SchemaVersion": "1.0.0"
         }
     }
     
@@ -119,6 +126,9 @@ def main():
         "Categories": {
             "PrimaryCategory": "faces",
             "ContentTags": ["human", "smiling"]
+        },
+        "Metadata": {
+            "SchemaVersion": "1.0.0"
         }
     }
     
@@ -136,6 +146,9 @@ def main():
         "Categories": {
             "PrimaryCategory": "speech",
             "ContentTags": ["word", "german"]
+        },
+        "Metadata": {
+            "SchemaVersion": "1.0.0"
         }
     }
     
