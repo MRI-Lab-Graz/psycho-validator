@@ -1,0 +1,34 @@
+{
+  "Technical": {
+    "StimulusType": "EEG",
+    "FileFormat": "edf",
+    "SamplingRate": 500,
+    "ChannelCount": 10,
+    "ChannelLayout": "10-20",
+    "ReferenceType": "common_average"
+  },
+  "Study": {
+    "Paradigm": "oddball",
+    "TrialCount": 200,
+    "BaselinePeriod": [
+      -200,
+      0
+    ]
+  },
+  "Categories": {
+    "AnalysisType": [
+      "erp"
+    ],
+    "ERPComponents": [
+      "P3",
+      "N1"
+    ],
+    "CognitiveProcesses": [
+      "attention"
+    ],
+    "DataQuality": "excellent"
+  },
+  "Metadata": {
+    "SchemaVersion": "1.0.0"
+  }
+}

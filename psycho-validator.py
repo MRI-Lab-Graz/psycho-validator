@@ -22,7 +22,8 @@ MODALITY_PATTERNS = {
     "eyetracking": r".+\.(tsv|edf)$",
     "eeg": r".+\.(edf|bdf|eeg)$",
     "audio": r".+\.(wav|mp3)$",
-    "behavior": r".+\.tsv$"
+    "behavior": r".+\.tsv$",
+    "physiological": r".+\.(edf|bdf|txt|csv)$"
 }
 
 # ----------------------------
