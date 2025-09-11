@@ -106,7 +106,25 @@
         },
         "Description": {
           "type": "string",
+<<<<<<< HEAD
           "description": "Free-text description of the movie stimulus"
+=======
+          "description": "Version of this stimulus"
+        },
+        "License": {
+          "type": "string",
+          "enum": ["CC0", "CC BY", "CC BY-NC", "CC BY-SA", "proprietary", "restricted"],
+          "description": "Usage license"
+        },
+        "AccessLevel": {
+          "type": "string",
+          "enum": ["public", "institutional", "restricted", "private"],
+          "description": "Access level for this stimulus"
+        },
+        "CopyrightInfo": {
+          "type": "string",
+          "description": "Copyright information for the movie content"
+>>>>>>> 50bb45a95c3bb4f30ecc600545fda3b8b1726b3c
         }
       },
       "required": ["SchemaVersion", "CreationDate"]

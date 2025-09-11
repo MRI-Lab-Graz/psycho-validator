@@ -730,6 +730,10 @@ if __name__ == "__main__":
                        help="List all available schema versions")
     parser.add_argument("--check-compatibility", nargs=2, metavar=('SCHEMA_VERSION', 'REQUIRED_VERSION'),
                        help="Check if a schema version is compatible with a required version")
+    parser.add_argument("--fair-export", metavar="METADATA_FILE",
+                       help="Export metadata in FAIR-compliant formats (Dublin Core, DataCite)")
+    parser.add_argument("--fair-check", metavar="METADATA_FILE",
+                       help="Evaluate FAIR principles compliance of metadata")
     args = parser.parse_args()
 
     if args.schema_info:
@@ -745,6 +749,61 @@ if __name__ == "__main__":
         is_compat = is_compatible_version(schema_version, required_version)
         print(f"Schema version {schema_version} {'IS' if is_compat else 'IS NOT'} compatible with required version {required_version}")
         sys.exit(0 if is_compat else 1)
+    
+    if args.fair_export:
+        from fair_export import export_fair_metadata
+        if not os.path.exists(args.fair_export):
+            print(f"❌ Metadata file not found: {args.fair_export}")
+            sys.exit(1)
+        
+        print(f"🔄 Exporting FAIR metadata for: {args.fair_export}")
+        results = export_fair_metadata(args.fair_export)
+        
+        success_count = sum(1 for result in results.values() if result)
+        total_count = len(results)
+        
+        if success_count == total_count:
+            print(f"✅ All {total_count} FAIR exports completed successfully!")
+            sys.exit(0)
+        else:
+            print(f"⚠️  {success_count}/{total_count} FAIR exports completed")
+            sys.exit(1)
+    
+    if args.fair_check:
+        from fair_checker import FAIRComplianceChecker
+        if not os.path.exists(args.fair_check):
+            print(f"❌ Metadata file not found: {args.fair_check}")
+            sys.exit(1)
+        
+        checker = FAIRComplianceChecker()
+        results = checker.evaluate_dataset(args.fair_check)
+        
+        if 'error' in results:
+            print(f"❌ {results['error']}")
+            sys.exit(1)
+        
+        # Display results
+        print(f"\n🔍 FAIR Compliance Report: {os.path.basename(args.fair_check)}")
+        print("=" * 60)
+        
+        # Overall grade
+        print(f"🎯 Overall Grade: {results['grade']}")
+        print(f"📊 Total Score: {results['total_percentage']:.1f}%\n")
+        
+        # Individual scores
+        print("📈 Category Scores:")
+        for category, percentage in results['percentages'].items():
+            bar_length = int(percentage / 5)  # Scale to 20 chars max
+            bar = "█" * bar_length + "░" * (20 - bar_length)
+            print(f"  {category.upper():13} [{bar}] {percentage:5.1f}%")
+        
+        # Recommendations
+        print(f"\n💡 Recommendations ({len(results['recommendations'])} items):")
+        for i, rec in enumerate(results['recommendations'], 1):
+            print(f"  {i:2d}. {rec}")
+        
+        # Exit with appropriate code
+        sys.exit(0 if results['total_percentage'] >= 70 else 1)
 
     if not args.dataset:
         parser.error("the following arguments are required: dataset")
