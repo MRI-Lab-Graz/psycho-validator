@@ -12,6 +12,7 @@ import os
 def export_dublin_core(metadata_file, output_file=None):
     """
     Export metadata to Dublin Core format for FAIR findability
+    Supports both dataset-level (dataset_description.json) and stimulus-level metadata
     """
     with open(metadata_file, 'r') as f:
         metadata = json.load(f)
@@ -21,20 +22,36 @@ def export_dublin_core(metadata_file, output_file=None):
     root.set("xmlns:dc", "http://purl.org/dc/elements/1.1/")
     root.set("xmlns:dcterms", "http://purl.org/dc/terms/")
     
-    # Dublin Core Mapping
-    dc_mapping = {
-        # Required Dublin Core elements
-        "dc:title": get_nested_value(metadata, "Study.TaskName", "Unknown Task"),
-        "dc:creator": get_nested_value(metadata, "Metadata.Creator", "Unknown Creator"),
-        "dc:subject": get_nested_value(metadata, "Categories.PrimaryCategory", "Psychology"),
-        "dc:description": get_nested_value(metadata, "Metadata.Description", "Psychological stimulus data"),
-        "dc:date": get_nested_value(metadata, "Metadata.CreationDate", datetime.now().strftime("%Y-%m-%d")),
-        "dc:type": get_nested_value(metadata, "Technical.StimulusType", "Dataset"),
-        "dc:format": get_nested_value(metadata, "Technical.FileFormat", "Unknown"),
-        "dc:identifier": get_nested_value(metadata, "Metadata.DatasetDOI", f"local:{os.path.basename(metadata_file)}"),
-        "dc:language": "en",  # Default to English, could be made configurable
-        "dc:rights": get_nested_value(metadata, "Metadata.License", "All rights reserved")
-    }
+    # Detect if this is a dataset description (BIDS-style) or stimulus metadata
+    is_dataset_description = "Name" in metadata and "BIDSVersion" in metadata
+    
+    if is_dataset_description:
+        # Dataset-level Dublin Core mapping
+        dc_mapping = {
+            "dc:title": metadata.get("Name", "Unknown Dataset"),
+            "dc:creator": format_creators(metadata.get("Authors", [])),
+            "dc:subject": "; ".join(metadata.get("Keywords", ["Psychology"])),
+            "dc:description": metadata.get("Description", "Psychological research dataset"),
+            "dc:date": get_nested_value(metadata, "DataCollection.start_date", datetime.now().strftime("%Y-%m-%d")),
+            "dc:type": "Dataset",
+            "dc:identifier": metadata.get("DatasetDOI", f"local:{os.path.basename(metadata_file)}"),
+            "dc:language": "en",
+            "dc:rights": metadata.get("License", "All rights reserved")
+        }
+    else:
+        # Stimulus-level Dublin Core mapping (backwards compatibility)
+        dc_mapping = {
+            "dc:title": get_nested_value(metadata, "Study.TaskName", "Unknown Task"),
+            "dc:creator": get_nested_value(metadata, "Metadata.Creator", "Unknown Creator"),
+            "dc:subject": get_nested_value(metadata, "Categories.PrimaryCategory", "Psychology"),
+            "dc:description": get_nested_value(metadata, "Metadata.Description", "Psychological stimulus data"),
+            "dc:date": get_nested_value(metadata, "Metadata.CreationDate", datetime.now().strftime("%Y-%m-%d")),
+            "dc:type": get_nested_value(metadata, "Technical.StimulusType", "Dataset"),
+            "dc:format": get_nested_value(metadata, "Technical.FileFormat", "Unknown"),
+            "dc:identifier": get_nested_value(metadata, "Metadata.DatasetDOI", f"local:{os.path.basename(metadata_file)}"),
+            "dc:language": "en",
+            "dc:rights": get_nested_value(metadata, "Metadata.License", "All rights reserved")
+        }
     
     # Add optional elements if available
     keywords = get_nested_value(metadata, "Metadata.Keywords", [])
@@ -86,25 +103,57 @@ def export_datacite(metadata_file, output_file=None):
     root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
     root.set("xsi:schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd")
     
+    # Detect if this is a dataset description or stimulus metadata
+    is_dataset_description = "Name" in metadata and "BIDSVersion" in metadata
+    
     # Identifier (DOI)
     identifier = ET.SubElement(root, "identifier")
     identifier.set("identifierType", "DOI")
-    doi = get_nested_value(metadata, "Metadata.DatasetDOI")
+    if is_dataset_description:
+        doi = metadata.get("DatasetDOI")
+    else:
+        doi = get_nested_value(metadata, "Metadata.DatasetDOI")
     identifier.text = doi if doi else "10.PLACEHOLDER/DATASET"
     
     # Creators
     creators = ET.SubElement(root, "creators")
-    creator = ET.SubElement(creators, "creator")
-    creator_name = ET.SubElement(creator, "creatorName")
-    creator_name.text = get_nested_value(metadata, "Metadata.Creator", "Unknown Creator")
     
-    # Add ORCID if available
-    orcid = get_nested_value(metadata, "Metadata.CreatorORCID")
-    if orcid:
-        name_identifier = ET.SubElement(creator, "nameIdentifier")
-        name_identifier.set("nameIdentifierScheme", "ORCID")
-        name_identifier.set("schemeURI", "https://orcid.org")
-        name_identifier.text = f"https://orcid.org/{orcid}"
+    if is_dataset_description:
+        # Handle BIDS-style authors array
+        authors = metadata.get("Authors", [])
+        for author in authors:
+            creator = ET.SubElement(creators, "creator")
+            creator_name = ET.SubElement(creator, "creatorName")
+            
+            if isinstance(author, dict):
+                creator_name.text = author.get("name", "Unknown Creator")
+                # Add ORCID if available
+                orcid = author.get("orcid")
+                if orcid:
+                    name_identifier = ET.SubElement(creator, "nameIdentifier")
+                    name_identifier.set("nameIdentifierScheme", "ORCID")
+                    name_identifier.set("schemeURI", "https://orcid.org")
+                    name_identifier.text = f"https://orcid.org/{orcid}"
+                # Add affiliation
+                affiliation = author.get("affiliation")
+                if affiliation:
+                    aff_elem = ET.SubElement(creator, "affiliation")
+                    aff_elem.text = affiliation
+            else:
+                creator_name.text = str(author)
+    else:
+        # Handle stimulus-level metadata (backwards compatibility)
+        creator = ET.SubElement(creators, "creator")
+        creator_name = ET.SubElement(creator, "creatorName")
+        creator_name.text = get_nested_value(metadata, "Metadata.Creator", "Unknown Creator")
+        
+        # Add ORCID if available
+        orcid = get_nested_value(metadata, "Metadata.CreatorORCID")
+        if orcid:
+            name_identifier = ET.SubElement(creator, "nameIdentifier")
+            name_identifier.set("nameIdentifierScheme", "ORCID")
+            name_identifier.set("schemeURI", "https://orcid.org")
+            name_identifier.text = f"https://orcid.org/{orcid}"
     
     # Titles
     titles = ET.SubElement(root, "titles")
@@ -192,6 +241,27 @@ def get_nested_value(dictionary, key_path, default=None):
         return value
     except (KeyError, TypeError):
         return default
+
+def format_creators(authors):
+    """
+    Format authors list for Dublin Core creator field
+    """
+    if not authors:
+        return "Unknown Creator"
+    
+    creator_names = []
+    for author in authors:
+        if isinstance(author, dict):
+            name = author.get("name", "Unknown")
+            orcid = author.get("orcid")
+            if orcid:
+                creator_names.append(f"{name} (ORCID: {orcid})")
+            else:
+                creator_names.append(name)
+        else:
+            creator_names.append(str(author))
+    
+    return "; ".join(creator_names)
 
 def export_fair_metadata(metadata_file):
     """
