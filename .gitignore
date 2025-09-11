@@ -8,5 +8,14 @@ env/
 venv/
 .venv/
 .DS_Store
+
+# Auto-generated FAIR exports (can be regenerated)
+*_datacite.xml
+*_dublin_core.xml
+fair_dataset_description.json
+
+# Templates (can be regenerated)
+*_template.json
+example_*_metadata.json
 *test*
 test*

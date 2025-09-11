@@ -98,6 +98,7 @@ def validate_schema_version(metadata, schema):
     return issues
 
 SCHEMAS = {m: load_schema(m) for m in MODALITY_PATTERNS}
+SCHEMAS['dataset_description'] = load_schema('dataset_description')
 
 # ----------------------------
 # Inherited Metadata System
@@ -713,6 +714,332 @@ def list_schema_versions():
     print(f"   • MINOR: New features (backward compatible)")  
     print(f"   • PATCH: Bug fixes (backward compatible)")
 
+def validate_dataset_fair(dataset_root):
+    """Validate dataset-level FAIR compliance"""
+    print(f"🔍 Validating FAIR compliance for dataset: {dataset_root}")
+    
+    # Check for dataset_description.json
+    dataset_desc_path = os.path.join(dataset_root, "dataset_description.json")
+    if not os.path.exists(dataset_desc_path):
+        print("❌ dataset_description.json not found!")
+        print("💡 Use --create-fair-template to generate a FAIR-compliant template")
+        return
+    
+    # Load and validate dataset description
+    try:
+        with open(dataset_desc_path, 'r') as f:
+            dataset_desc = json.load(f)
+    except Exception as e:
+        print(f"❌ Error reading dataset_description.json: {e}")
+        return
+    
+    # Validate against schema
+    dataset_schema = SCHEMAS.get('dataset_description')
+    if dataset_schema:
+        try:
+            validate(dataset_desc, dataset_schema)
+            print("✅ Dataset description schema validation passed")
+        except ValidationError as e:
+            print(f"⚠️  Schema validation warnings:")
+            error_path = " -> ".join(str(p) for p in e.absolute_path) if e.absolute_path else "root"
+            print(f"   Path: {error_path}")
+            print(f"   Issue: {e.message}")
+    else:
+        print("⚠️  Dataset description schema not available for validation")
+    
+    # Run FAIR compliance check
+    from fair_checker import FAIRComplianceChecker
+    checker = FAIRComplianceChecker()
+    results = checker.evaluate_dataset(dataset_desc_path)
+    
+    if 'error' in results:
+        print(f"❌ {results['error']}")
+        return
+    
+    # Display results
+    print(f"\n🔍 Dataset FAIR Compliance Report")
+    print("=" * 60)
+    
+    # Overall grade
+    print(f"🎯 Overall Grade: {results['grade']}")
+    print(f"📊 Total Score: {results['total_percentage']:.1f}%\n")
+    
+    # Individual scores
+    print("📈 Category Scores:")
+    for category, percentage in results['percentages'].items():
+        bar_length = int(percentage / 5)  # Scale to 20 chars max
+        bar = "█" * bar_length + "░" * (20 - bar_length)
+        print(f"  {category.upper():13} [{bar}] {percentage:5.1f}%")
+    
+    # Recommendations
+    if results['recommendations']:
+        print(f"\n💡 Recommendations for FAIR improvement:")
+        for i, rec in enumerate(results['recommendations'], 1):
+            print(f"  {i:2d}. {rec}")
+    
+    # Export FAIR metadata if score is good
+    if results['total_percentage'] >= 50:
+        print(f"\n🚀 Exporting FAIR metadata...")
+        from fair_export import export_fair_metadata
+        export_results = export_fair_metadata(dataset_desc_path)
+        
+        for format_type, result in export_results.items():
+            if result:
+                print(f"  ✅ {format_type}: {result}")
+            else:
+                print(f"  ❌ {format_type}: Export failed")
+
+def create_fair_template(output_file):
+    """Create a FAIR-compliant dataset_description.json template"""
+    template = {
+        "Name": "Your Dataset Name",
+        "BIDSVersion": "1.9.0",
+        "DatasetType": "raw",
+        "License": "CC-BY-4.0",
+        "Authors": [
+            {
+                "name": "Your Name",
+                "orcid": "0000-0000-0000-0000",
+                "affiliation": "Your Institution",
+                "ror": "https://ror.org/your-institution-id"
+            }
+        ],
+        "Funding": [
+            {
+                "agency": "Funding Agency Name",
+                "grant_number": "Grant Number",
+                "funder_id": "https://doi.org/10.13039/funder-id"
+            }
+        ],
+        "EthicsApprovals": [
+            {
+                "committee": "Ethics Committee Name",
+                "approval_number": "Approval Number",
+                "date": "YYYY-MM-DD"
+            }
+        ],
+        "DatasetDOI": "10.PLACEHOLDER/dataset-doi",
+        "Description": "Detailed description of your psychological research dataset including methods, participants, and data collection procedures.",
+        "Keywords": [
+            "psychology",
+            "neuroscience",
+            "behavioral data",
+            "experimental psychology"
+        ],
+        "ResearchDomains": [
+            "cognitive psychology",
+            "experimental psychology"
+        ],
+        "Acknowledgements": "Acknowledge participants, funding sources, and collaborators.",
+        "ReferencesAndLinks": [
+            "https://github.com/your-repository",
+            "https://your-project-website.com"
+        ],
+        "DataCollection": {
+            "start_date": "YYYY-MM-DD",
+            "end_date": "YYYY-MM-DD",
+            "location": "Data collection location"
+        },
+        "Publications": [
+            {
+                "title": "Related Publication Title",
+                "doi": "10.PLACEHOLDER/publication-doi",
+                "year": "YYYY"
+            }
+        ],
+        "Contact": {
+            "name": "Contact Person Name",
+            "email": "contact@institution.edu",
+            "orcid": "0000-0000-0000-0000"
+        },
+        "GeneratedBy": [
+            {
+                "Name": "psycho-validator",
+                "Version": "1.3.0",
+                "CodeURL": "https://github.com/MRI-Lab-Graz/psycho-validator"
+            }
+        ]
+    }
+    
+    try:
+        with open(output_file, 'w') as f:
+            json.dump(template, f, indent=2)
+        
+        print(f"✅ FAIR-compliant template created: {output_file}")
+        print("\n📝 Next steps:")
+        print("  1. Edit the template with your actual dataset information")
+        print("  2. Ensure all ORCID IDs and DOIs are valid")
+        print("  3. Run --dataset-fair to check compliance")
+        print("  4. Use --fair-export to generate XML metadata")
+        
+    except Exception as e:
+        print(f"❌ Error creating template: {e}")
+
+def generate_full_fair_report(dataset_root):
+    """Generate comprehensive FAIR report for entire dataset"""
+    print(f"🔍 Generating comprehensive FAIR report for: {dataset_root}")
+    print("=" * 80)
+    
+    # Check dataset description first
+    dataset_desc_path = os.path.join(dataset_root, "dataset_description.json")
+    dataset_score = None
+    
+    if os.path.exists(dataset_desc_path):
+        print("\n📋 DATASET-LEVEL FAIR COMPLIANCE")
+        print("-" * 40)
+        
+        from fair_checker import FAIRComplianceChecker
+        checker = FAIRComplianceChecker()
+        results = checker.evaluate_dataset(dataset_desc_path)
+        
+        if 'error' not in results:
+            dataset_score = results['total_percentage']
+            print(f"📊 Overall Score: {dataset_score:.1f}%")
+            print(f"🎯 Grade: {results['grade']}")
+            
+            # Quick category overview
+            for category, percentage in results['percentages'].items():
+                status = "✅" if percentage >= 70 else "⚠️" if percentage >= 50 else "❌"
+                print(f"  {status} {category.upper()}: {percentage:.1f}%")
+    else:
+        print("❌ No dataset_description.json found - create one for better FAIR compliance")
+    
+    # Scan for all metadata files
+    print(f"\n📁 STIMULUS-LEVEL METADATA ANALYSIS")
+    print("-" * 40)
+    
+    metadata_files = []
+    for root, dirs, files in os.walk(dataset_root):
+        for file in files:
+            if file.endswith('.json') and 'stim' in file:
+                metadata_files.append(os.path.join(root, file))
+    
+    if not metadata_files:
+        print("ℹ️  No stimulus metadata files found")
+        return
+    
+    print(f"Found {len(metadata_files)} stimulus metadata files")
+    
+    # Analyze each metadata file
+    fair_scores = []
+    modality_summary = {}
+    
+    from fair_checker import FAIRComplianceChecker
+    checker = FAIRComplianceChecker()
+    
+    for metadata_file in metadata_files[:10]:  # Limit to first 10 for performance
+        try:
+            results = checker.evaluate_dataset(metadata_file)
+            if 'error' not in results:
+                score = results['total_percentage']
+                fair_scores.append(score)
+                
+                # Determine modality
+                modality = detect_modality_from_path(metadata_file)
+                if modality not in modality_summary:
+                    modality_summary[modality] = []
+                modality_summary[modality].append(score)
+                
+                # Show brief result
+                status = "✅" if score >= 70 else "⚠️" if score >= 50 else "❌"
+                rel_path = os.path.relpath(metadata_file, dataset_root)
+                print(f"  {status} {rel_path}: {score:.1f}%")
+                
+        except Exception as e:
+            rel_path = os.path.relpath(metadata_file, dataset_root)
+            print(f"  ❌ {rel_path}: Error - {e}")
+    
+    # Summary statistics
+    if fair_scores:
+        print(f"\n📊 STIMULUS METADATA SUMMARY")
+        print("-" * 40)
+        avg_score = sum(fair_scores) / len(fair_scores)
+        min_score = min(fair_scores)
+        max_score = max(fair_scores)
+        
+        print(f"📈 Average FAIR Score: {avg_score:.1f}%")
+        print(f"📉 Range: {min_score:.1f}% - {max_score:.1f}%")
+        
+        # Modality breakdown
+        print(f"\n🎯 MODALITY BREAKDOWN:")
+        for modality, scores in modality_summary.items():
+            if scores:
+                avg_mod = sum(scores) / len(scores)
+                print(f"  {modality}: {avg_mod:.1f}% avg ({len(scores)} files)")
+        
+        # Overall assessment
+        print(f"\n🏆 OVERALL DATASET ASSESSMENT")
+        print("-" * 40)
+        
+        overall_score = dataset_score if dataset_score else avg_score
+        if overall_score >= 80:
+            print("🥇 EXCELLENT - Dataset meets high FAIR standards")
+        elif overall_score >= 60:
+            print("🥈 GOOD - Dataset is FAIR-compliant with room for improvement")
+        elif overall_score >= 40:
+            print("🥉 FAIR - Basic compliance achieved, significant improvements needed")
+        else:
+            print("📋 NEEDS WORK - Major FAIR improvements required")
+            
+        print(f"Combined Score: {overall_score:.1f}%")
+
+def generate_fair_summary(dataset_root):
+    """Generate quick FAIR compliance summary"""
+    print(f"🔍 FAIR Compliance Summary: {os.path.basename(dataset_root)}")
+    print("=" * 60)
+    
+    # Quick dataset check
+    dataset_desc_path = os.path.join(dataset_root, "dataset_description.json")
+    if os.path.exists(dataset_desc_path):
+        print("✅ Dataset description found")
+        
+        # Quick validation
+        try:
+            with open(dataset_desc_path, 'r') as f:
+                dataset_desc = json.load(f)
+            
+            # Check key FAIR indicators
+            indicators = {
+                'DOI': dataset_desc.get('DatasetDOI', '').startswith('10.'),
+                'Authors': len(dataset_desc.get('Authors', [])) > 0,
+                'License': dataset_desc.get('License') not in [None, '', 'All rights reserved'],
+                'Keywords': len(dataset_desc.get('Keywords', [])) >= 3,
+                'Description': len(dataset_desc.get('Description', '')) > 50,
+                'Contact': dataset_desc.get('Contact', {}).get('email') is not None
+            }
+            
+            passed = sum(indicators.values())
+            total = len(indicators)
+            
+            print(f"📊 Quick FAIR Check: {passed}/{total} indicators passed")
+            for indicator, status in indicators.items():
+                status_icon = "✅" if status else "❌"
+                print(f"  {status_icon} {indicator}")
+                
+        except Exception as e:
+            print(f"⚠️  Error reading dataset description: {e}")
+    else:
+        print("❌ No dataset_description.json found")
+        print("💡 Run: python psycho-validator.py --create-fair-template dataset_description.json")
+    
+    # Count metadata files
+    metadata_count = 0
+    for root, dirs, files in os.walk(dataset_root):
+        metadata_count += sum(1 for f in files if f.endswith('.json') and 'stim' in f)
+    
+    print(f"\n📁 Found {metadata_count} stimulus metadata files")
+    
+    if metadata_count > 0:
+        print("💡 Run full analysis: python psycho-validator.py --full-fair-report .")
+
+def detect_modality_from_path(file_path):
+    """Detect modality from file path"""
+    path_lower = file_path.lower()
+    for modality in MODALITY_PATTERNS.keys():
+        if modality in path_lower:
+            return modality
+    return 'unknown'
+
 # ----------------------------
 # CLI entry point
 # ----------------------------
@@ -734,6 +1061,14 @@ if __name__ == "__main__":
                        help="Export metadata in FAIR-compliant formats (Dublin Core, DataCite)")
     parser.add_argument("--fair-check", metavar="METADATA_FILE",
                        help="Evaluate FAIR principles compliance of metadata")
+    parser.add_argument("--dataset-fair", metavar="DATASET_ROOT",
+                       help="Validate dataset-level FAIR compliance (checks dataset_description.json)")
+    parser.add_argument("--create-fair-template", metavar="OUTPUT_FILE",
+                       help="Create FAIR-compliant dataset_description.json template")
+    parser.add_argument("--full-fair-report", metavar="DATASET_ROOT",
+                       help="Generate comprehensive FAIR report for entire dataset")
+    parser.add_argument("--fair-summary", metavar="DATASET_ROOT",
+                       help="Generate FAIR compliance summary for all metadata files")
     args = parser.parse_args()
 
     if args.schema_info:
@@ -804,6 +1139,22 @@ if __name__ == "__main__":
         
         # Exit with appropriate code
         sys.exit(0 if results['total_percentage'] >= 70 else 1)
+    
+    if args.dataset_fair:
+        validate_dataset_fair(args.dataset_fair)
+        sys.exit(0)
+    
+    if args.create_fair_template:
+        create_fair_template(args.create_fair_template)
+        sys.exit(0)
+    
+    if args.full_fair_report:
+        generate_full_fair_report(args.full_fair_report)
+        sys.exit(0)
+        
+    if args.fair_summary:
+        generate_fair_summary(args.fair_summary)
+        sys.exit(0)
 
     if not args.dataset:
         parser.error("the following arguments are required: dataset")
