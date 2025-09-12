@@ -1,17 +1,112 @@
 import os
 import re
 import json
+import shutil
+import subprocess
 from jsonschema import validate, ValidationError
+
+# Optional: official BIDS schema tools (Python)
+try:
+    import bidsschematools as _bst
+except Exception:
+    _bst = None
+
+def _load_bids_schema_via_python():
+    """Try to load the official BIDS schema via bidsschematools if installed.
+    Returns (schema_obj, error_message or None).
+    """
+    if _bst is None:
+        return None, "bidsschematools is not installed"
+    # Try common APIs defensively to support multiple versions
+    try:
+        if hasattr(_bst, 'load_schema'):
+            return _bst.load_schema(), None
+        if hasattr(_bst, 'schema') and hasattr(_bst.schema, 'load_schema'):
+            return _bst.schema.load_schema(), None
+        # Some versions may expose a Schema class
+        if hasattr(_bst, 'Schema'):
+            try:
+                return _bst.Schema(), None
+            except Exception:
+                pass
+        return None, "Unsupported bidsschematools version/API"
+    except Exception as e:
+        return None, str(e)
+
+def _print_bids_schema_summary():
+    schema, err = _load_bids_schema_via_python()
+    if not schema:
+        print(f"⚠️  Could not load BIDS schema via bidsschematools: {err}")
+        print("💡 Install: pip install bidsschematools")
+        print("📖 Docs: https://bidsschematools.readthedocs.io/")
+        return
+    # Try to extract entities, datatypes, suffixes (best-effort across versions)
+    entities = None
+    datatypes = None
+    suffixes = None
+    if isinstance(schema, dict):
+        entities = schema.get('entities') or schema.get('objects', {}).get('entities')
+        datatypes = schema.get('datatypes') or schema.get('objects', {}).get('datatypes')
+        suffixes = schema.get('suffixes') or schema.get('objects', {}).get('suffixes')
+    else:
+        entities = getattr(schema, 'entities', None)
+        datatypes = getattr(schema, 'datatypes', None)
+        suffixes = getattr(schema, 'suffixes', None)
+
+    print("\n="*30)
+    print("📚 OFFICIAL BIDS SCHEMA (Python)")
+    print("="*60)
+    if entities:
+        names = list(entities.keys()) if isinstance(entities, dict) else list(map(str, entities))
+        print(f"🔹 Entities ({len(names)}): {', '.join(sorted(names)[:20])}{'...' if len(names)>20 else ''}")
+    if datatypes:
+        names = list(datatypes.keys()) if isinstance(datatypes, dict) else list(map(str, datatypes))
+        print(f"🔹 Datatypes ({len(names)}): {', '.join(sorted(names))}")
+    if suffixes:
+        names = list(suffixes.keys()) if isinstance(suffixes, dict) else list(map(str, suffixes))
+        # Show common MRI suffixes if present
+        show = [n for n in names if n in ("T1w","T2w","bold","dwi","phasediff","fieldmap","epi")]
+        show = show or names[:10]
+        print(f"🔹 Suffixes (sample): {', '.join(show)}")
+    print()
+
+# ----------------------------
+# Utility: filename handling
+# ----------------------------
+COMPOUND_EXTS = (".nii.gz", ".tsv.gz", ".edf.gz")
+
+def split_compound_ext(filename):
+    """Return (stem, ext) and handle compound extensions like .nii.gz.
+    stem excludes the full extension chain; ext is the full extension (e.g., .nii.gz)
+    """
+    if any(filename.endswith(ext) for ext in COMPOUND_EXTS):
+        for ext in COMPOUND_EXTS:
+            if filename.endswith(ext):
+                stem = filename[: -len(ext)]
+                return stem, ext
+    base, ext = os.path.splitext(filename)
+    return base, ext
+
+def derive_sidecar_path(file_path):
+    """Derive the JSON sidecar path for a data file, respecting compound extensions."""
+    dirname = os.path.dirname(file_path)
+    fname = os.path.basename(file_path)
+    stem, _ext = split_compound_ext(fname)
+    return os.path.join(dirname, f"{stem}.json")
 
 # ----------------------------
 # Regex for BIDS-style filenames
 # ----------------------------
+# Standard BIDS-like for behavioral/stim modalities (task-based)
 BIDS_REGEX = re.compile(
     r"^sub-[a-zA-Z0-9]+"
     r"(_ses-[a-zA-Z0-9]+)?"
-    r"_task-[a-zA-Z0-9]+"
+    r"(_task-[a-zA-Z0-9]+)?"  # task optional for MRI
     r"(_run-[0-9]+)?"
 )
+
+# MRI filename pattern (e.g., sub-01[_ses-01][_task-..][_run-..]_T1w|_bold|_dwi etc.)
+MRI_SUFFIX_REGEX = re.compile(r"_(T1w|T2w|T2star|FLAIR|PD|PDw|T1map|T2map|bold|dwi|magnitude1|magnitude2|phasediff|fieldmap|epi)$")
 
 # ----------------------------
 # Modality definitions
@@ -23,7 +118,12 @@ MODALITY_PATTERNS = {
     "eeg": r".+\.(edf|bdf|eeg)$",
     "audio": r".+\.(wav|mp3)$",
     "behavior": r".+\.tsv$",
-    "physiological": r".+\.(edf|bdf|txt|csv)$"
+    "physiological": r".+\.(edf|bdf|txt|csv)$",
+    # MRI submodalities (nested under 'mri' folder)
+    "anat": r".+_(T1w|T2w|T2star|FLAIR|PD|PDw|T1map|T2map)\.nii(\.gz)?$",
+    "func": r".+_bold\.nii(\.gz)?$",
+    "fmap": r".+_(magnitude1|magnitude2|phasediff|fieldmap|epi)\.nii(\.gz)?$",
+    "dwi":  r".+_dwi\.nii(\.gz)?$"
 }
 
 # ----------------------------
@@ -98,6 +198,11 @@ def validate_schema_version(metadata, schema):
     return issues
 
 SCHEMAS = {m: load_schema(m) for m in MODALITY_PATTERNS}
+# MRI nested schemas
+SCHEMAS['anat'] = load_schema(os.path.join('mri', 'anat'))
+SCHEMAS['func'] = load_schema(os.path.join('mri', 'func'))
+SCHEMAS['fmap'] = load_schema(os.path.join('mri', 'fmap'))
+SCHEMAS['dwi']  = load_schema(os.path.join('mri', 'dwi'))
 SCHEMAS['dataset_description'] = load_schema('dataset_description')
 
 # ----------------------------
@@ -246,7 +351,7 @@ def validate_participants_consistency(stats, participants_info):
 # Helper: validate sidecar JSON (enhanced with inheritance)
 # ----------------------------
 def validate_sidecar(file_path, schema, root_dir):
-    sidecar = file_path.replace(os.path.splitext(file_path)[1], ".json")
+    sidecar = derive_sidecar_path(file_path)
     issues = []
     
     if not os.path.exists(sidecar):
@@ -442,9 +547,67 @@ class DatasetStats:
 # ----------------------------
 # Main validator
 # ----------------------------
-def validate_dataset(root_dir):
+def run_bids_validator_cli(root_dir):
+    """Run official Node 'bids-validator' if available and return (issues, summary_info)."""
+    issues = []
+    summary_info = {}
+    exe = shutil.which('bids-validator')
+    if not exe:
+        return None, None  # Not available
+    try:
+        # --no-color for clean output, --json for machine parseable
+        result = subprocess.run(
+            [exe, '--json', '--no-color', root_dir],
+            capture_output=True, text=True, check=False
+        )
+        output = result.stdout.strip()
+        if not output:
+            return issues, summary_info
+        data = json.loads(output)
+        # Extract issues (errors/warnings may be under data['issues'])
+        if isinstance(data, dict):
+            # Summary if present
+            summary_info = data.get('summary') or {}
+            # Newer versions: data['issues'] = {'errors':[], 'warnings':[]}
+            issues_block = data.get('issues') or {}
+            for err in issues_block.get('errors', []) or []:
+                msg = err.get('reason') or err.get('code') or json.dumps(err)
+                issues.append(("ERROR", f"BIDS: {msg}"))
+            for warn in issues_block.get('warnings', []) or []:
+                msg = warn.get('reason') or warn.get('code') or json.dumps(warn)
+                issues.append(("WARNING", f"BIDS: {msg}"))
+            # Older format: flat list under data['errors'] / data['warnings']
+            for err in data.get('errors', []) or []:
+                msg = err.get('reason') or err.get('code') or json.dumps(err)
+                issues.append(("ERROR", f"BIDS: {msg}"))
+            for warn in data.get('warnings', []) or []:
+                msg = warn.get('reason') or warn.get('code') or json.dumps(warn)
+                issues.append(("WARNING", f"BIDS: {msg}"))
+        return issues, summary_info
+    except Exception as e:
+        # Treat as not available on error
+        return None, None
+
+def validate_dataset(root_dir, bids_mode='auto'):
     issues = []
     stats = DatasetStats()
+
+    # 0. Optionally run official BIDS validator
+    skip_core_bids_checks = False
+    bids_issues = []
+    bids_summary = None
+    if bids_mode != 'off':
+        bi, bs = run_bids_validator_cli(root_dir)
+        if bi is not None:
+            # Found bids-validator and ran it
+            bids_issues = bi
+            bids_summary = bs or {}
+            # Respect BIDS as source of truth for core modalities; we skip our MRI checks
+            skip_core_bids_checks = True
+            # Add an info line
+            issues.append(("INFO", "Using official BIDS validator for core BIDS checks"))
+        elif bids_mode == 'auto':
+            issues.append(("INFO", "bids-validator not found; falling back to internal checks"))
 
     # 1. Dataset-level checks
     dataset_desc_path = os.path.join(root_dir, "dataset_description.json")
@@ -461,7 +624,7 @@ def validate_dataset(root_dir):
         item_path = os.path.join(root_dir, item)
         if os.path.isdir(item_path) and item.startswith("sub-"):
             # This is a subject directory
-            subject_issues = validate_subject(item_path, item, stats, root_dir)
+            subject_issues = validate_subject(item_path, item, stats, root_dir, skip_core_bids_checks)
             issues += subject_issues
 
     # 4. Check cross-subject consistency
@@ -472,9 +635,12 @@ def validate_dataset(root_dir):
     participant_consistency_issues = validate_participants_consistency(stats, participants_info)
     issues += participant_consistency_issues
 
+    # Merge in BIDS validator issues last (so INFO lines appear earlier)
+    issues += bids_issues
+
     return issues, stats
 
-def validate_subject(subject_dir, subject_id, stats, root_dir):
+def validate_subject(subject_dir, subject_id, stats, root_dir, skip_core_bids_checks=False):
     """Validate a single subject directory"""
     issues = []
     
@@ -483,21 +649,39 @@ def validate_subject(subject_dir, subject_id, stats, root_dir):
         if os.path.isdir(item_path):
             if item.startswith("ses-"):
                 # Session directory
-                issues += validate_session(item_path, subject_id, item, stats, root_dir)
+                issues += validate_session(item_path, subject_id, item, stats, root_dir, skip_core_bids_checks)
+            elif item == "mri":
+                # MRI container without sessions
+                if not skip_core_bids_checks:
+                    issues += validate_mri_container(item_path, subject_id, None, stats, root_dir)
             elif item in MODALITY_PATTERNS:
                 # Direct modality directory (no sessions)
                 issues += validate_modality_dir(item_path, subject_id, None, item, stats, root_dir)
     
     return issues
 
-def validate_session(session_dir, subject_id, session_id, stats, root_dir):
+def validate_session(session_dir, subject_id, session_id, stats, root_dir, skip_core_bids_checks=False):
     """Validate a single session directory"""
     issues = []
     
     for item in os.listdir(session_dir):
         item_path = os.path.join(session_dir, item)
-        if os.path.isdir(item_path) and item in MODALITY_PATTERNS:
-            issues += validate_modality_dir(item_path, subject_id, session_id, item, stats, root_dir)
+        if os.path.isdir(item_path):
+            if item == "mri":
+                if not skip_core_bids_checks:
+                    issues += validate_mri_container(item_path, subject_id, session_id, stats, root_dir)
+            elif item in MODALITY_PATTERNS:
+                issues += validate_modality_dir(item_path, subject_id, session_id, item, stats, root_dir)
+
+    return issues
+
+def validate_mri_container(mri_dir, subject_id, session_id, stats, root_dir):
+    """Validate nested MRI submodalities under an 'mri' folder (anat/func/fmap/dwi)."""
+    issues = []
+    for sub in os.listdir(mri_dir):
+        sub_path = os.path.join(mri_dir, sub)
+        if os.path.isdir(sub_path) and sub in ("anat", "func", "fmap", "dwi"):
+            issues += validate_modality_dir(sub_path, subject_id, session_id, sub, stats, root_dir)
     
     return issues
 
@@ -521,10 +705,14 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
             stats.add_file(subject_id, session_id, modality, task, fname)
             
             if pattern.match(fname):
-                # Check naming convention
-                base, ext = os.path.splitext(fname)
-                if not BIDS_REGEX.match(base):
-                    issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
+                # Check naming convention (MRI allows no task label)
+                base, _ext = split_compound_ext(fname)
+                if modality in ("anat", "func", "fmap", "dwi"):
+                    if not BIDS_REGEX.match(base) or not MRI_SUFFIX_REGEX.search(base):
+                        issues.append(("ERROR", f"Invalid MRI filename: {fname} in {modality_dir}"))
+                else:
+                    if not BIDS_REGEX.match(base):
+                        issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
                 
                 # Validate expected subject/session in filename
                 if subject_id not in fname:
@@ -1051,10 +1239,16 @@ if __name__ == "__main__":
     parser.add_argument("dataset", nargs='?', default=None, help="Path to dataset root")
     parser.add_argument("-v", "--verbose", action="store_true", 
                        help="Show detailed validation information")
+    parser.add_argument("--bids-mode", choices=["auto", "off", "require"], default="auto",
+                        help="Use official bids-validator for core BIDS checks: auto=use if installed, off=disable, require=fail if not available")
     parser.add_argument("--schema-info", metavar="MODALITY",
                        help="Display schema details for a specific modality")
     parser.add_argument("--list-versions", action="store_true",
                        help="List all available schema versions")
+    parser.add_argument("--bids-schema", action="store_true",
+                       help="Show summary of official BIDS schema via bidsschematools")
+    parser.add_argument("--check-bids-cli", action="store_true",
+                       help="Check availability of Node 'bids-validator' and print version")
     parser.add_argument("--check-compatibility", nargs=2, metavar=('SCHEMA_VERSION', 'REQUIRED_VERSION'),
                        help="Check if a schema version is compatible with a required version")
     parser.add_argument("--fair-export", metavar="METADATA_FILE",
@@ -1069,6 +1263,10 @@ if __name__ == "__main__":
                        help="Generate comprehensive FAIR report for entire dataset")
     parser.add_argument("--fair-summary", metavar="DATASET_ROOT",
                        help="Generate FAIR compliance summary for all metadata files")
+    parser.add_argument("--init-bidsignore", action="store_true",
+                       help="Create a recommended .bidsignore in the dataset to exclude non-BIDS folders (audio/image/movie/mri, scripts, etc.) from the official validator")
+    parser.add_argument("--force-bidsignore", action="store_true",
+                       help="Overwrite existing .bidsignore when used with --init-bidsignore")
     args = parser.parse_args()
 
     if args.schema_info:
@@ -1077,6 +1275,22 @@ if __name__ == "__main__":
     
     if args.list_versions:
         list_schema_versions()
+        sys.exit(0)
+
+    if args.check_bids_cli:
+        exe = shutil.which('bids-validator')
+        if exe:
+            try:
+                out = subprocess.run([exe, '--version'], capture_output=True, text=True)
+                print(f"✅ bids-validator available: {out.stdout.strip() or exe}")
+            except Exception:
+                print("✅ bids-validator found (version check failed)")
+        else:
+            print("❌ bids-validator not found. Install: npm install -g bids-validator")
+        sys.exit(0)
+
+    if args.bids_schema:
+        _print_bids_schema_summary()
         sys.exit(0)
     
     if args.check_compatibility:
@@ -1156,6 +1370,9 @@ if __name__ == "__main__":
         generate_fair_summary(args.fair_summary)
         sys.exit(0)
 
+    if args.init_bidsignore and not args.dataset:
+        parser.error("--init-bidsignore requires: dataset")
+
     if not args.dataset:
         parser.error("the following arguments are required: dataset")
 
@@ -1163,12 +1380,53 @@ if __name__ == "__main__":
         print(f"❌ Dataset directory not found: {args.dataset}")
         sys.exit(1)
 
+    # Handle .bidsignore initialization
+    if args.init_bidsignore:
+        bidsignore_path = os.path.join(args.dataset, ".bidsignore")
+        if os.path.exists(bidsignore_path) and not args.force_bidsignore:
+            print(f"⚠️  .bidsignore already exists at {bidsignore_path} (use --force-bidsignore to overwrite)")
+            sys.exit(0)
+
+        lines = [
+            "# Ignore non-BIDS custom modalities and helper scripts",
+            "scripts/",
+            "code/",
+            "**/.DS_Store",
+            "",
+            "# Custom modality folders (kept for psycho-validator)",
+            "sub-*/ses-*/audio/",
+            "sub-*/ses-*/image/",
+            "sub-*/movie/",
+            "",
+            "# Optional extra MRI container not in BIDS",
+            "sub-*/ses-*/mri/",
+            "",
+            "# Common caches",
+            "**/__pycache__/",
+            "**/.ipynb_checkpoints/",
+        ]
+        try:
+            with open(bidsignore_path, "w") as f:
+                f.write("\n".join(lines) + "\n")
+            print(f"✅ Wrote .bidsignore to {bidsignore_path}")
+            print("💡 The official bids-validator will now ignore these paths; psycho-validator still checks them.")
+        except Exception as e:
+            print(f"❌ Failed to write .bidsignore: {e}")
+            sys.exit(1)
+        sys.exit(0)
+
     print(f"🔍 Validating dataset: {args.dataset}")
     if args.verbose:
         print(f"📁 Scanning for modalities: {list(MODALITY_PATTERNS.keys())}")
         print(f"📋 Available schemas: {[k for k, v in SCHEMAS.items() if v is not None]}")
     
-    problems, stats = validate_dataset(args.dataset)
+    # Handle require mode: fail early if not available
+    if args.bids_mode == 'require' and shutil.which('bids-validator') is None:
+        print("❌ bids-validator not found but --bids-mode=require specified")
+        print("💡 Install with: npm install -g bids-validator")
+        sys.exit(2)
+
+    problems, stats = validate_dataset(args.dataset, bids_mode=args.bids_mode)
 
     # Print comprehensive summary
     print_dataset_summary(args.dataset, stats)

@@ -1,3 +1,4 @@
 jsonschema
 Pillow
 numpy
+Nibabel
