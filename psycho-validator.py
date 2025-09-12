@@ -639,19 +639,40 @@ def run_bids_validator_cli(root_dir):
             summary_info = data.get('summary') or {}
             # Newer versions: data['issues'] = {'errors':[], 'warnings':[]}
             issues_block = data.get('issues') or {}
+            def _fmt_msg(level_item):
+                msg = level_item.get('reason') or level_item.get('code') or ''
+                paths = []
+                # Try multiple shapes used by bids-validator
+                if isinstance(level_item.get('files'), list):
+                    for fi in level_item['files']:
+                        # shapes: {'file': {'path': str}} or {'path': str}
+                        if isinstance(fi, dict):
+                            if isinstance(fi.get('file'), dict) and fi['file'].get('path'):
+                                paths.append(fi['file']['path'])
+                            elif fi.get('path'):
+                                paths.append(fi['path'])
+                if isinstance(level_item.get('file'), dict) and level_item['file'].get('path'):
+                    paths.append(level_item['file']['path'])
+                if paths:
+                    # De-duplicate and shorten output
+                    uniq = []
+                    for p in paths:
+                        if p not in uniq:
+                            uniq.append(p)
+                    if len(uniq) == 1:
+                        return f"{msg} [at {uniq[0]}]"
+                    else:
+                        return f"{msg} [e.g., {uniq[0]} and {len(uniq)-1} more]"
+                return msg or json.dumps(level_item)
             for err in issues_block.get('errors', []) or []:
-                msg = err.get('reason') or err.get('code') or json.dumps(err)
-                issues.append(("ERROR", f"BIDS: {msg}"))
+                issues.append(("ERROR", f"BIDS: {_fmt_msg(err)}"))
             for warn in issues_block.get('warnings', []) or []:
-                msg = warn.get('reason') or warn.get('code') or json.dumps(warn)
-                issues.append(("WARNING", f"BIDS: {msg}"))
+                issues.append(("WARNING", f"BIDS: {_fmt_msg(warn)}"))
             # Older format: flat list under data['errors'] / data['warnings']
             for err in data.get('errors', []) or []:
-                msg = err.get('reason') or err.get('code') or json.dumps(err)
-                issues.append(("ERROR", f"BIDS: {msg}"))
+                issues.append(("ERROR", f"BIDS: {_fmt_msg(err)}"))
             for warn in data.get('warnings', []) or []:
-                msg = warn.get('reason') or warn.get('code') or json.dumps(warn)
-                issues.append(("WARNING", f"BIDS: {msg}"))
+                issues.append(("WARNING", f"BIDS: {_fmt_msg(warn)}"))
         return issues, summary_info
     except Exception as e:
         # Treat as not available on error
@@ -754,9 +775,10 @@ def validate_dataset(root_dir, bids_mode='auto'):
             subject_issues = validate_subject(item_path, item, stats, root_dir, skip_core_bids_checks)
             issues += subject_issues
 
-    # 4. Check cross-subject consistency
-    consistency_warnings = stats.check_consistency()
-    issues += consistency_warnings
+    # 4. Check cross-subject consistency (skip when using official BIDS validator)
+    if not skip_core_bids_checks:
+        consistency_warnings = stats.check_consistency()
+        issues += consistency_warnings
     
     # 5. Validate participants.tsv consistency
     participant_consistency_issues = validate_participants_consistency(stats, participants_info)
@@ -771,6 +793,17 @@ def validate_subject(subject_dir, subject_id, stats, root_dir, skip_core_bids_ch
     """Validate a single subject directory"""
     issues = []
     
+    def _record_stats_for_dir(modality_dir, modality):
+        for fname in os.listdir(modality_dir):
+            file_path = os.path.join(modality_dir, fname)
+            if os.path.isfile(file_path):
+                task = None
+                if "_task-" in fname:
+                    m = re.search(r'_task-([A-Za-z0-9]+)(?:_|$)', fname)
+                    if m:
+                        task = m.group(1)
+                stats.add_file(subject_id, None, modality, task, fname)
+    
     for item in os.listdir(subject_dir):
         item_path = os.path.join(subject_dir, item)
         if os.path.isdir(item_path):
@@ -781,9 +814,19 @@ def validate_subject(subject_dir, subject_id, stats, root_dir, skip_core_bids_ch
                 # MRI container without sessions
                 if not skip_core_bids_checks:
                     issues += validate_mri_container(item_path, subject_id, None, stats, root_dir)
+                else:
+                    # Stats-only scan of MRI container
+                    for sub in os.listdir(item_path):
+                        sub_path = os.path.join(item_path, sub)
+                        if os.path.isdir(sub_path) and sub in ("anat", "func", "fmap", "dwi"):
+                            _record_stats_for_dir(sub_path, sub)
             elif item in MODALITY_PATTERNS:
                 # Direct modality directory (no sessions)
-                issues += validate_modality_dir(item_path, subject_id, None, item, stats, root_dir)
+                if skip_core_bids_checks and item in ("anat", "func", "fmap", "dwi"):
+                    # Skip internal MRI checks when official BIDS validator is used but still collect stats
+                    _record_stats_for_dir(item_path, item)
+                else:
+                    issues += validate_modality_dir(item_path, subject_id, None, item, stats, root_dir)
     
     return issues
 
@@ -791,14 +834,35 @@ def validate_session(session_dir, subject_id, session_id, stats, root_dir, skip_
     """Validate a single session directory"""
     issues = []
     
+    def _record_stats_for_dir(modality_dir, modality):
+        for fname in os.listdir(modality_dir):
+            file_path = os.path.join(modality_dir, fname)
+            if os.path.isfile(file_path):
+                task = None
+                if "_task-" in fname:
+                    m = re.search(r'_task-([A-Za-z0-9]+)(?:_|$)', fname)
+                    if m:
+                        task = m.group(1)
+                stats.add_file(subject_id, session_id, modality, task, fname)
+    
     for item in os.listdir(session_dir):
         item_path = os.path.join(session_dir, item)
         if os.path.isdir(item_path):
             if item == "mri":
                 if not skip_core_bids_checks:
                     issues += validate_mri_container(item_path, subject_id, session_id, stats, root_dir)
+                else:
+                    # Stats-only scan of MRI container
+                    for sub in os.listdir(item_path):
+                        sub_path = os.path.join(item_path, sub)
+                        if os.path.isdir(sub_path) and sub in ("anat", "func", "fmap", "dwi"):
+                            _record_stats_for_dir(sub_path, sub)
             elif item in MODALITY_PATTERNS:
-                issues += validate_modality_dir(item_path, subject_id, session_id, item, stats, root_dir)
+                if skip_core_bids_checks and item in ("anat", "func", "fmap", "dwi"):
+                    # Skip internal MRI checks when official BIDS validator is used but still collect stats
+                    _record_stats_for_dir(item_path, item)
+                else:
+                    issues += validate_modality_dir(item_path, subject_id, session_id, item, stats, root_dir)
 
     return issues
 
@@ -832,7 +896,8 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
             # Extract task from filename if possible
             task = None
             if "_task-" in fname:
-                task_match = re.search(r'_task-([A-Za-z0-9_]+)', fname)
+                # Capture task label up to next '_' (entity boundary) or end of string
+                task_match = re.search(r'_task-([A-Za-z0-9]+)(?:_|$)', fname)
                 if task_match:
                     task = task_match.group(1)
                     # Enforce BIDS task label rule: alphanumeric only
@@ -852,16 +917,35 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
                     issues.append(("ERROR", f"{file_path}: non-BIDS suffix '_stim'. Replace with a BIDS-appropriate suffix for this modality."))
 
             # Check naming convention (MRI vs others)
-            base, _ext = split_compound_ext(fname)
+            base, ext = split_compound_ext(fname)
+            is_nifti = ext in (".nii", ".nii.gz")
+            is_tsv = ext in (".tsv", ".tsv.gz")
             if modality in ("anat", "func", "fmap", "dwi"):
-                if not BIDS_REGEX.match(base) or not MRI_SUFFIX_REGEX.search(base):
-                    issues.append(("ERROR", f"Invalid MRI filename: {fname} in {modality_dir}"))
+                if is_nifti:
+                    if not BIDS_REGEX.match(base) or not MRI_SUFFIX_REGEX.search(base):
+                        issues.append(("ERROR", f"Invalid MRI filename: {fname} in {modality_dir}"))
+                else:
+                    # For non-NIfTI files in MRI folders (e.g., events.tsv, .json, .bval/.bvec), use general BIDS base check only
+                    if not BIDS_REGEX.match(base):
+                        issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
             else:
                 if not BIDS_REGEX.match(base):
                     issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
 
             # Pattern conformity and modality-specific hints
-            if not pattern.match(fname):
+            allowed_extra = False
+            if modality == 'func':
+                # Accept events.tsv and corresponding JSON in func folder
+                if re.match(r".+_events\.tsv(\.gz)?$", fname) or fname.endswith('_events.json'):
+                    allowed_extra = True
+            if modality == 'dwi':
+                # Accept diffusion gradient files
+                if fname.endswith('.bval') or fname.endswith('.bvec'):
+                    allowed_extra = True
+            # JSON sidecars are metadata; don't warn about pattern mismatch
+            if ext == '.json':
+                pass
+            elif not pattern.match(fname) and not allowed_extra:
                 if modality == 'physiological' and fname.endswith('.csv'):
                     issues.append(("ERROR", f"{file_path}: .csv not valid for BIDS physio. Use .tsv(.gz) with '_physio' suffix and a JSON data dictionary."))
                 else:
@@ -875,10 +959,30 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
 
             # Sidecar presence and validation
             sidecar = derive_sidecar_path(file_path)
-            if not os.path.exists(sidecar):
-                issues.append(("ERROR", f"Missing sidecar JSON: {sidecar}"))
+            require_sidecar = False
+            warn_sidecar = False
+            # Require sidecars for imaging and EEG
+            if modality in ("anat", "func", "fmap", "dwi") and is_nifti:
+                require_sidecar = True
+            if modality == 'eeg' and re.search(r"\.(edf|bdf|eeg)$", fname):
+                require_sidecar = True
+            # Events data dictionary is recommended but not required
+            if modality == 'func' and is_tsv and fname.endswith('_events.tsv'):
+                warn_sidecar = True
+            # Generic recommendation for behavioral and eyetracking TSVs
+            if modality in ('behavior', 'eyetracking') and is_tsv:
+                warn_sidecar = True
+
+            if require_sidecar:
+                if not os.path.exists(sidecar):
+                    issues.append(("ERROR", f"Missing sidecar JSON: {sidecar}"))
+                else:
+                    issues += validate_sidecar(file_path, schema, root_dir)
             else:
-                issues += validate_sidecar(file_path, schema, root_dir)
+                if os.path.exists(sidecar):
+                    issues += validate_sidecar(file_path, schema, root_dir)
+                elif warn_sidecar:
+                    issues.append(("WARNING", f"Missing recommended data dictionary: {sidecar}"))
     
     return issues
 
