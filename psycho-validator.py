@@ -5,40 +5,107 @@ import shutil
 import subprocess
 from jsonschema import validate, ValidationError
 
-# Optional: official BIDS schema tools (Python)
+"""
+Optional: official BIDS schema tools (Python)
+Support both legacy 'bidsschematools' and newer 'bids_schema' style modules.
+"""
 try:
     import bidsschematools as _bst
 except Exception:
     _bst = None
+try:
+    import bids_schema as _bsc  # hypothetical/newer name used in some environments
+except Exception:
+    _bsc = None
 
 def _load_bids_schema_via_python():
-    """Try to load the official BIDS schema via bidsschematools if installed.
-    Returns (schema_obj, error_message or None).
+    """Try to load the official BIDS schema via installed Python packages.
+    Tries bidsschematools and bids_schema. Returns (schema_obj, error_message or None).
     """
-    if _bst is None:
-        return None, "bidsschematools is not installed"
-    # Try common APIs defensively to support multiple versions
+    last_err = None
+    # Try bidsschematools first
+    if _bst is not None:
+        try:
+            if hasattr(_bst, 'load_schema'):
+                return _bst.load_schema(), None
+            if hasattr(_bst, 'schema') and hasattr(_bst.schema, 'load_schema'):
+                return _bst.schema.load_schema(), None
+            if hasattr(_bst, 'Schema'):
+                try:
+                    return _bst.Schema(), None
+                except Exception as e:
+                    last_err = f"bidsschematools.Schema failed: {e}"
+            else:
+                last_err = "Unsupported bidsschematools version/API"
+        except Exception as e:
+            last_err = f"bidsschematools error: {e}"
+    else:
+        last_err = "bidsschematools not installed"
+
+    # Try bids_schema (alternative/newer module name)
+    if _bsc is not None:
+        try:
+            # common guesses across versions
+            if hasattr(_bsc, 'load_schema'):
+                return _bsc.load_schema(), None
+            if hasattr(_bsc, 'get_schema'):
+                return _bsc.get_schema(), None
+            if hasattr(_bsc, 'Schema'):
+                try:
+                    return _bsc.Schema(), None
+                except Exception as e:
+                    last_err = f"bids_schema.Schema failed: {e}"
+            # Some distros expose module attributes for components
+            if hasattr(_bsc, 'schema') and hasattr(_bsc.schema, 'load_schema'):
+                return _bsc.schema.load_schema(), None
+            last_err = "Unsupported bids_schema version/API"
+        except Exception as e:
+            last_err = f"bids_schema error: {e}"
+    else:
+        # keep last_err from previous attempts
+        pass
+
+    return None, last_err or "No supported BIDS schema Python package found"
+
+def _load_bids_schema_from_path(path):
+    """Load a BIDS schema-like JSON from a local path, returning (obj, err).
+    Expects a JSON file that includes top-level keys like 'entities', 'datatypes',
+    or an 'objects' dict containing them. If YAML is provided, we do not parse it.
+    """
     try:
-        if hasattr(_bst, 'load_schema'):
-            return _bst.load_schema(), None
-        if hasattr(_bst, 'schema') and hasattr(_bst.schema, 'load_schema'):
-            return _bst.schema.load_schema(), None
-        # Some versions may expose a Schema class
-        if hasattr(_bst, 'Schema'):
-            try:
-                return _bst.Schema(), None
-            except Exception:
-                pass
-        return None, "Unsupported bidsschematools version/API"
+        if not os.path.isfile(path):
+            return None, f"Path is not a file: {path}"
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data, None
     except Exception as e:
         return None, str(e)
 
-def _print_bids_schema_summary():
-    schema, err = _load_bids_schema_via_python()
+def _get_pkg_version_safe(pkg):
+    try:
+        return getattr(pkg, '__version__', None) or getattr(pkg, 'VERSION', None)
+    except Exception:
+        return None
+
+def _print_bids_schema_summary(local_path=None):
+    schema = None
+    err = None
+    used = None
+    if local_path:
+        schema, err = _load_bids_schema_from_path(local_path)
+        used = f"local JSON @ {local_path}"
     if not schema:
-        print(f"⚠️  Could not load BIDS schema via bidsschematools: {err}")
-        print("💡 Install: pip install bidsschematools")
+        schema, err = _load_bids_schema_via_python()
+        if schema:
+            if used is None and _bst is not None:
+                used = f"bidsschematools {_get_pkg_version_safe(_bst) or ''}".strip()
+            elif used is None and _bsc is not None:
+                used = f"bids_schema {_get_pkg_version_safe(_bsc) or ''}".strip()
+    if not schema:
+        print(f"⚠️  Could not load BIDS schema: {err}")
+        print("💡 Install one of: pip install bidsschematools | pip install bids-schema (if available)")
         print("📖 Docs: https://bidsschematools.readthedocs.io/")
+        print("📖 Spec: https://bids-specification.readthedocs.io/")
         return
     # Try to extract entities, datatypes, suffixes (best-effort across versions)
     entities = None
@@ -54,8 +121,10 @@ def _print_bids_schema_summary():
         suffixes = getattr(schema, 'suffixes', None)
 
     print("\n="*30)
-    print("📚 OFFICIAL BIDS SCHEMA (Python)")
+    print("📚 BIDS SCHEMA SUMMARY")
     print("="*60)
+    if used:
+        print(f"Source: {used}")
     if entities:
         names = list(entities.keys()) if isinstance(entities, dict) else list(map(str, entities))
         print(f"🔹 Entities ({len(names)}): {', '.join(sorted(names)[:20])}{'...' if len(names)>20 else ''}")
@@ -596,7 +665,65 @@ def validate_dataset(root_dir, bids_mode='auto'):
     skip_core_bids_checks = False
     bids_issues = []
     bids_summary = None
+    # Helpers to make the official bids-validator ignore our custom modalities
+    def _detect_custom_modalities(base_dir):
+        custom_dirs = []
+        for entry in os.listdir(base_dir):
+            sub_path = os.path.join(base_dir, entry)
+            if entry.startswith("sub-") and os.path.isdir(sub_path):
+                # subject-level custom modality containers
+                for name in ("behavior", "eyetracking", "physiological", "movie", "image", "audio", "mri"):
+                    p = os.path.join(sub_path, name)
+                    if os.path.isdir(p):
+                        custom_dirs.append(os.path.relpath(p, base_dir))
+                # session-level variants
+                for ses in os.listdir(sub_path):
+                    ses_path = os.path.join(sub_path, ses)
+                    if os.path.isdir(ses_path) and ses.startswith("ses-"):
+                        for name in ("behavior", "eyetracking", "physiological", "movie", "image", "audio", "mri"):
+                            p = os.path.join(ses_path, name)
+                            if os.path.isdir(p):
+                                custom_dirs.append(os.path.relpath(p, base_dir))
+        return custom_dirs
+
+    def _ensure_bidsignore(base_dir):
+        bidsignore_path = os.path.join(base_dir, ".bidsignore")
+        if os.path.exists(bidsignore_path):
+            return False
+        lines = [
+            "# Ignore custom non-core BIDS modality folders (psycho-validator still checks them)",
+            "sub-*/behavior/",
+            "sub-*/eyetracking/",
+            "sub-*/physiological/",
+            "sub-*/movie/",
+            "sub-*/image/",
+            "sub-*/audio/",
+            "sub-*/mri/",
+            "sub-*/ses-*/behavior/",
+            "sub-*/ses-*/eyetracking/",
+            "sub-*/ses-*/physiological/",
+            "sub-*/ses-*/movie/",
+            "sub-*/ses-*/image/",
+            "sub-*/ses-*/audio/",
+            "sub-*/ses-*/mri/",
+            "",
+            "# Common caches",
+            "**/__pycache__/",
+            "**/.ipynb_checkpoints/",
+            "**/.DS_Store",
+        ]
+        try:
+            with open(bidsignore_path, "w") as f:
+                f.write("\n".join(lines) + "\n")
+            issues.append(("INFO", "Created .bidsignore so bids-validator ignores custom modalities"))
+            return True
+        except Exception as e:
+            issues.append(("WARNING", f"Failed to write .bidsignore: {e}"))
+            return False
     if bids_mode != 'off':
+        # If custom modalities are present, ensure the official validator ignores them
+        if _detect_custom_modalities(root_dir):
+            _ensure_bidsignore(root_dir)
         bi, bs = run_bids_validator_cli(root_dir)
         if bi is not None:
             # Found bids-validator and ran it
@@ -690,6 +817,14 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
     issues = []
     pattern = re.compile(MODALITY_PATTERNS[modality])
     schema = SCHEMAS.get(modality)
+    expected_suffix = {
+        'eeg': 'eeg',
+        'behavior': 'beh',
+        'physiological': 'physio',
+        'eyetracking': 'eyetrack',
+        'anat': None, 'func': None, 'fmap': None, 'dwi': None,
+        'image': None, 'audio': None, 'movie': None,
+    }
     
     for fname in os.listdir(modality_dir):
         file_path = os.path.join(modality_dir, fname)
@@ -697,31 +832,52 @@ def validate_modality_dir(modality_dir, subject_id, session_id, modality, stats,
             # Extract task from filename if possible
             task = None
             if "_task-" in fname:
-                task_match = re.search(r'_task-([a-zA-Z0-9]+)', fname)
+                task_match = re.search(r'_task-([A-Za-z0-9_]+)', fname)
                 if task_match:
                     task = task_match.group(1)
+                    # Enforce BIDS task label rule: alphanumeric only
+                    if re.search(r"[^A-Za-z0-9]", task):
+                        suggestion = re.sub(r"[^A-Za-z0-9]", "", task)
+                        issues.append(("ERROR", f"{file_path}: invalid task label '{task}'. Use only letters/digits. Suggested: '{suggestion}'"))
             
             # Add to stats for all files in modality directory
             stats.add_file(subject_id, session_id, modality, task, fname)
             
-            if pattern.match(fname):
-                # Check naming convention (MRI allows no task label)
-                base, _ext = split_compound_ext(fname)
-                if modality in ("anat", "func", "fmap", "dwi"):
-                    if not BIDS_REGEX.match(base) or not MRI_SUFFIX_REGEX.search(base):
-                        issues.append(("ERROR", f"Invalid MRI filename: {fname} in {modality_dir}"))
+            # Non-BIDS _stim suffix hints
+            if re.search(r"_stim\.", fname):
+                hint = expected_suffix.get(modality)
+                if hint:
+                    issues.append(("ERROR", f"{file_path}: non-BIDS suffix '_stim'. Use '_{hint}' instead and provide a matching sidecar JSON."))
                 else:
-                    if not BIDS_REGEX.match(base):
-                        issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
-                
-                # Validate expected subject/session in filename
-                if subject_id not in fname:
-                    issues.append(("ERROR", f"Filename {fname} doesn't contain subject ID {subject_id}"))
-                
-                if session_id and session_id not in fname:
-                    issues.append(("ERROR", f"Filename {fname} doesn't contain session ID {session_id}"))
-                
-                # Check sidecar schema (now with inheritance)
+                    issues.append(("ERROR", f"{file_path}: non-BIDS suffix '_stim'. Replace with a BIDS-appropriate suffix for this modality."))
+
+            # Check naming convention (MRI vs others)
+            base, _ext = split_compound_ext(fname)
+            if modality in ("anat", "func", "fmap", "dwi"):
+                if not BIDS_REGEX.match(base) or not MRI_SUFFIX_REGEX.search(base):
+                    issues.append(("ERROR", f"Invalid MRI filename: {fname} in {modality_dir}"))
+            else:
+                if not BIDS_REGEX.match(base):
+                    issues.append(("ERROR", f"Invalid filename: {fname} in {modality_dir}"))
+
+            # Pattern conformity and modality-specific hints
+            if not pattern.match(fname):
+                if modality == 'physiological' and fname.endswith('.csv'):
+                    issues.append(("ERROR", f"{file_path}: .csv not valid for BIDS physio. Use .tsv(.gz) with '_physio' suffix and a JSON data dictionary."))
+                else:
+                    issues.append(("WARNING", f"{file_path}: does not match expected pattern for modality '{modality}'"))
+
+            # Validate expected subject/session presence in filename
+            if subject_id not in fname:
+                issues.append(("ERROR", f"Filename {fname} doesn't contain subject ID {subject_id}"))
+            if session_id and session_id not in fname:
+                issues.append(("ERROR", f"Filename {fname} doesn't contain session ID {session_id}"))
+
+            # Sidecar presence and validation
+            sidecar = derive_sidecar_path(file_path)
+            if not os.path.exists(sidecar):
+                issues.append(("ERROR", f"Missing sidecar JSON: {sidecar}"))
+            else:
                 issues += validate_sidecar(file_path, schema, root_dir)
     
     return issues
@@ -1246,7 +1402,9 @@ if __name__ == "__main__":
     parser.add_argument("--list-versions", action="store_true",
                        help="List all available schema versions")
     parser.add_argument("--bids-schema", action="store_true",
-                       help="Show summary of official BIDS schema via bidsschematools")
+                       help="Show summary of the BIDS schema (via Python package or local JSON)")
+    parser.add_argument("--bids-schema-path", type=str, default=None,
+                       help="Optional: path to a local BIDS schema JSON file to inspect")
     parser.add_argument("--check-bids-cli", action="store_true",
                        help="Check availability of Node 'bids-validator' and print version")
     parser.add_argument("--check-compatibility", nargs=2, metavar=('SCHEMA_VERSION', 'REQUIRED_VERSION'),
@@ -1290,7 +1448,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if args.bids_schema:
-        _print_bids_schema_summary()
+        _print_bids_schema_summary(args.bids_schema_path)
         sys.exit(0)
     
     if args.check_compatibility:
