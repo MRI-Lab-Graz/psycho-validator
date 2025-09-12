@@ -152,6 +152,7 @@ The included `test_dataset/` demonstrates:
 - `test_dataset/` - Example dataset for testing
 - `test_validator.py` - Comprehensive test script
 - `create_dummy_files.py` - Script to generate realistic test files
+- `docs/` - Project documentation and examples
 
 ## Future Enhancements
 
@@ -167,5 +168,10 @@ The included `test_dataset/` demonstrates:
 - `jsonschema` - For JSON schema validation
 
 Optional (for dummy file generation):
+
 - `Pillow` - For creating test images
 - `numpy` - For generating test data
+
+## Documentation
+
+See the `docs/` directory for FAIR policy/implementation, proposed modalities, schema versioning, and examples.

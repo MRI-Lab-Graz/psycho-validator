@@ -1,0 +1,16 @@
+# Ignore non-BIDS custom modalities and helper scripts
+scripts/
+code/
+**/.DS_Store
+
+# Custom modality folders (kept for psycho-validator)
+sub-*/ses-*/audio/
+sub-*/ses-*/image/
+sub-*/movie/
+
+# Optional extra MRI container not in BIDS
+sub-*/ses-*/mri/
+
+# Common caches
+**/__pycache__/
+**/.ipynb_checkpoints/

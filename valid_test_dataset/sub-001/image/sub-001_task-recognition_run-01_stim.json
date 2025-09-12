@@ -1,9 +1,0 @@
-{
-  "StimulusType": "Image",
-  "FileFormat": "png",
-  "Resolution": [800, 600],
-  "ColorSpace": "RGB",
-  "TaskName": "recognition",
-  "StimulusID": "img_001",
-  "PresentedWith": "PsychoPy"
-}
