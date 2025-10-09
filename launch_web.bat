@@ -13,24 +13,26 @@ echo ==========================================
 echo.
 
 :: Check if virtual environment exists
-if not exist ".venv\bin\activate" (
-    if not exist ".venv\Scripts\activate.bat" (
+if not exist ".venv\Scripts\activate.bat" (
+    if not exist ".venv\bin\activate" (
         echo ❌ Virtual environment not found
-        echo    Please run scripts\setup-windows.bat first
+        echo    Please run setup.sh or scripts\setup-windows.bat first
         echo.
         pause
         exit /b 1
     )
-    :: Use Windows-style activation
-    set ACTIVATE_CMD=.venv\Scripts\activate.bat
-) else (
-    :: Use Unix-style activation (e.g., Git Bash, WSL)
-    set ACTIVATE_CMD=source .venv/bin/activate
 )
 
-:: Activate virtual environment
-echo 🔌 Activating virtual environment...
-call %ACTIVATE_CMD%
+:: Activate virtual environment (Windows style)
+if exist ".venv\Scripts\activate.bat" (
+    echo 🔌 Activating virtual environment...
+    call .venv\Scripts\activate.bat
+) else (
+    echo ❌ Cannot activate virtual environment
+    echo    Windows activation script not found
+    pause
+    exit /b 1
+)
 
 :: Check if Flask is installed
 python -c "import flask" >nul 2>nul

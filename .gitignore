@@ -8,6 +8,8 @@ env/
 venv/
 .venv/
 .DS_Store
+psycho_validator.egg-info/
+
 
 # Auto-generated FAIR exports (can be regenerated)
 *_datacite.xml

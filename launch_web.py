@@ -16,10 +16,23 @@ def main():
     print("🌐 Starting Psycho-Validator Web Interface...")
     print()
 
+
     # Check if we're in the right directory
     if not os.path.exists("web_interface.py"):
         print("❌ Error: Please run this script from the psycho-validator directory")
         print("   Make sure web_interface.py exists in the current directory")
+        sys.exit(1)
+
+    # Check if running inside the venv
+    venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv")
+    if not sys.prefix.startswith(venv_path):
+        print("❌ Error: You are not running inside the psycho-validator virtual environment!")
+        print("   Please activate the venv first:")
+        if os.name == 'nt':  # Windows
+            print(f"     {venv_path}\\Scripts\\activate")
+        else:  # Unix/Mac
+            print(f"     source {venv_path}/bin/activate")
+        print("   Then run this script again.")
         sys.exit(1)
 
     # Set default parameters

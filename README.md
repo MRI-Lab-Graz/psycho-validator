@@ -9,9 +9,12 @@ This tool validates datasets containing psychological/psychophysical stimuli and
 - **Multi-modal validation**: Supports images, movies, audio, EEG, eye-tracking, and behavioral data
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
 - **JSON schema validation**: Validates sidecar metadata files against modality-specific schemas
-- **Schema versioning**: Support for multiple schema versions (stable, v0.1, etc.) - similar to Docker tags
+- **Schema versioning**: Support for multiple schema versions (stable, v0.1, etc.) with CLI and web UI selection
 - **Flexible structure**: Supports both session-based and direct subject organization
 - **Cross-subject consistency checking**: Warns when subjects have inconsistent modalities or tasks (critical for scientific datasets)
+- **Web interface**: User-friendly drag & drop interface with visual validation results
+- **Cross-platform**: Works on Windows, macOS, and Linux with automatic path handling
+- **Virtual environment protection**: Automatic checks ensure correct Python environment is used
 - **Comprehensive reporting**: 
   - Dataset summary with subject/session counts
   - Modality breakdown with file counts
@@ -225,11 +228,18 @@ For an easy-to-use graphical interface:
 ```cmd
 launch_web.bat
 ```
+This batch file will automatically activate the virtual environment and start the web interface.
 
 **Linux/macOS:**
 ```bash
+# First, activate the virtual environment
+source .venv/bin/activate
+
+# Then run the launcher
 python launch_web.py
 ```
+
+**Note:** Both scripts will check if you're running inside the virtual environment and show appropriate activation instructions if needed.
 
 The web interface provides:
 - 🎯 User-friendly drag & drop interface
@@ -244,6 +254,11 @@ See [`docs/WEB_INTERFACE.md`](docs/WEB_INTERFACE.md) for detailed usage instruct
 For automation and advanced usage:
 
 ```bash
+# First, activate the virtual environment
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
+
 # Basic validation (uses stable schema version)
 python psycho-validator.py /path/to/your/dataset
 
@@ -256,6 +271,8 @@ python psycho-validator.py --list-versions
 # Verbose mode
 python psycho-validator.py /path/to/your/dataset -v
 ```
+
+**Note:** The validator will check if you're running inside the virtual environment and show activation instructions if needed.
 
 #### Schema Versioning
 
