@@ -5,9 +5,22 @@ Psycho-Validator: Streamlined main entry point
 A modular, BIDS-inspired validation tool for psychological research datasets.
 """
 
+
 import os
 import sys
 import argparse
+
+# Check if running inside the venv
+venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv")
+if not sys.prefix.startswith(venv_path):
+    print("❌ Error: You are not running inside the psycho-validator virtual environment!")
+    print("   Please activate the venv first:")
+    if os.name == 'nt':  # Windows
+        print(f"     {venv_path}\\Scripts\\activate")
+    else:  # Unix/Mac
+        print(f"     source {venv_path}/bin/activate")
+    print("   Then run this script again.")
+    sys.exit(1)
 
 # Add src directory to path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
