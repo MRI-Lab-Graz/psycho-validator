@@ -200,6 +200,32 @@ def format_validation_results(issues, dataset_stats, dataset_path):
     valid_files = []
     invalid_files = []
     file_paths = set()
+    
+    def strip_temp_path(file_path):
+        """Strip temporary folder path prefix and keep only relative path from dataset root"""
+        if not file_path:
+            return None
+        
+        # If it's a temp path, try to extract the relative path
+        if '/tmp/' in file_path or '/T/psycho_validator_' in file_path or '/var/folders/' in file_path or 'psycho_validator_' in file_path:
+            # Find the dataset root marker - typically after 'dataset/'
+            if '/dataset/' in file_path:
+                parts = file_path.split('/dataset/', 1)
+                if len(parts) > 1:
+                    return parts[1]
+            
+            # Alternative: look for BIDS structure markers (sub-, dataset_description.json)
+            import re
+            match = re.search(r'((?:sub-|ses-|dataset_description\.json).*)', file_path)
+            if match:
+                return match.group(1)
+        
+        # If dataset_path is a temp directory, strip it
+        if dataset_path and file_path.startswith(dataset_path):
+            relative = file_path[len(dataset_path):].lstrip('/')
+            return relative if relative else file_path
+        
+        return file_path
 
     def extract_path_from_message(msg):
         """Try to heuristically extract a file path or filename from a validator message."""
@@ -209,18 +235,19 @@ def format_validation_results(issues, dataset_stats, dataset_path):
         import re
         abs_path_match = re.search(r"(/[^\s:,]+\.[A-Za-z0-9]+(?:\.gz)?)", msg)
         if abs_path_match:
-            return abs_path_match.group(1)
+            extracted = abs_path_match.group(1)
+            return strip_temp_path(extracted)
         # dataset_description.json special case
         if 'dataset_description.json' in msg:
-            return os.path.join(dataset_path or '', 'dataset_description.json')
+            return 'dataset_description.json'
         # Look for sub-... filenames like sub-01_task-foo_blah.ext
         name_match = re.search(r"(sub-[A-Za-z0-9._-]+\.[A-Za-z0-9]+(?:\.gz)?)", msg)
         if name_match:
-            return os.path.join(dataset_path or '', name_match.group(1))
+            return name_match.group(1)
         # Generic filename with extension (e.g., task-recognition_stim.json)
         generic_match = re.search(r"([A-Za-z0-9._\-]+\.(?:json|tsv|edf|nii|nii\.gz|txt|csv|mp4|png|jpg|jpeg))", msg)
         if generic_match:
-            return os.path.join(dataset_path or '', generic_match.group(1))
+            return generic_match.group(1)
         return None
 
     for issue in issues:
@@ -241,11 +268,27 @@ def format_validation_results(issues, dataset_stats, dataset_path):
             message = str(issue)
             file_path = None
 
+        # Always strip temp path from file_path
         if not file_path:
             file_path = extract_path_from_message(message)
+        file_path = strip_temp_path(file_path) if file_path else None
 
         if file_path:
             file_paths.add(file_path)
+
+        # Also strip temp path from message text itself
+        def strip_temp_path_from_message(msg):
+            if not msg:
+                return msg
+            import re
+            # Replace temp folder paths in the message with just the relative path
+            # Match various temp folder patterns: /tmp/, /T/, /var/folders/, psycho_validator_
+            msg = re.sub(r'(/tmp/[^\s,:]+/dataset/|/T/psycho_validator_[^\s,:]+/dataset/|/var/folders/[^\s,:]+/dataset/|psycho_validator_[^\s,:]+/dataset/)([^\s,:]+)', r'\2', msg)
+            # Also replace standalone temp paths that lead to sub- or ses- files
+            msg = re.sub(r'(/tmp/[^\s,:]+/|/var/folders/[^\s,:]+/)(sub-[^\s,:/]+)', r'\2', msg)
+            return msg
+
+        message = strip_temp_path_from_message(message)
 
         # Extract error code from message if possible
         error_code = 'GENERAL_ERROR'
