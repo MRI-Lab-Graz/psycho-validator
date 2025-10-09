@@ -3,18 +3,21 @@
 Setup script for psycho-validator
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup
 import os
+
 
 # Read the README file
 def read_file(filename):
-    with open(os.path.join(os.path.dirname(__file__), filename), encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__), filename), encoding="utf-8") as f:
         return f.read()
+
 
 # Read requirements
 def read_requirements(filename):
-    with open(filename, 'r') as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    with open(filename, "r") as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
 
 setup(
     name="psycho-validator",
@@ -25,21 +28,21 @@ setup(
     author="MRI-Lab-Graz",
     author_email="contact@mri-lab-graz.at",
     url="https://github.com/MRI-Lab-Graz/psycho-validator",
-    packages=['src'],
-    package_dir={'src': 'src'},
+    packages=["src"],
+    package_dir={"src": "src"},
     package_data={
-        '': ['schemas/*.json', 'schemas/mri/*.json'],
+        "": ["schemas/*.json", "schemas/mri/*.json"],
     },
     include_package_data=True,
     install_requires=read_requirements("requirements.txt"),
     extras_require={
-        'dev': ['pytest', 'pytest-cov', 'black', 'flake8'],
-        'full': ['bidsschematools', 'nibabel'],
-        'demo': ['Pillow', 'numpy', 'matplotlib'],
+        "dev": ["pytest", "pytest-cov", "black", "flake8"],
+        "full": ["bidsschematools", "nibabel"],
+        "demo": ["Pillow", "numpy", "matplotlib"],
     },
     scripts=[
-        'psycho-validator.py',
-        'launch_web.py',
+        "psycho-validator.py",
+        "launch_web.py",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
