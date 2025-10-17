@@ -226,20 +226,22 @@ For an easy-to-use graphical interface:
 
 **Windows:**
 ```cmd
-launch_web.bat
+# Activate virtual environment first
+.venv\Scripts\activate
+# Then run the web interface
+online-psycho-validator
 ```
-This batch file will automatically activate the virtual environment and start the web interface.
 
 **Linux/macOS:**
 ```bash
-# First, activate the virtual environment
+# Activate virtual environment first
 source .venv/bin/activate
 
-# Then run the launcher
-python launch_web.py
+# Then run the web interface
+online-psycho-validator
 ```
 
-**Note:** Both scripts will check if you're running inside the virtual environment and show appropriate activation instructions if needed.
+**Note:** The script will check if you're running inside the virtual environment and show appropriate activation instructions if needed.
 
 The web interface provides:
 - 🎯 User-friendly drag & drop interface
