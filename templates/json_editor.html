@@ -261,32 +261,150 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Use the beautiful form generator
                 const form = BIDSFormGenerator.generateForm(schema, jsonData);
                 formContainer.appendChild(form);
-                showAlert(`Loaded: ${fileName} (schema-driven form)`, 'success');
-            } else if (typeof BIDSFormGenerator !== 'undefined') {
-                // No schema available - for complex nested objects like participants.json,
-                // use raw JSON textarea since the form generator expects flat structures
-                const jsonString = JSON.stringify(jsonData, null, 2);
+                showAlert(`Loaded: ${fileName} (form)`, 'success');
+            } else if (fileType === 'participants') {
+                // Special handling for participants.json - recursive nested structure
                 formContainer.innerHTML = `
                     <div class="mb-3">
-                        <label for="jsonEditor" class="form-label">
-                            <i class="fas fa-file-code me-2"></i>
-                            ${fileName}
-                        </label>
-                        <textarea id="jsonEditor" class="form-control" rows="25" style="font-family: 'Courier New', monospace; font-size: 12px; white-space: pre; overflow-wrap: normal;"></textarea>
-                        <small class="text-muted d-block mt-2">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Editing as structured JSON - changes are downloaded, not auto-saved
-                        </small>
+                        <h5>${fileName}</h5>
+                        <p class="text-muted small">Edit JSON values. All keys are fixed.</p>
+                        <div id="participantsContainer"></div>
                     </div>
                 `;
-                // Set textarea content separately to avoid escaping issues
-                const textarea = document.getElementById('jsonEditor');
-                if (textarea) {
-                    textarea.value = jsonString;
+                
+                // Recursive function to build nested forms with collapsible sections
+                function buildNestedForm(obj, parentKey = '', depth = 0) {
+                    const container = document.createElement('div');
+                    
+                    Object.entries(obj).forEach(([key, value]) => {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'mb-1';
+                        fieldDiv.style.paddingLeft = (depth * 15) + 'px';
+                        
+                        // Check if value is an object or primitive
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            // Nested object - create collapsible section
+                            const collapsibleId = `collapse_${parentKey}${key}`.replace(/\./g, '_');
+                            
+                            // Header with toggle button
+                            const headerDiv = document.createElement('div');
+                            headerDiv.className = 'd-flex align-items-center gap-2';
+                            headerDiv.style.cursor = 'pointer';
+                            headerDiv.style.userSelect = 'none';
+                            headerDiv.style.padding = '0.25rem 0';
+                            
+                            // Toggle button
+                            const toggleBtn = document.createElement('i');
+                            toggleBtn.className = 'fas fa-chevron-right';
+                            toggleBtn.style.fontSize = '11px';
+                            toggleBtn.style.color = '#666';
+                            toggleBtn.style.minWidth = '12px';
+                            toggleBtn.style.textAlign = 'center';
+                            
+                            // Key label
+                            const keyLabel = document.createElement('label');
+                            keyLabel.className = 'form-label mb-0';
+                            keyLabel.style.fontWeight = depth === 0 ? '600' : 'normal';
+                            keyLabel.style.fontSize = depth === 0 ? '13px' : '12px';
+                            keyLabel.style.cursor = 'pointer';
+                            keyLabel.textContent = key;
+                            
+                            headerDiv.appendChild(toggleBtn);
+                            headerDiv.appendChild(keyLabel);
+                            fieldDiv.appendChild(headerDiv);
+                            
+                            // Content section (collapsible)
+                            const contentDiv = document.createElement('div');
+                            contentDiv.style.display = 'none';
+                            contentDiv.style.borderLeft = '1px solid #dee2e6';
+                            contentDiv.style.marginLeft = '6px';
+                            contentDiv.style.paddingLeft = '10px';
+                            contentDiv.style.marginTop = '0.25rem';
+                            
+                            const nestedForm = buildNestedForm(value, `${parentKey}${key}.`, depth + 1);
+                            contentDiv.appendChild(nestedForm);
+                            fieldDiv.appendChild(contentDiv);
+                            
+                            // Toggle functionality
+                            headerDiv.addEventListener('click', () => {
+                                const isHidden = contentDiv.style.display === 'none';
+                                contentDiv.style.display = isHidden ? 'block' : 'none';
+                                toggleBtn.className = isHidden ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+                                toggleBtn.style.color = isHidden ? '#0d6efd' : '#666';
+                            });
+                        } else {
+                            // Primitive value - inline label with textarea
+                            const labelDiv = document.createElement('div');
+                            labelDiv.className = 'mb-1';
+                            
+                            const keyLabel = document.createElement('label');
+                            keyLabel.className = 'form-label mb-1';
+                            keyLabel.style.fontSize = '12px';
+                            keyLabel.style.fontWeight = '500';
+                            keyLabel.textContent = key;
+                            labelDiv.appendChild(keyLabel);
+                            fieldDiv.appendChild(labelDiv);
+                            
+                            let textarea;
+                            if (Array.isArray(value)) {
+                                // Array - show as JSON textarea
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = 2;
+                                textarea.style.cssText = "font-family: 'Courier New', monospace; font-size: 11px; white-space: pre;";
+                                textarea.value = JSON.stringify(value, null, 2);
+                            } else if (typeof value === 'string') {
+                                // String
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = value.length > 50 ? 2 : 1;
+                                textarea.style.cssText = "font-family: monospace; font-size: 11px;";
+                                textarea.value = value;
+                            } else {
+                                // Number, boolean, null
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = 1;
+                                textarea.style.cssText = "font-family: monospace; font-size: 11px;";
+                                textarea.value = String(value);
+                            }
+                            
+                            textarea.dataset.jsonPath = `${parentKey}${key}`;
+                            fieldDiv.appendChild(textarea);
+                        }
+                        
+                        container.appendChild(fieldDiv);
+                    });
+                    
+                    return container;
                 }
-                showAlert(`Loaded: ${fileName} (JSON editor)`, 'info');
+                
+                // Generate the nested form for all participants columns
+                const participantsContainer = document.getElementById('participantsContainer');
+                Object.entries(jsonData).forEach(([colKey, colValue]) => {
+                    const columnSection = document.createElement('div');
+                    columnSection.className = 'mb-4 p-3 rounded';
+                    columnSection.style.backgroundColor = '#f8f9fa';
+                    columnSection.style.border = '1px solid #dee2e6';
+                    
+                    // Top-level column key
+                    const colHeader = document.createElement('h6');
+                    colHeader.className = 'mb-3';
+                    colHeader.style.fontWeight = 'bold';
+                    colHeader.style.color = '#212529';
+                    colHeader.textContent = colKey;
+                    columnSection.appendChild(colHeader);
+                    
+                    // Build nested form for this column
+                    const nestedForm = buildNestedForm(colValue, `${colKey}.`, 0);
+                    columnSection.appendChild(nestedForm);
+                    
+                    participantsContainer.appendChild(columnSection);
+                });
+                
+                showAlert(`Loaded: ${fileName} - Edit nested values`, 'info');
             } else {
-                // Fallback to JSON textarea if form generator unavailable
+                // Fallback to JSON textarea for other files without schema
                 const jsonString = JSON.stringify(jsonData, null, 2);
                 formContainer.innerHTML = `
                     <div class="mb-3">
@@ -294,19 +412,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="fas fa-file-code me-2"></i>
                             ${fileName}
                         </label>
-                        <textarea id="jsonEditor" class="form-control" rows="20" style="font-family: 'Courier New', monospace; font-size: 12px; white-space: pre; overflow-wrap: normal;"></textarea>
+                        <textarea id="jsonEditor" class="form-control" rows="25" style="font-family: 'Courier New', monospace; font-size: 13px; white-space: pre; overflow-wrap: normal; line-height: 1.5;"></textarea>
                         <small class="text-muted d-block mt-2">
                             <i class="fas fa-info-circle me-1"></i>
-                            Editing as raw JSON - changes are downloaded, not auto-saved
+                            Edit the JSON content directly - click Save to download
                         </small>
                     </div>
                 `;
-                // Set textarea content separately to avoid escaping issues
+                // Set textarea content separately to avoid HTML escaping issues
                 const textarea = document.getElementById('jsonEditor');
                 if (textarea) {
                     textarea.value = jsonString;
                 }
-                showAlert(`Loaded: ${fileName} (raw JSON mode)`, 'info');
+                showAlert(`Loaded: ${fileName} - Edit JSON content`, 'info');
             }
             
         } catch (error) {
@@ -324,20 +442,62 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saveBtn').addEventListener('click', async function() {
         try {
             let updatedJson;
+            const fileName = window.currentFilePath ? window.currentFilePath.split('/').pop() : 'file.json';
+            const fileType = fileName.replace('.json', '');
             
-            // Check if we're using the form builder or textarea
-            const form = document.querySelector('.bids-form');
-            if (form && typeof BIDSFormGenerator !== 'undefined') {
-                // Extract data from form
-                updatedJson = BIDSFormGenerator.getFormData(form);
+            if (fileType === 'participants') {
+                // Reconstruct participants object from nested form
+                updatedJson = {};
+                
+                // Get all textareas with jsonPath (nested values)
+                const allTextareas = document.querySelectorAll('[data-json-path]');
+                allTextareas.forEach(textarea => {
+                    const path = textarea.dataset.jsonPath;
+                    const value = textarea.value;
+                    
+                    try {
+                        // Parse value based on context
+                        let parsedValue;
+                        if (value.trim().startsWith('{') || value.trim().startsWith('[')) {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'true' || value === 'false') {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'null') {
+                            parsedValue = null;
+                        } else if (!isNaN(value) && value !== '') {
+                            parsedValue = Number(value);
+                        } else {
+                            parsedValue = value;
+                        }
+                        
+                        // Set nested value using path (e.g., "participant_id.Description")
+                        const pathParts = path.split('.');
+                        let current = updatedJson;
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            const part = pathParts[i];
+                            if (!current[part]) current[part] = {};
+                            current = current[part];
+                        }
+                        current[pathParts[pathParts.length - 1]] = parsedValue;
+                    } catch (e) {
+                        showAlert(`Invalid value for "${path}": ${e.message}`, 'warning');
+                    }
+                });
             } else {
-                // Get data from textarea
-                const editor = document.getElementById('jsonEditor');
-                if (editor) {
-                    updatedJson = JSON.parse(editor.value);
+                // Check if we're using the form builder or textarea
+                const form = document.querySelector('.bids-form');
+                if (form && typeof BIDSFormGenerator !== 'undefined') {
+                    // Extract data from form
+                    updatedJson = BIDSFormGenerator.getFormData(form);
                 } else {
-                    showAlert('No data to save', 'warning');
-                    return;
+                    // Get data from textarea
+                    const editor = document.getElementById('jsonEditor');
+                    if (editor) {
+                        updatedJson = JSON.parse(editor.value);
+                    } else {
+                        showAlert('No data to save', 'warning');
+                        return;
+                    }
                 }
             }
             
@@ -346,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = window.currentFilePath ? window.currentFilePath.split('/').pop() : 'edited.json';
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

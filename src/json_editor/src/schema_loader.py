@@ -264,8 +264,8 @@ class BIDSSchemaLoader:
                 return self.get_dataset_description_schema()
 
             elif json_type == "participants":
-                # Participants file should be displayed as raw JSON, not schema-driven form
-                # Return None so template falls back to raw JSON textarea
+                # Participants file - return None to use raw JSON editor
+                # (Schema-based form doesn't work well for nested object structures)
                 return None
 
             elif json_type.startswith("task-"):
