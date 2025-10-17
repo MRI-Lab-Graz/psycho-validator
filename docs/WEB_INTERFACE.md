@@ -4,14 +4,21 @@ The Psycho-Validator includes a user-friendly web interface that makes dataset v
 
 ## Quick Start
 
-### Option 1: Simple Launcher (Recommended)
+### Option 1: Direct Execution (Recommended)
 **Windows users:**
-1. Double-click `launch_web.bat`
-2. Your browser will open automatically
+```cmd
+# Activate virtual environment first
+.venv\Scripts\activate
+# Then run
+online-psycho-validator
+```
 
 **Linux/macOS users:**
 ```bash
-python launch_web.py
+# Activate virtual environment first
+source .venv/bin/activate
+# Then run
+online-psycho-validator
 ```
 
 ### Option 2: Manual Start

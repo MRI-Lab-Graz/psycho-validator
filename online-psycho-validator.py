@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Web interface for psycho-validator
 A simple Flask web app that provides a user-friendly interface for dataset validation
