@@ -42,7 +42,7 @@ setup(
     },
     scripts=[
         "psycho-validator.py",
-        "launch_web.py",
+        "online-psycho-validator.py",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

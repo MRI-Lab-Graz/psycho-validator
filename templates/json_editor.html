@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+
+{% block title %}JSON Editor - Psycho-Validator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header Section -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-pen-fancy text-primary me-3"></i>
+                JSON Editor
+            </h1>
+            <p class="lead text-muted">
+                Edit and validate BIDS dataset metadata files
+            </p>
+            <p class="text-muted small">
+                Schema-driven editing for BIDS metadata with real-time validation
+            </p>
+        </div>
+
+        <!-- Main Editor Card -->
+        <div class="card feature-card mb-4">
+            <div class="card-body p-5">
+                <h3 class="card-title text-center mb-4">
+                    <i class="fas fa-folder-open text-primary me-2"></i>
+                    Select your dataset
+                </h3>
+                
+                <!-- Dataset Selection Section -->
+                <div class="mb-4">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-folder fa-3x text-muted mb-3"></i>
+                        <h5>Select your dataset</h5>
+                        <p class="text-muted">Choose a folder or ZIP file</p>
+                        
+                        <div class="btn-group mb-3" role="group">
+                            <button type="button" class="btn btn-primary" id="folderBtn">
+                                <i class="fas fa-folder-open me-2"></i>Browse Folder
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="zipBtn">
+                                <i class="fas fa-file-archive me-2"></i>Browse ZIP File
+                            </button>
+                        </div>
+                        
+                        <!-- Hidden file inputs -->
+                        <input type="file" class="d-none" id="datasetFolder" webkitdirectory directory multiple>
+                        <input type="file" class="d-none" id="datasetZip" accept=".zip">
+                    </div>
+                    
+                    <!-- Info text -->
+                    <div class="mt-3 text-center">
+                        <small class="text-muted" id="uploadInfo">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Select a folder containing your BIDS dataset to edit JSON metadata files
+                        </small>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Editor Section (shown after loading dataset) -->
+        <div class="card feature-card mt-4" id="editorSection" style="display:none;">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-contract me-2"></i>
+                    Edit Metadata File
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- File Selector -->
+                <div class="mb-3">
+                    <label for="fileSelector" class="form-label">
+                        <i class="fas fa-file me-2"></i>Select File to Edit:
+                    </label>
+                    <select id="fileSelector" class="form-select">
+                        <option value="">-- Select File --</option>
+                    </select>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="mb-3">
+                    <button id="saveBtn" class="btn btn-success me-2">
+                        <i class="fas fa-save me-1"></i>Save
+                    </button>
+                    <button id="newFileBtn" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus me-1"></i>New File
+                    </button>
+                </div>
+
+                <!-- Status/Alerts -->
+                <div id="alertContainer" class="mb-3"></div>
+
+                <!-- Form Container -->
+                <div class="mt-4">
+                    <div id="formContainer">
+                        <p class="text-muted text-center py-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Load a file to begin editing
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include JSON Editor CSS -->
+<link rel="stylesheet" href="{{ url_for('json_editor.static', filename='css/style.css') }}">
+
+<!-- Include JSON Editor JavaScript -->
+<script src="{{ url_for('json_editor.static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('json_editor.static', filename='js/form-builder.js') }}"></script>
+
+<style>
+    .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9ff;
+    }
+    
+    .upload-area.dragover {
+        border-color: #0d6efd;
+        background-color: #e7f1ff;
+    }
+    
+    .feature-card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+        border-radius: 0.5rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const folderInput = document.getElementById('datasetFolder');
+    const zipInput = document.getElementById('datasetZip');
+    const folderBtn = document.getElementById('folderBtn');
+    const zipBtn = document.getElementById('zipBtn');
+    const uploadInfo = document.getElementById('uploadInfo');
+    const editorSection = document.getElementById('editorSection');
+    const fileSelector = document.getElementById('fileSelector');
+    const alertContainer = document.getElementById('alertContainer');
+    
+    let currentDatasetPath = null;
+    let selectedFiles = null;
+
+    // Check for webkitdirectory support
+    const supportsFolderUpload = 'webkitdirectory' in document.createElement('input');
+
+    // Folder button click
+    folderBtn.addEventListener('click', function() {
+        if (supportsFolderUpload) {
+            folderInput.click();
+        } else {
+            showAlert('Folder upload is not supported in this browser. Please use the ZIP file option or try a modern browser like Chrome, Firefox, or Edge.', 'warning');
+        }
+    });
+
+    // ZIP button click
+    zipBtn.addEventListener('click', function() {
+        zipInput.click();
+    });
+
+    // Handle folder selection
+    folderInput.addEventListener('change', function() {
+        if (folderInput.files.length > 0) {
+            selectedFiles = folderInput.files;
+            uploadInfo.innerHTML = `<i class="fas fa-check-circle me-1 text-success"></i>Selected folder with ${folderInput.files.length} files`;
+            processSelectedFiles(folderInput.files);
+        }
+    });
+
+    // Handle ZIP selection
+    zipInput.addEventListener('change', function() {
+        if (zipInput.files.length > 0) {
+            showAlert('ZIP file support: Please extract the ZIP file and select the extracted folder.', 'info');
+            uploadInfo.innerHTML = '<i class="fas fa-info-circle me-1"></i>ZIP selected - please extract and re-select folder';
+        }
+    });
+
+    // Local folder path input (removed - using only Browse buttons)
+    
+    // Auto-load file when selected from dropdown
+    fileSelector.addEventListener('change', async function() {
+        const selectedFilePath = fileSelector.value;
+        if (!selectedFilePath) {
+            // Clear the form if no file selected
+            document.getElementById('formContainer').innerHTML = `
+                <p class="text-muted text-center py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Select a file to begin editing
+                </p>
+            `;
+            return;
+        }
+
+        try {
+            // Find the file object from selected dataset files
+            const fileObj = window.selectedDatasetFiles.find(f => 
+                (f.webkitRelativePath || f.name) === selectedFilePath
+            );
+            
+            if (!fileObj) {
+                showAlert('File not found in dataset', 'danger');
+                return;
+            }
+            
+            // Read the file content
+            const fileContent = await fileObj.text();
+            const jsonData = JSON.parse(fileContent);
+            
+            // Render the JSON in the form container
+            renderJSONForm(jsonData, selectedFilePath);
+            
+        } catch (error) {
+            showAlert('Error loading file: ' + error.message, 'danger');
+        }
+    });
+    
+    // Render JSON data as an editable form using BIDS Form Generator
+    async function renderJSONForm(jsonData, filePath) {
+        const formContainer = document.getElementById('formContainer');
+        
+        try {
+            // Store current file path and data globally
+            window.currentFilePath = filePath;
+            window.currentFileData = jsonData;
+            
+            // Determine file type from path (e.g., dataset_description.json -> dataset_description)
+            const fileName = filePath.split('/').pop();
+            const fileType = fileName.replace('.json', '');
+            
+            // Try to get schema for this file type
+            const response = await fetch(`/editor/api/schema/${fileType}`);
+            let schema = null;
+            
+            if (response.ok) {
+                const schemaData = await response.json();
+                if (schemaData.success) {
+                    schema = schemaData.schema;
+                }
+            }
+            
+            formContainer.innerHTML = '';
+            
+            if (schema && typeof BIDSFormGenerator !== 'undefined') {
+                // Use the beautiful form generator
+                const form = BIDSFormGenerator.generateForm(schema, jsonData);
+                formContainer.appendChild(form);
+                showAlert(`Loaded: ${fileName} (form)`, 'success');
+            } else if (fileType === 'participants') {
+                // Special handling for participants.json - recursive nested structure
+                formContainer.innerHTML = `
+                    <div class="mb-3">
+                        <h5>${fileName}</h5>
+                        <p class="text-muted small">Edit JSON values. All keys are fixed.</p>
+                        <div id="participantsContainer"></div>
+                    </div>
+                `;
+                
+                // Recursive function to build nested forms with collapsible sections
+                function buildNestedForm(obj, parentKey = '', depth = 0) {
+                    const container = document.createElement('div');
+                    
+                    Object.entries(obj).forEach(([key, value]) => {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'mb-1';
+                        fieldDiv.style.paddingLeft = (depth * 15) + 'px';
+                        
+                        // Check if value is an object or primitive
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            // Nested object - create collapsible section
+                            const collapsibleId = `collapse_${parentKey}${key}`.replace(/\./g, '_');
+                            
+                            // Header with toggle button
+                            const headerDiv = document.createElement('div');
+                            headerDiv.className = 'd-flex align-items-center gap-2';
+                            headerDiv.style.cursor = 'pointer';
+                            headerDiv.style.userSelect = 'none';
+                            headerDiv.style.padding = '0.25rem 0';
+                            
+                            // Toggle button
+                            const toggleBtn = document.createElement('i');
+                            toggleBtn.className = 'fas fa-chevron-right';
+                            toggleBtn.style.fontSize = '11px';
+                            toggleBtn.style.color = '#666';
+                            toggleBtn.style.minWidth = '12px';
+                            toggleBtn.style.textAlign = 'center';
+                            
+                            // Key label
+                            const keyLabel = document.createElement('label');
+                            keyLabel.className = 'form-label mb-0';
+                            keyLabel.style.fontWeight = depth === 0 ? '600' : 'normal';
+                            keyLabel.style.fontSize = depth === 0 ? '13px' : '12px';
+                            keyLabel.style.cursor = 'pointer';
+                            keyLabel.textContent = key;
+                            
+                            headerDiv.appendChild(toggleBtn);
+                            headerDiv.appendChild(keyLabel);
+                            fieldDiv.appendChild(headerDiv);
+                            
+                            // Content section (collapsible)
+                            const contentDiv = document.createElement('div');
+                            contentDiv.style.display = 'none';
+                            contentDiv.style.borderLeft = '1px solid #dee2e6';
+                            contentDiv.style.marginLeft = '6px';
+                            contentDiv.style.paddingLeft = '10px';
+                            contentDiv.style.marginTop = '0.25rem';
+                            
+                            const nestedForm = buildNestedForm(value, `${parentKey}${key}.`, depth + 1);
+                            contentDiv.appendChild(nestedForm);
+                            fieldDiv.appendChild(contentDiv);
+                            
+                            // Toggle functionality
+                            headerDiv.addEventListener('click', () => {
+                                const isHidden = contentDiv.style.display === 'none';
+                                contentDiv.style.display = isHidden ? 'block' : 'none';
+                                toggleBtn.className = isHidden ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+                                toggleBtn.style.color = isHidden ? '#0d6efd' : '#666';
+                            });
+                        } else {
+                            // Primitive value - inline label with textarea
+                            const labelDiv = document.createElement('div');
+                            labelDiv.className = 'mb-1';
+                            
+                            const keyLabel = document.createElement('label');
+                            keyLabel.className = 'form-label mb-1';
+                            keyLabel.style.fontSize = '12px';
+                            keyLabel.style.fontWeight = '500';
+                            keyLabel.textContent = key;
+                            labelDiv.appendChild(keyLabel);
+                            fieldDiv.appendChild(labelDiv);
+                            
+                            let textarea;
+                            if (Array.isArray(value)) {
+                                // Array - show as JSON textarea
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = 2;
+                                textarea.style.cssText = "font-family: 'Courier New', monospace; font-size: 11px; white-space: pre;";
+                                textarea.value = JSON.stringify(value, null, 2);
+                            } else if (typeof value === 'string') {
+                                // String
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = value.length > 50 ? 2 : 1;
+                                textarea.style.cssText = "font-family: monospace; font-size: 11px;";
+                                textarea.value = value;
+                            } else {
+                                // Number, boolean, null
+                                textarea = document.createElement('textarea');
+                                textarea.className = 'form-control form-control-sm';
+                                textarea.rows = 1;
+                                textarea.style.cssText = "font-family: monospace; font-size: 11px;";
+                                textarea.value = String(value);
+                            }
+                            
+                            textarea.dataset.jsonPath = `${parentKey}${key}`;
+                            fieldDiv.appendChild(textarea);
+                        }
+                        
+                        container.appendChild(fieldDiv);
+                    });
+                    
+                    return container;
+                }
+                
+                // Generate the nested form for all participants columns
+                const participantsContainer = document.getElementById('participantsContainer');
+                Object.entries(jsonData).forEach(([colKey, colValue]) => {
+                    const columnSection = document.createElement('div');
+                    columnSection.className = 'mb-4 p-3 rounded';
+                    columnSection.style.backgroundColor = '#f8f9fa';
+                    columnSection.style.border = '1px solid #dee2e6';
+                    
+                    // Top-level column key
+                    const colHeader = document.createElement('h6');
+                    colHeader.className = 'mb-3';
+                    colHeader.style.fontWeight = 'bold';
+                    colHeader.style.color = '#212529';
+                    colHeader.textContent = colKey;
+                    columnSection.appendChild(colHeader);
+                    
+                    // Build nested form for this column
+                    const nestedForm = buildNestedForm(colValue, `${colKey}.`, 0);
+                    columnSection.appendChild(nestedForm);
+                    
+                    participantsContainer.appendChild(columnSection);
+                });
+                
+                showAlert(`Loaded: ${fileName} - Edit nested values`, 'info');
+            } else {
+                // Fallback to JSON textarea for other files without schema
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                formContainer.innerHTML = `
+                    <div class="mb-3">
+                        <label for="jsonEditor" class="form-label">
+                            <i class="fas fa-file-code me-2"></i>
+                            ${fileName}
+                        </label>
+                        <textarea id="jsonEditor" class="form-control" rows="25" style="font-family: 'Courier New', monospace; font-size: 13px; white-space: pre; overflow-wrap: normal; line-height: 1.5;"></textarea>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Edit the JSON content directly - click Save to download
+                        </small>
+                    </div>
+                `;
+                // Set textarea content separately to avoid HTML escaping issues
+                const textarea = document.getElementById('jsonEditor');
+                if (textarea) {
+                    textarea.value = jsonString;
+                }
+                showAlert(`Loaded: ${fileName} - Edit JSON content`, 'info');
+            }
+            
+        } catch (error) {
+            console.error('Error rendering form:', error);
+            formContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error rendering form: ${error.message}
+                </div>
+            `;
+        }
+    }
+    
+    // Save button handler
+    document.getElementById('saveBtn').addEventListener('click', async function() {
+        try {
+            let updatedJson;
+            const fileName = window.currentFilePath ? window.currentFilePath.split('/').pop() : 'file.json';
+            const fileType = fileName.replace('.json', '');
+            
+            if (fileType === 'participants') {
+                // Reconstruct participants object from nested form
+                updatedJson = {};
+                
+                // Get all textareas with jsonPath (nested values)
+                const allTextareas = document.querySelectorAll('[data-json-path]');
+                allTextareas.forEach(textarea => {
+                    const path = textarea.dataset.jsonPath;
+                    const value = textarea.value;
+                    
+                    try {
+                        // Parse value based on context
+                        let parsedValue;
+                        if (value.trim().startsWith('{') || value.trim().startsWith('[')) {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'true' || value === 'false') {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'null') {
+                            parsedValue = null;
+                        } else if (!isNaN(value) && value !== '') {
+                            parsedValue = Number(value);
+                        } else {
+                            parsedValue = value;
+                        }
+                        
+                        // Set nested value using path (e.g., "participant_id.Description")
+                        const pathParts = path.split('.');
+                        let current = updatedJson;
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            const part = pathParts[i];
+                            if (!current[part]) current[part] = {};
+                            current = current[part];
+                        }
+                        current[pathParts[pathParts.length - 1]] = parsedValue;
+                    } catch (e) {
+                        showAlert(`Invalid value for "${path}": ${e.message}`, 'warning');
+                    }
+                });
+            } else {
+                // Check if we're using the form builder or textarea
+                const form = document.querySelector('.bids-form');
+                if (form && typeof BIDSFormGenerator !== 'undefined') {
+                    // Extract data from form
+                    updatedJson = BIDSFormGenerator.getFormData(form);
+                } else {
+                    // Get data from textarea
+                    const editor = document.getElementById('jsonEditor');
+                    if (editor) {
+                        updatedJson = JSON.parse(editor.value);
+                    } else {
+                        showAlert('No data to save', 'warning');
+                        return;
+                    }
+                }
+            }
+            
+            // Create a downloadable JSON file
+            const blob = new Blob([JSON.stringify(updatedJson, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert(`File downloaded: ${a.download}. Replace the original file in your dataset.`, 'success');
+            
+        } catch (error) {
+            showAlert('Error saving file: ' + error.message, 'danger');
+        }
+    });
+    
+    // New File button handler
+    document.getElementById('newFileBtn').addEventListener('click', function() {
+        const formContainer = document.getElementById('formContainer');
+        formContainer.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Select a file from your dataset to edit, or create a new JSON file manually.
+            </div>
+        `;
+    });
+    
+    
+    // Handle drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            selectedFiles = files;
+            processSelectedFiles(files);
+        }
+    });
+
+    function processSelectedFiles(files) {
+        currentDatasetPath = null;
+        
+        // Extract metadata files - ONLY .json at root level
+        // Exclude: .tsv, .csv, .txt files
+        // Exclude: files in subject folders (containing 'sub-')
+        const metadataFiles = [];
+        const skippedFiles = [];
+        
+        console.log('Processing', files.length, 'total files...');
+        
+        for (let file of files) {
+            const fileName = file.name.toLowerCase();
+            const filePath = file.webkitRelativePath || file.name;
+            
+            console.log('Checking file:', filePath);
+            
+            // Only include .json files
+            if (!fileName.endsWith('.json')) {
+                skippedFiles.push(`${filePath} (not JSON)`);
+                continue;
+            }
+            
+            // Skip .tsv, .csv, .txt files
+            if (fileName.endsWith('.tsv') || fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+                skippedFiles.push(`${filePath} (TSV/CSV/TXT)`);
+                continue;
+            }
+            
+            // Skip files in subject directories (contain 'sub-')
+            if (filePath.includes('sub-')) {
+                skippedFiles.push(`${filePath} (in subject folder)`);
+                continue;
+            }
+            
+            console.log('  -> Including:', filePath);
+            metadataFiles.push(file);
+        }
+        
+        console.log('Skipped files:', skippedFiles);
+        
+        if (metadataFiles.length === 0) {
+            showAlert('No root-level JSON metadata files found in the selected folder.', 'warning');
+            return;
+        }
+        
+        // Populate file selector
+        const fileList = metadataFiles.map(f => f.webkitRelativePath || f.name);
+        populateFileSelector(fileList);
+        
+        // Debug logging
+        console.log('Loaded metadata files:', fileList);
+        console.log('Total JSON files found:', metadataFiles.length);
+        metadataFiles.forEach(f => console.log('  -', f.webkitRelativePath || f.name));
+        
+        // Store files for later loading
+        window.selectedDatasetFiles = metadataFiles;
+        
+        editorSection.style.display = 'block';
+        uploadArea.style.display = 'none';
+        showAlert(`Dataset loaded! Found ${metadataFiles.length} root-level JSON metadata files.`, 'success');
+    }
+
+    function populateFileSelector(files) {
+        fileSelector.innerHTML = '<option value="">-- Select File --</option>';
+        
+        if (files.length === 0) {
+            console.warn('No files to populate in selector');
+            showAlert('No JSON files found. Ensure your dataset has metadata files at the root level.', 'warning');
+        }
+        
+        files.forEach(file => {
+            const fileValue = typeof file === 'string' ? file : file.name;
+            const fileDisplay = typeof file === 'string' ? file : file.name;
+            
+            console.log('Adding to selector:', fileDisplay);
+            
+            const option = document.createElement('option');
+            option.value = fileValue;
+            option.textContent = fileDisplay;
+            fileSelector.appendChild(option);
+        });
+        
+        console.log('File selector populated with', files.length, 'files');
+    }
+
+    function showAlert(message, type = 'info') {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = 'alert';
+        alert.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        alertContainer.appendChild(alert);
+        
+        // Auto-dismiss non-error alerts after 5 seconds
+        if (type !== 'danger') {
+            setTimeout(() => {
+                if (alert.parentNode) alert.remove();
+            }, 5000);
+        }
+    }
+});
+</script>
+{% endblock %}
