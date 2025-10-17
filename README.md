@@ -151,7 +151,8 @@ The included `test_dataset/` demonstrates:
 
 ## Files in this Repository
 
-- `psycho-validator.py` - Main validation script
+- **`online-psycho-validator.py`** - **MAIN ENTRY POINT** - Web interface (recommended for most users)
+- `psycho-validator.py` - Command-line validation script (advanced/automation)
 - `schemas/` - JSON schemas for each modality
 - `test_dataset/` - Example dataset for testing
 - `test_validator.py` - Comprehensive test script
@@ -220,34 +221,32 @@ For Windows-specific setup instructions, see [`docs/WINDOWS_SETUP.md`](docs/WIND
 
 ## Usage
 
-### Web Interface (Recommended for most users)
+### Web Interface (Main Entry Point - Recommended)
 
-For an easy-to-use graphical interface:
+The web interface is the **recommended way** to use Psycho-Validator. It automatically opens in your default browser:
 
-**Windows:**
-```cmd
-# Activate virtual environment first
-.venv\Scripts\activate
-# Then run the web interface
-online-psycho-validator
-```
-
-**Linux/macOS:**
+**All Platforms (Windows/macOS/Linux):**
 ```bash
 # Activate virtual environment first
-source .venv/bin/activate
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
 
-# Then run the web interface
-online-psycho-validator
+# Run the web interface (automatically opens in browser)
+python online-psycho-validator.py
 ```
 
-**Note:** The script will check if you're running inside the virtual environment and show appropriate activation instructions if needed.
+**Or use the installed command** (after setup):
+```bash
+online-psycho-validator
+```
 
 The web interface provides:
 - 🎯 User-friendly drag & drop interface
 - 📊 Visual validation results with charts
 - 🔒 Local processing (no data uploaded)
-- 📁 Support for ZIP uploads and local folders
+- 📁 Support for folder and ZIP uploads
+- 🌐 **Automatically opens in your default browser**
 
 See [`docs/WEB_INTERFACE.md`](docs/WEB_INTERFACE.md) for detailed usage instructions.
 

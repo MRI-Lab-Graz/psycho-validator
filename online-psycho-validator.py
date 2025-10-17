@@ -9,6 +9,8 @@ import sys
 import json
 import tempfile
 import shutil
+import webbrowser
+import threading
 from pathlib import Path
 from datetime import datetime
 from flask import (
@@ -1226,17 +1228,39 @@ def main():
         action="store_true",
         help="Allow external connections (sets host to 0.0.0.0)",
     )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Do not automatically open browser",
+    )
 
     args = parser.parse_args()
 
     host = "0.0.0.0" if args.public else args.host
+    display_host = "localhost" if host == "127.0.0.1" else host
+    url = f"http://{display_host}:{args.port}"
 
     print("🌐 Starting Psycho-Validator Web Interface")
-    print(f"🔗 Open your browser to: http://{host}:{args.port}")
+    print(f"🔗 URL: {url}")
     if args.public:
         print("⚠️  Warning: Running in public mode - accessible from other computers")
     print("💡 Press Ctrl+C to stop the server")
     print()
+
+    # Open browser in a separate thread to avoid blocking the Flask server
+    if not args.no_browser:
+        def open_browser():
+            import time
+            time.sleep(1)  # Wait for server to start
+            try:
+                webbrowser.open(url)
+                print("✅ Browser opened automatically")
+            except Exception as e:
+                print(f"ℹ️  Could not open browser automatically: {e}")
+                print(f"   Please visit {url} manually")
+
+        browser_thread = threading.Thread(target=open_browser, daemon=True)
+        browser_thread.start()
 
     app.run(host=host, port=args.port, debug=args.debug)
 
