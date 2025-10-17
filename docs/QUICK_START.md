@@ -11,10 +11,10 @@ This guide shows how to use the improved psycho-validator after the B, C, A refa
 source .venv/bin/activate
 
 # Start web interface
-python web_interface.py
+online-psycho-validator
 
 # Or specify port
-python web_interface.py --port 5000
+online-psycho-validator --port 5000
 ```
 
 Then open http://127.0.0.1:5000 in your browser.
@@ -231,7 +231,7 @@ psycho-validator/
 │   └── results.html              # ⭐ Improved results display
 │
 ├── psycho-validator.py           # ⭐ CLI entry (now uses src.runner)
-├── web_interface.py              # ⭐ Web interface (clean imports)
+├── online-psycho-validator.py    # ⭐ Web interface (executable)
 ├── requirements.txt
 ├── setup.sh / setup.bat
 └── README.md
