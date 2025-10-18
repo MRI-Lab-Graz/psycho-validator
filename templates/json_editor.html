@@ -61,6 +61,51 @@
             </div>
         </div>
 
+        <!-- Tool Selection Section (shown after loading dataset) -->
+        <div class="card feature-card mt-4" id="toolSelectionSection" style="display:none;">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-toolbox me-2"></i>
+                    Choose Tool
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted mb-4">Your dataset is loaded. Select a tool to work with:</p>
+                
+                <div class="row g-3">
+                    <!-- Metadata Editor Tool -->
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-primary btn-lg w-100 p-4 text-start" id="toolMetadataBtn">
+                            <div>
+                                <h6 class="mb-2">
+                                    <i class="fas fa-pen-fancy text-primary me-2"></i>
+                                    📋 Edit Metadata
+                                </h6>
+                                <small class="text-muted d-block">
+                                    Edit any JSON metadata file in your dataset (dataset_description, task events, etc.)
+                                </small>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- NeuroBagel Tool (only if participants.json exists) -->
+                    <div class="col-md-6" id="toolBagelBtnContainer" style="display:none;">
+                        <button class="btn btn-outline-info btn-lg w-100 p-4 text-start" id="toolBagelBtn">
+                            <div>
+                                <h6 class="mb-2">
+                                    <i class="fas fa-brain text-info me-2"></i>
+                                    🧠 Annotate Participants
+                                </h6>
+                                <small class="text-muted d-block">
+                                    Use NeuroBagel to harmonize & annotate your participants.json file with standardized terms
+                                </small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Editor Section (shown after loading dataset) -->
         <div class="card feature-card mt-4" id="editorSection" style="display:none;">
             <div class="card-header bg-light">
@@ -70,6 +115,11 @@
                 </h5>
             </div>
             <div class="card-body p-4">
+                <!-- Back button -->
+                <button id="backFromEditorBtn" class="btn btn-sm btn-outline-secondary mb-3">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Tool Selection
+                </button>
+                
                 <!-- File Selector -->
                 <div class="mb-3">
                     <label for="fileSelector" class="form-label">
@@ -79,9 +129,6 @@
                         <option value="">-- Select File --</option>
                     </select>
                 </div>
-
-                <!-- NeuroBagel Annotation Widget (for participants.json) -->
-                <div id="neurobagelWidgetPlaceholder"></div>
 
                 <!-- Control Buttons -->
                 <div class="mb-3">
@@ -107,6 +154,40 @@
                 </div>
             </div>
         </div>
+
+        <!-- NeuroBagel Section (shown when tool is selected) -->
+        <div class="card feature-card mt-4" id="bagelSection" style="display:none;">
+            <div class="card-header bg-light border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain text-info me-2"></i>
+                        NeuroBagel Participant Annotation Tool
+                    </h5>
+                    <button id="backFromBagelBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted mb-4">
+                    Harmonize your participants.json file using standardized NeuroBagel vocabularies (SNOMED-CT, NIDM, etc.)
+                </p>
+                
+                <!-- NeuroBagel widget container -->
+                <div id="neurobagelWidgetPlaceholder"></div>
+
+                <!-- Save button -->
+                <div class="mt-4">
+                    <button id="bagelSaveBtn" class="btn btn-success me-2">
+                        <i class="fas fa-download me-1"></i>Save Annotated File
+                    </button>
+                    <button id="bagelCancelBtn" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -156,15 +237,89 @@ document.addEventListener('DOMContentLoaded', function() {
     const folderBtn = document.getElementById('folderBtn');
     const zipBtn = document.getElementById('zipBtn');
     const uploadInfo = document.getElementById('uploadInfo');
+    const toolSelectionSection = document.getElementById('toolSelectionSection');
     const editorSection = document.getElementById('editorSection');
+    const bagelSection = document.getElementById('bagelSection');
     const fileSelector = document.getElementById('fileSelector');
     const alertContainer = document.getElementById('alertContainer');
+    
+    // Tool buttons
+    const toolMetadataBtn = document.getElementById('toolMetadataBtn');
+    const toolBagelBtn = document.getElementById('toolBagelBtn');
+    const backFromEditorBtn = document.getElementById('backFromEditorBtn');
+    const backFromBagelBtn = document.getElementById('backFromBagelBtn');
     
     let currentDatasetPath = null;
     let selectedFiles = null;
 
     // Check for webkitdirectory support
     const supportsFolderUpload = 'webkitdirectory' in document.createElement('input');
+    
+    // Tool selection handlers
+    toolMetadataBtn.addEventListener('click', function() {
+        toolSelectionSection.style.display = 'none';
+        editorSection.style.display = 'block';
+        fileSelector.value = '';
+        document.getElementById('formContainer').innerHTML = `
+            <p class="text-muted text-center py-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Select a file to begin editing
+            </p>
+        `;
+    });
+    
+    toolBagelBtn.addEventListener('click', async function() {
+        toolSelectionSection.style.display = 'none';
+        bagelSection.style.display = 'block';
+        
+        // Load NeuroBagel widget
+        const widgetPlaceholder = document.getElementById('neurobagelWidgetPlaceholder');
+        if (!document.getElementById('neurobagelAnnotationWidget')) {
+            const response = await fetch('{{ url_for("static", filename="neurobagel_widget.html") }}');
+            const html = await response.text();
+            
+            // Parse HTML to separate markup from scripts
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Find and remove scripts
+            const scripts = doc.querySelectorAll('script');
+            const scriptTexts = [];
+            scripts.forEach(script => {
+                scriptTexts.push(script.textContent);
+                script.remove();
+            });
+            
+            // Insert the HTML without scripts
+            widgetPlaceholder.innerHTML = doc.body.innerHTML;
+            
+            // Execute scripts in order
+            scriptTexts.forEach(scriptText => {
+                try {
+                    new Function(scriptText)();
+                } catch (err) {
+                    console.error('Error executing widget script:', err);
+                }
+            });
+            
+            // Initialize widget
+            await new Promise(resolve => setTimeout(resolve, 100));
+            if (window.renderNeurobagelWidget) {
+                console.log('Initializing NeuroBagel widget...');
+                await window.renderNeurobagelWidget();
+            }
+        }
+    });
+    
+    backFromEditorBtn.addEventListener('click', function() {
+        editorSection.style.display = 'none';
+        toolSelectionSection.style.display = 'block';
+    });
+    
+    backFromBagelBtn.addEventListener('click', function() {
+        bagelSection.style.display = 'none';
+        toolSelectionSection.style.display = 'block';
+    });
 
     // Folder button click
     folderBtn.addEventListener('click', function() {
@@ -248,56 +403,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Determine file type from path (e.g., dataset_description.json -> dataset_description)
             const fileName = filePath.split('/').pop();
             const fileType = fileName.replace('.json', '');
-            
-            // Show/hide NeuroBagel widget based on file type
-            const widgetPlaceholder = document.getElementById('neurobagelWidgetPlaceholder');
-            if (fileType === 'participants') {
-                // Load and show NeuroBagel widget
-                if (!document.getElementById('neurobagelAnnotationWidget')) {
-                    const response = await fetch('{{ url_for("static", filename="neurobagel_widget.html") }}');
-                    const html = await response.text();
-                    
-                    // Parse HTML to separate markup from scripts
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Find and remove scripts
-                    const scripts = doc.querySelectorAll('script');
-                    const scriptTexts = [];
-                    scripts.forEach(script => {
-                        scriptTexts.push(script.textContent);
-                        script.remove();
-                    });
-                    
-                    // Insert the HTML without scripts
-                    widgetPlaceholder.innerHTML = doc.body.innerHTML;
-                    
-                    // Execute scripts in order
-                    scriptTexts.forEach(scriptText => {
-                        try {
-                            new Function(scriptText)();
-                        } catch (err) {
-                            console.error('Error executing widget script:', err);
-                        }
-                    });
-                    
-                    // Initialize widget after scripts load
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    if (window.renderNeurobagelWidget) {
-                        console.log('Calling renderNeurobagelWidget...');
-                        await window.renderNeurobagelWidget();
-                        document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
-                    } else {
-                        console.warn('renderNeurobagelWidget not found!');
-                    }
-                } else {
-                    document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
-                }
-            } else {
-                // Hide widget for other files
-                const widget = document.getElementById('neurobagelAnnotationWidget');
-                if (widget) widget.style.display = 'none';
-            }
             
             // Try to get schema for this file type
             const response = await fetch(`/editor/api/schema/${fileType}`);
@@ -694,7 +799,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store files for later loading
         window.selectedDatasetFiles = metadataFiles;
         
-        editorSection.style.display = 'block';
+        // Show tool selection instead of editor directly
+        document.getElementById('toolSelectionSection').style.display = 'block';
+        
+        // Check if participants.json exists to show NeuroBagel option
+        const hasParticipants = metadataFiles.some(f => 
+            (f.webkitRelativePath || f.name).endsWith('participants.json')
+        );
+        
+        if (hasParticipants) {
+            document.getElementById('toolBagelBtnContainer').style.display = 'block';
+        } else {
+            document.getElementById('toolBagelBtnContainer').style.display = 'none';
+        }
+        
         uploadArea.style.display = 'none';
         showAlert(`Dataset loaded! Found ${metadataFiles.length} root-level JSON metadata files.`, 'success');
     }

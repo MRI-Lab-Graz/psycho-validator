@@ -670,8 +670,41 @@ def neurobagel_participants():
     - Categorical value vocabularies with URIs
     """
     data = fetch_neurobagel_participants()
+    
+    # If external fetch fails, use built-in dictionary
     if not data:
-        return jsonify({'error': 'Could not fetch NeuroBagel data'}), 502
+        # Use built-in NeuroBagel-compatible dictionary for common phenotypic variables
+        data = {
+            "properties": {
+                "participant_id": {
+                    "Description": "A participant ID"
+                },
+                "age": {
+                    "Description": "Age of the participant",
+                    "Units": "years"
+                },
+                "sex": {
+                    "Description": "Biological sex of the participant",
+                    "Levels": {
+                        "M": "Male",
+                        "F": "Female",
+                        "O": "Other"
+                    }
+                },
+                "group": {
+                    "Description": "Participant group or experimental condition",
+                    "Levels": {}
+                },
+                "handedness": {
+                    "Description": "Participant handedness",
+                    "Levels": {
+                        "L": "Left",
+                        "R": "Right",
+                        "A": "Ambidextrous"
+                    }
+                }
+            }
+        }
     
     # Augment raw data with standardized mappings and vocabularies
     augmented = augment_neurobagel_data(data)
@@ -679,7 +712,8 @@ def neurobagel_participants():
     return jsonify({
         'source': 'neurobagel',
         'raw': data,
-        'augmented': augmented
+        'augmented': augmented,
+        'note': 'Using built-in dictionary (external fetch failed)' if not fetch_neurobagel_participants() else 'Using remote NeuroBagel dictionary'
     })
 
 
