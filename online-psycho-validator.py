@@ -743,7 +743,13 @@ validation_results = {}
 
 @app.route("/")
 def index():
-    """Main page with upload form"""
+    """Home page with tool selection"""
+    return render_template("home.html")
+
+
+@app.route("/validate")
+def validate_dataset():
+    """Dataset validation page with upload form"""
     # Get available schema versions
     schema_dir = os.path.join(os.path.dirname(__file__), "schemas")
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
