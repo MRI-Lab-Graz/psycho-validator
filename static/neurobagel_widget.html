@@ -252,11 +252,14 @@ window.toggleNeurobagelWidget = function() {
 };
 
 window.renderNeurobagelWidget = async function() {
+  console.log('🧠 renderNeurobagelWidget called');
   const data = await fetchNeurobagelParticipants();
+  console.log('🧠 Fetched data:', data);
   if (!data || !data.properties) {
-    console.warn('No NeuroBagel data for widget');
+    console.warn('❌ No NeuroBagel data for widget');
     return;
   }
+  console.log('✅ Data has properties:', Object.keys(data.properties).length, 'columns');
   
   window.neurobagelWidgetState.allColumns = data.properties;
   
@@ -274,8 +277,15 @@ window.renderNeurobagelWidget = async function() {
     }
   }
   
+  console.log('📊 Standardized variables:', Object.keys(byStandardized));
+  console.log('📊 Unannotated columns:', Object.keys(unannotated));
+  
   // Render sidebar
   const sidebar = document.getElementById('neurobagelSidebar');
+  if (!sidebar) {
+    console.error('❌ neurobagelSidebar element not found!');
+    return;
+  }
   sidebar.innerHTML = '';
   
   for (const [stdVar, columns] of Object.entries(byStandardized)) {
