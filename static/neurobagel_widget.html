@@ -353,15 +353,39 @@ window.renderNeurobagelEditor = function(colName, colData) {
     <div class="nb-editor-header">
       <div>
         <div class="nb-editor-title">${colName}</div>
-        <div style="font-size: 12px; color: #666; margin-top: 3px;">
-          ${colData.description || 'No description'}
-        </div>
       </div>
       <div class="nb-editor-type-badge">${dataType}</div>
     </div>
+    
+    <!-- Editable Description Field -->
+    <div class="nb-field-group">
+      <label class="nb-field-label">Description</label>
+      <textarea 
+        class="nb-field-input" 
+        id="nb-desc-${colName}" 
+        placeholder="Enter description for this field"
+        style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"
+      >${colData.description || ''}</textarea>
+    </div>
   `;
   
-  if (dataType === 'categorical' && colData.levels) {
+  if (dataType === 'continuous') {
+    // Editable unit field for continuous
+    html += `
+      <div class="nb-field-group">
+        <label class="nb-field-label">Unit</label>
+        <input 
+          type="text" 
+          class="nb-field-input" 
+          id="nb-unit-${colName}" 
+          placeholder="e.g., years, kg, mm"
+          value="${colData.unit || ''}"
+          style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"
+        />
+      </div>
+    `;
+  } else if (dataType === 'categorical' && colData.levels) {
+    // Categorical levels
     html += `
       <div class="nb-field-group">
         <div class="nb-field-label">Categorical Levels</div>
@@ -383,25 +407,6 @@ window.renderNeurobagelEditor = function(colName, colData) {
         </div>
       </div>
     `;
-  } else if (dataType === 'continuous') {
-    html += `
-      <div class="nb-field-group">
-        <div class="nb-field-label">Continuous Field</div>
-        <div class="nb-field-description">
-          <strong>Unit:</strong> ${colData.unit || 'Not specified'}<br>
-          <strong>Description:</strong> ${colData.description || 'No description'}
-        </div>
-      </div>
-    `;
-  } else {
-    html += `
-      <div class="nb-field-group">
-        <div class="nb-field-label">Field Information</div>
-        <div class="nb-field-description">
-          ${colData.description || 'No description available'}
-        </div>
-      </div>
-    `;
   }
   
   html += `
@@ -416,6 +421,24 @@ window.renderNeurobagelEditor = function(colName, colData) {
   `;
   
   editor.innerHTML = html;
+  
+  // Store edited values back to column data when user changes them
+  const descField = document.getElementById(`nb-desc-${colName}`);
+  const unitField = document.getElementById(`nb-unit-${colName}`);
+  
+  if (descField) {
+    descField.addEventListener('change', function() {
+      colData.description = this.value;
+      console.log(`Updated description for ${colName}:`, this.value);
+    });
+  }
+  
+  if (unitField) {
+    unitField.addEventListener('change', function() {
+      colData.unit = this.value;
+      console.log(`Updated unit for ${colName}:`, this.value);
+    });
+  }
 };
 
 window.applyNeurobagelLevel = function(colName, levelKey) {
