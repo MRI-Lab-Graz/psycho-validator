@@ -248,6 +248,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const toolBagelBtn = document.getElementById('toolBagelBtn');
     const backFromEditorBtn = document.getElementById('backFromEditorBtn');
     const backFromBagelBtn = document.getElementById('backFromBagelBtn');
+    const bagelSaveBtn = document.getElementById('bagelSaveBtn');
+    const bagelCancelBtn = document.getElementById('bagelCancelBtn');
     
     let currentDatasetPath = null;
     let selectedFiles = null;
@@ -319,6 +321,146 @@ document.addEventListener('DOMContentLoaded', function() {
     backFromBagelBtn.addEventListener('click', function() {
         bagelSection.style.display = 'none';
         toolSelectionSection.style.display = 'block';
+    });
+    
+    bagelCancelBtn.addEventListener('click', function() {
+        bagelSection.style.display = 'none';
+        toolSelectionSection.style.display = 'block';
+    });
+    
+    bagelSaveBtn.addEventListener('click', async function() {
+        try {
+            // Get the current state of the NeuroBagel widget
+            // The widget maintains state in window.neurobagelWidgetState
+            const widgetState = window.neurobagelWidgetState || {};
+            const allColumns = widgetState.allColumns || {};
+            
+            // Build annotated participants.json structure
+            const annotatedData = {};
+            
+            // Get current form data if it exists (participants.json editing)
+            const participantsContainer = document.getElementById('participantsContainer');
+            if (participantsContainer) {
+                // Extract from form if it exists
+                const allTextareas = document.querySelectorAll('[data-json-path]');
+                allTextareas.forEach(textarea => {
+                    const path = textarea.dataset.jsonPath;
+                    const value = textarea.value;
+                    
+                    try {
+                        let parsedValue;
+                        if (value.trim().startsWith('{') || value.trim().startsWith('[')) {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'true' || value === 'false') {
+                            parsedValue = JSON.parse(value);
+                        } else if (value === 'null') {
+                            parsedValue = null;
+                        } else if (!isNaN(value) && value !== '') {
+                            parsedValue = Number(value);
+                        } else {
+                            parsedValue = value;
+                        }
+                        
+                        // Set nested value using path
+                        const pathParts = path.split('.');
+                        let current = annotatedData;
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            const part = pathParts[i];
+                            if (!current[part]) current[part] = {};
+                            current = current[part];
+                        }
+                        current[pathParts[pathParts.length - 1]] = parsedValue;
+                    } catch (e) {
+                        console.warn('Error parsing value for path', path, e);
+                    }
+                });
+            }
+            
+            // Add NeuroBagel annotations from widget state
+            for (const [colName, colData] of Object.entries(allColumns)) {
+                if (!annotatedData[colName]) {
+                    annotatedData[colName] = {};
+                }
+                
+                // Add description if available
+                if (colData.Description) {
+                    annotatedData[colName].Description = colData.Description;
+                }
+                
+                // Add units if available (for continuous variables)
+                if (colData.unit) {
+                    annotatedData[colName].Units = colData.unit;
+                }
+                
+                // Add levels if available (for categorical variables)
+                if (colData.levels && Object.keys(colData.levels).length > 0) {
+                    annotatedData[colName].Levels = {};
+                    for (const [levelKey, levelData] of Object.entries(colData.levels)) {
+                        annotatedData[colName].Levels[levelKey] = levelData.label || levelKey;
+                    }
+                }
+                
+                // Add NeuroBagel-specific annotations
+                if (colData.standardized_variable || colData.data_type) {
+                    if (!annotatedData[colName].Annotations) {
+                        annotatedData[colName].Annotations = {};
+                    }
+                    
+                    // Add IsAbout annotation
+                    if (colData.standardized_variable) {
+                        annotatedData[colName].Annotations.IsAbout = {
+                            TermURL: 'nb:' + colData.standardized_variable,
+                            Label: colData.standardized_variable
+                        };
+                    }
+                    
+                    // Add VariableType annotation
+                    const typeMap = {
+                        'categorical': 'Categorical',
+                        'continuous': 'Continuous',
+                        'text': 'Text'
+                    };
+                    
+                    if (colData.data_type && typeMap[colData.data_type]) {
+                        annotatedData[colName].Annotations.VariableType = typeMap[colData.data_type];
+                    }
+                    
+                    // Add level annotations for categorical variables
+                    if (colData.data_type === 'categorical' && colData.levels) {
+                        annotatedData[colName].Annotations.Levels = {};
+                        for (const [levelKey, levelData] of Object.entries(colData.levels)) {
+                            annotatedData[colName].Annotations.Levels[levelKey] = {
+                                Label: levelData.label || levelKey,
+                                TermURL: levelData.uri || undefined
+                            };
+                            // Remove undefined properties
+                            if (!annotatedData[colName].Annotations.Levels[levelKey].TermURL) {
+                                delete annotatedData[colName].Annotations.Levels[levelKey].TermURL;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Download as JSON file
+            const jsonString = JSON.stringify(annotatedData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'participants.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showAlert('✅ Annotated participants.json downloaded! Replace your original file in the dataset folder.', 'success');
+            
+        } catch (error) {
+            console.error('Error saving annotated file:', error);
+            showAlert('Error saving file: ' + error.message, 'danger');
+        }
+    });
     });
 
     // Folder button click
