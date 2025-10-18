@@ -1,20 +1,45 @@
 # Psycho-Validator: BIDS-inspired Validation Tool
 
+## 🚀 Quick Start
+
+**👉 Run the web interface** (recommended for all users):
+
+```bash
+bash setup.sh              # One-time setup (macOS/Linux)
+python online-psycho-validator.py
+```
+
+The web interface will open automatically at `http://localhost:5001`. No additional configuration needed!
+
+---
+
 ## Overview
 
-This tool validates datasets containing psychological/psychophysical stimuli and experimental data following a BIDS-inspired structure. It's designed specifically for experiments involving multiple stimulus modalities like images, videos, audio, etc.
+Psycho-Validator validates datasets containing psychological/psychophysical stimuli and experimental data following a BIDS-inspired structure. It's designed specifically for experiments involving multiple stimulus modalities like images, videos, audio, etc.
 
-## Features
+## ✨ Key Features
 
+### 🎯 Web Interface (Primary Method)
+- **Drag & drop dataset upload** - Just drop a folder or ZIP file
+- **Interactive validation** - Real-time results with visual charts
+- **🧠 NeuroBagel Integration** - Annotate participants with standardized ontologies
+  - Professional annotation widget for participant metadata
+  - Integration with official NeuroBagel dictionary
+  - SNOMED-CT shorthand URI support
+  - Auto-detect and parse participants.tsv files
+  - Categorical value extraction and labeling
+- **JSON Editor** - Edit and create metadata files interactively
+- **Local processing** - All data stays on your machine (no cloud uploads)
+- **Cross-platform** - Works on Windows, macOS, and Linux
+- **Responsive design** - Works on desktop and mobile browsers
+
+### ✅ Validation Features
 - **Multi-modal validation**: Supports images, movies, audio, EEG, eye-tracking, and behavioral data
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
-- **JSON schema validation**: Validates sidecar metadata files against modality-specific schemas
-- **Schema versioning**: Support for multiple schema versions (stable, v0.1, etc.) with CLI and web UI selection
+- **JSON schema validation**: Validates sidecar metadata against modality-specific schemas
+- **Schema versioning**: Multiple schema versions (stable, v0.1, etc.) selectable in UI
 - **Flexible structure**: Supports both session-based and direct subject organization
-- **Cross-subject consistency checking**: Warns when subjects have inconsistent modalities or tasks (critical for scientific datasets)
-- **Web interface**: User-friendly drag & drop interface with visual validation results
-- **Cross-platform**: Works on Windows, macOS, and Linux with automatic path handling
-- **Virtual environment protection**: Automatic checks ensure correct Python environment is used
+- **Cross-subject consistency**: Warns when subjects have inconsistent modalities or tasks
 - **Comprehensive reporting**: 
   - Dataset summary with subject/session counts
   - Modality breakdown with file counts
@@ -22,7 +47,6 @@ This tool validates datasets containing psychological/psychophysical stimuli and
   - File statistics (data files vs sidecars)
   - Cross-subject consistency warnings
   - Clear error and warning categorization
-  - Exit codes for automation
 
 ## Directory Structure
 
@@ -149,157 +173,212 @@ The included `test_dataset/` demonstrates:
 - ❌ Missing sidecar files
 - ✅ Mixed session/no-session structures
 
-## Files in this Repository
+## 📁 Repository Structure
 
-- **`online-psycho-validator.py`** - **MAIN ENTRY POINT** - Web interface (recommended for most users)
-- `psycho-validator.py` - Command-line validation script (advanced/automation)
+- **`online-psycho-validator.py`** - **✨ MAIN ENTRY POINT** - Web interface with NeuroBagel integration
 - `schemas/` - JSON schemas for each modality
-- `test_dataset/` - Example dataset for testing
-- `test_validator.py` - Comprehensive test script
-- `create_dummy_files.py` - Script to generate realistic test files
-- `docs/` - Project documentation and examples
+- `docs/` - Documentation (web interface guide, examples, NeuroBagel integration)
+- `tests/` - Test dataset and test scripts
+- `src/` - Core validation and utility modules
+- `static/` - Web interface assets (CSS, JavaScript, NeuroBagel widget)
+- `templates/` - Web interface templates (HTML)
 
-## Future Enhancements
+### Additional Files
+- `psycho-validator.py` - Command-line tool (see footnote below)
+- `setup.sh` / `setup-windows.bat` - Installation scripts
+- `requirements.txt` - Python dependencies
+
+## 🔬 NeuroBagel Integration (v1.1.0+)
+
+The JSON Editor now includes professional **NeuroBagel annotation tools** for standardizing participant metadata:
+
+### Features:
+- **Automatic TSV Parsing**: Loads unique values from `participants.tsv`
+- **Smart Categorization**: Separates available columns from suggestions
+- **Data Type Detection**: Auto-detects continuous vs. categorical variables
+- **Ontology Integration**: Add SNOMED-CT URIs to categorical levels
+- **Standardized Export**: Downloads annotated `participants.json` with full BIDS compliance
+
+### Workflow:
+1. Upload dataset with `participants.json` and `participants.tsv`
+2. Go to JSON Editor → Select "Annotate Participants"
+3. Edit column descriptions, units, and categorical levels
+4. Add ontology URIs (SNOMED-CT shorthand: `snomed:248153007`)
+5. Download annotated file to replace original
+
+See [`docs/NEUROBAGEL_INTEGRATION_STRATEGY.md`](docs/NEUROBAGEL_INTEGRATION_STRATEGY.md) for details.
+
+---
+
+## 📚 Additional Resources
+
+- **[Web Interface Documentation](docs/WEB_INTERFACE.md)** - Detailed UI guide
+- **[NeuroBagel Integration](docs/NEUROBAGEL_INTEGRATION_STRATEGY.md)** - Annotation tool usage
+- **[Schema Versioning Guide](docs/SCHEMA_VERSIONING_GUIDE.md)** - Multiple schema versions
+- **[Examples](docs/examples/)** - Test datasets and example files
+- **[FAIR Implementation](docs/FAIR_IMPLEMENTATION.md)** - FAIR data principles
+
+---
+
+## 🔮 Future Enhancements
 
 1. **Additional modalities**: Add schemas for EEG, eye-tracking, and behavioral data
 2. **Cross-file validation**: Validate stimulus-response timing relationships
 3. **BIDS compatibility**: Ensure full compatibility with official BIDS standard
-4. **Web interface**: Create a web-based validation tool
-5. **Batch processing**: Support for validating multiple datasets
+4. **Batch processing**: Support for validating multiple datasets via web UI
+5. **Export formats**: BIDS package export, DataLad integration
 
 ## Installation
 
-### Quick Start
+### ⚡ Quick Setup (Recommended)
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-repo/psycho-validator.git
-   cd psycho-validator
-   ```
-
-2. **Set up the environment**:
-   
-   **Linux/macOS**:
-   ```bash
-   bash scripts/setup.sh
-   ```
-   
-   **Windows**:
-   ```cmd
-   scripts\setup-windows.bat
-   ```
-
-3. **Test the installation**:
-   ```bash
-   python psycho-validator.py --help
-   ```
-
-### Manual Installation
-
-1. **Create virtual environment**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Linux/macOS
-   # or
-   .venv\Scripts\activate     # Windows
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Cross-Platform Support
-
-The psycho-validator is designed to work on Windows, macOS, and Linux with automatic handling of:
-- Path separators and file encodings
-- Line ending differences (CRLF vs LF)
-- Case-sensitive vs case-insensitive filesystems
-- Platform-specific filename restrictions
-
-For Windows-specific setup instructions, see [`docs/WINDOWS_SETUP.md`](docs/WINDOWS_SETUP.md).
-
-## Usage
-
-### Web Interface (Main Entry Point - Recommended)
-
-The web interface is the **recommended way** to use Psycho-Validator. It automatically opens in your default browser:
-
-**All Platforms (Windows/macOS/Linux):**
+**macOS/Linux:**
 ```bash
-# Activate virtual environment first
-source .venv/bin/activate  # Linux/macOS
-# or
-.venv\Scripts\activate     # Windows
-
-# Run the web interface (automatically opens in browser)
+git clone https://github.com/MRI-Lab-Graz/psycho-validator.git
+cd psycho-validator
+bash setup.sh
 python online-psycho-validator.py
 ```
 
-**Or use the installed command** (after setup):
-```bash
-online-psycho-validator
+**Windows:**
+```cmd
+git clone https://github.com/MRI-Lab-Graz/psycho-validator.git
+cd psycho-validator
+scripts\setup-windows.bat
+python online-psycho-validator.py
 ```
 
-The web interface provides:
-- 🎯 User-friendly drag & drop interface
-- 📊 Visual validation results with charts
-- 🔒 Local processing (no data uploaded)
-- 📁 Support for folder and ZIP uploads
-- 🌐 **Automatically opens in your default browser**
+The web interface opens automatically! 🌐
 
-See [`docs/WEB_INTERFACE.md`](docs/WEB_INTERFACE.md) for detailed usage instructions.
-
-### Command Line Interface
-
-For automation and advanced usage:
+### Manual Setup
 
 ```bash
-# First, activate the virtual environment
-source .venv/bin/activate  # Linux/macOS
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # macOS/Linux or .venv\Scripts\activate on Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run web interface
+python online-psycho-validator.py
+```
+
+---
+
+## 📖 Usage Guide
+
+### 🌐 Web Interface (Primary - Recommended for All Users)
+
+Simply run:
+```bash
+python online-psycho-validator.py
+```
+
+The interface opens at `http://localhost:5001` with three main sections:
+
+#### 1. **Dataset Validation** (Home Tab)
+- Drag & drop your dataset folder or ZIP file
+- Select schema version (stable/v0.1)
+- Get instant validation results with visual charts
+
+#### 2. **JSON Editor** (JSON Editor Tab)
+- Edit dataset_description.json and other metadata
+- Create new metadata files
+- **NeuroBagel Annotation Tool** (if participants.json exists):
+  - Load your dataset with participants.json
+  - Select "Annotate Participants" 
+  - Annotation widget loads your participants.tsv data
+  - Edit descriptions, units, and categorical levels
+  - Add SNOMED-CT URIs for ontology standardization
+  - Download annotated participants.json
+
+#### 3. **Home Page**
+- Introduction and quick links
+- Feature overview
+- Getting started guide
+
+**Features:**
+- ✅ All processing happens locally (no data leaves your machine)
+- ✅ Real-time validation feedback
+- ✅ Support for folder and ZIP uploads
+- ✅ Interactive metadata editing
+- ✅ Professional annotation with NeuroBagel
+
+See [`docs/WEB_INTERFACE.md`](docs/WEB_INTERFACE.md) for detailed instructions.
+
+---
+
+### 📝 Command-Line Interface (Advanced/Automation)
+
+For automation and scripting, use the CLI:
+
+```bash
+# Activate virtual environment first
+source .venv/bin/activate  # macOS/Linux
 # or
 .venv\Scripts\activate     # Windows
 
-# Basic validation (uses stable schema version)
-python psycho-validator.py /path/to/your/dataset
+# Basic validation (uses stable schema)
+python psycho-validator.py /path/to/dataset
 
 # Validate with specific schema version
-python psycho-validator.py /path/to/your/dataset --schema-version v0.1
+python psycho-validator.py /path/to/dataset --schema-version v0.1
 
 # List available schema versions
 python psycho-validator.py --list-versions
 
-# Verbose mode
-python psycho-validator.py /path/to/your/dataset -v
+# Verbose output
+python psycho-validator.py /path/to/dataset -v
+
+# Show help
+python psycho-validator.py --help
 ```
 
-**Note:** The validator will check if you're running inside the virtual environment and show activation instructions if needed.
+**Note:** This is primarily for automation and batch processing. The web interface is recommended for interactive use.
 
-#### Schema Versioning
+#### Schema Versions
 
-Psycho-validator supports multiple schema versions (similar to Docker tags):
+Available schema versions:
 - **`stable`** (default) - Current recommended version
 - **`v0.1`** - Version 0.1
 
-Select schema version in the web interface dropdown or use `--schema-version` flag in CLI.
-
 See [`docs/SCHEMA_VERSIONING_GUIDE.md`](docs/SCHEMA_VERSIONING_GUIDE.md) for details.
-
-#### Command Line Options
-```bash
-python psycho-validator.py --help
-```
 
 ## Dependencies
 
 - Python 3.6+
 - `jsonschema` - For JSON schema validation
+- `flask` - Web interface framework
+- `requests` - HTTP client for NeuroBagel API
 
 Optional (for dummy file generation):
-
 - `Pillow` - For creating test images
 - `numpy` - For generating test data
 
-## Documentation
+---
 
-See the `docs/` directory for FAIR policy/implementation, proposed modalities, schema versioning, and examples.
+## 📝 Footnote: Command-Line Tool
+
+While the **web interface is the primary and recommended method** for using Psycho-Validator, a command-line interface is also available for automation and batch processing.
+
+**Command-line tool usage:**
+```bash
+python psycho-validator.py /path/to/dataset [--schema-version VERSION] [-v]
+```
+
+This is useful for:
+- CI/CD pipelines and automated testing
+- Batch processing multiple datasets
+- Scripting and automation workflows
+- Integration with other tools
+
+For most users and interactive validation, please use the web interface instead.
+
+---
+
+## 💡 License & Attribution
+
+See LICENSE file for details.
+
+For questions or contributions, visit the [GitHub repository](https://github.com/MRI-Lab-Graz/psycho-validator).
