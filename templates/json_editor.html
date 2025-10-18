@@ -115,6 +115,8 @@
 <!-- Include JSON Editor JavaScript -->
 <script src="{{ url_for('json_editor.static', filename='js/api.js') }}"></script>
 <script src="{{ url_for('json_editor.static', filename='js/form-builder.js') }}"></script>
+<!-- NeuroBagel helpers -->
+<script src="{{ url_for('static', filename='js/neurobagel.js') }}"></script>
 
 <style>
     .upload-area {
@@ -257,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             formContainer.innerHTML = '';
             
-            if (schema && typeof BIDSFormGenerator !== 'undefined') {
+                if (schema && typeof BIDSFormGenerator !== 'undefined') {
                 // Use the beautiful form generator
                 const form = BIDSFormGenerator.generateForm(schema, jsonData);
                 formContainer.appendChild(form);
@@ -381,6 +383,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Generate the nested form for all participants columns
                 const participantsContainer = document.getElementById('participantsContainer');
+                // Add NeuroBagel toolbar above participants container
+                const toolbarDiv = document.createElement('div');
+                toolbarDiv.className = 'mb-3 d-flex gap-2 align-items-center';
+                toolbarDiv.innerHTML = `
+                    <label class="form-label mb-0 me-2" style="font-weight:500;">NeuroBagel suggestions:</label>
+                    <select id="neurobagelSelect" class="form-select form-select-sm" style="max-width:320px;">
+                        <option>Loading...</option>
+                    </select>
+                    <button id="neurobagelInsertBtn" class="btn btn-outline-primary btn-sm">Insert Suggestion</button>
+                `;
+                participantsContainer.parentNode.insertBefore(toolbarDiv, participantsContainer);
+
+                // Populate suggestions
+                const nbSelect = toolbarDiv.querySelector('#neurobagelSelect');
+                window.populateParticipantsSuggestions(nbSelect).catch(err => {
+                    console.warn('NeuroBagel populate failed', err);
+                    nbSelect.innerHTML = '<option>No suggestions</option>';
+                });
+
+                // Hook insert button
+                toolbarDiv.querySelector('#neurobagelInsertBtn').addEventListener('click', function() {
+                    const sel = nbSelect.value;
+                    if (!sel) {
+                        showAlert('Please choose a NeuroBagel field to insert', 'warning');
+                        return;
+                    }
+                    window.applyNeurobagelSuggestion(sel);
+                });
                 Object.entries(jsonData).forEach(([colKey, colValue]) => {
                     const columnSection = document.createElement('div');
                     columnSection.className = 'mb-4 p-3 rounded';

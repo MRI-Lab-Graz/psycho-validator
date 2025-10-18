@@ -26,6 +26,8 @@ from flask import (
 from werkzeug.utils import secure_filename
 import zipfile
 import io
+import requests
+from functools import lru_cache
 
 # Ensure we can import core validator logic from src
 BASE_DIR = Path(__file__).resolve().parent
@@ -536,6 +538,30 @@ def get_error_documentation_url(error_code):
         "GENERAL_ERROR": base_url,
     }
     return doc_anchors.get(error_code, base_url)
+
+
+@lru_cache(maxsize=8)
+def fetch_neurobagel_participants():
+    """Fetch NeuroBagel participants dictionary and cache it."""
+    url = "https://neurobagel.org/data_models/dictionaries/participants.json"
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception:
+        return None
+
+
+@app.route('/api/neurobagel/participants')
+def neurobagel_participants():
+    """Return NeuroBagel participants dictionary (cached).
+
+    The frontend can call this to populate suggestions for participants.tsv fields.
+    """
+    data = fetch_neurobagel_participants()
+    if not data:
+        return jsonify({'error': 'Could not fetch NeuroBagel data'}), 502
+    return jsonify({'source': 'neurobagel', 'data': data})
 
 
 def shorten_path(file_path, max_parts=3):
