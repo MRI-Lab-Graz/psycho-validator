@@ -256,12 +256,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!document.getElementById('neurobagelAnnotationWidget')) {
                     const response = await fetch('{{ url_for("static", filename="neurobagel_widget.html") }}');
                     const html = await response.text();
-                    widgetPlaceholder.innerHTML = html;
-                    // Initialize widget after insertion
+                    
+                    // Parse HTML to separate markup from scripts
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Find and remove scripts
+                    const scripts = doc.querySelectorAll('script');
+                    const scriptTexts = [];
+                    scripts.forEach(script => {
+                        scriptTexts.push(script.textContent);
+                        script.remove();
+                    });
+                    
+                    // Insert the HTML without scripts
+                    widgetPlaceholder.innerHTML = doc.body.innerHTML;
+                    
+                    // Execute scripts in order
+                    scriptTexts.forEach(scriptText => {
+                        try {
+                            new Function(scriptText)();
+                        } catch (err) {
+                            console.error('Error executing widget script:', err);
+                        }
+                    });
+                    
+                    // Initialize widget after scripts load
                     await new Promise(resolve => setTimeout(resolve, 100));
                     if (window.renderNeurobagelWidget) {
+                        console.log('Calling renderNeurobagelWidget...');
                         await window.renderNeurobagelWidget();
                         document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
+                    } else {
+                        console.warn('renderNeurobagelWidget not found!');
                     }
                 } else {
                     document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
