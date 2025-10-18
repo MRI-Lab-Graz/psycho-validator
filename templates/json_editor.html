@@ -80,6 +80,9 @@
                     </select>
                 </div>
 
+                <!-- NeuroBagel Annotation Widget (for participants.json) -->
+                <div id="neurobagelWidgetPlaceholder"></div>
+
                 <!-- Control Buttons -->
                 <div class="mb-3">
                     <button id="saveBtn" class="btn btn-success me-2">
@@ -245,6 +248,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Determine file type from path (e.g., dataset_description.json -> dataset_description)
             const fileName = filePath.split('/').pop();
             const fileType = fileName.replace('.json', '');
+            
+            // Show/hide NeuroBagel widget based on file type
+            const widgetPlaceholder = document.getElementById('neurobagelWidgetPlaceholder');
+            if (fileType === 'participants') {
+                // Load and show NeuroBagel widget
+                if (!document.getElementById('neurobagelAnnotationWidget')) {
+                    const response = await fetch('{{ url_for("static", filename="neurobagel_widget.html") }}');
+                    const html = await response.text();
+                    widgetPlaceholder.innerHTML = html;
+                    // Initialize widget after insertion
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    if (window.renderNeurobagelWidget) {
+                        await window.renderNeurobagelWidget();
+                        document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
+                }
+            } else {
+                // Hide widget for other files
+                const widget = document.getElementById('neurobagelAnnotationWidget');
+                if (widget) widget.style.display = 'none';
+            }
             
             // Try to get schema for this file type
             const response = await fetch(`/editor/api/schema/${fileType}`);

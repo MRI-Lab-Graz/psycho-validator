@@ -1,0 +1,476 @@
+<!-- NeuroBagel Annotation Widget -->
+<div id="neurobagelAnnotationWidget" style="display: none;">
+  <style>
+    .neurobagel-widget {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .nb-sidebar {
+      flex: 0 0 220px;
+      border-right: 1px solid #dee2e6;
+      padding-right: 15px;
+      max-height: 550px;
+      overflow-y: auto;
+    }
+    
+    .nb-main {
+      flex: 1;
+      min-height: 400px;
+    }
+    
+    .nb-section-title {
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin: 15px 0 8px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .nb-column-item {
+      padding: 8px 10px;
+      margin: 4px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+    
+    .nb-column-item:hover {
+      background: #e7f1ff;
+      border-left-color: #0d6efd;
+    }
+    
+    .nb-column-item.active {
+      background: #0d6efd;
+      color: white;
+      border-left-color: #0d6efd;
+      font-weight: 600;
+    }
+    
+    .nb-column-item-type {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+    
+    .nb-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .nb-editor-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .nb-editor-type-badge {
+      background: #0d6efd;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .nb-field-group {
+      margin-bottom: 20px;
+    }
+    
+    .nb-field-label {
+      font-weight: 600;
+      font-size: 12px;
+      color: #212529;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    
+    .nb-field-description {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+      padding: 8px;
+      background: white;
+      border-left: 3px solid #0d6efd;
+      border-radius: 2px;
+    }
+    
+    .nb-value-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .nb-value-item {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .nb-value-item:hover {
+      border-color: #0d6efd;
+      background: #f0f6ff;
+    }
+    
+    .nb-value-item.selected {
+      border-color: #0d6efd;
+      background: #e7f1ff;
+    }
+    
+    .nb-value-header {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    
+    .nb-value-label {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    
+    .nb-value-uri {
+      font-size: 11px;
+      color: #999;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    
+    .nb-button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+    
+    .nb-btn {
+      padding: 8px 12px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    
+    .nb-btn:hover {
+      background: #e7f1ff;
+      border-color: #0d6efd;
+    }
+    
+    .nb-btn-primary {
+      background: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+    
+    .nb-btn-primary:hover {
+      background: #0b5ed7;
+    }
+    
+    .nb-empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+    }
+    
+    .nb-toggle-btn {
+      padding: 6px 12px;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .nb-toggle-btn:hover {
+      background: #0b5ed7;
+    }
+  </style>
+
+  <div style="margin-bottom: 10px;">
+    <button class="nb-toggle-btn" onclick="window.toggleNeurobagelWidget()">
+      🧠 Open NeuroBagel Annotation Tool
+    </button>
+  </div>
+
+  <div class="neurobagel-widget" id="neurobagelWidgetContent">
+    <!-- Sidebar -->
+    <div class="nb-sidebar">
+      <div class="nb-section-title">Standardized Variables</div>
+      <div id="neurobagelSidebar"></div>
+      
+      <div class="nb-section-title" style="margin-top: 20px;">Unannotated</div>
+      <div id="neurobagelUnannotated"></div>
+    </div>
+    
+    <!-- Main Editor -->
+    <div class="nb-main">
+      <div id="neurobagelEditor">
+        <div class="nb-empty-state">
+          <p>Select a column from the sidebar to annotate</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// NeuroBagel Annotation Widget Functions
+window.neurobagelWidgetState = {
+  allColumns: {},
+  selectedColumn: null,
+  expanded: false
+};
+
+window.toggleNeurobagelWidget = function() {
+  const widget = document.getElementById('neurobagelAnnotationWidget');
+  const content = document.getElementById('neurobagelWidgetContent');
+  const expanded = window.neurobagelWidgetState.expanded;
+  
+  window.neurobagelWidgetState.expanded = !expanded;
+  content.style.display = expanded ? 'none' : 'flex';
+};
+
+window.renderNeurobagelWidget = async function() {
+  const data = await fetchNeurobagelParticipants();
+  if (!data || !data.properties) {
+    console.warn('No NeuroBagel data for widget');
+    return;
+  }
+  
+  window.neurobagelWidgetState.allColumns = data.properties;
+  
+  // Group columns by standardized variable
+  const byStandardized = {};
+  const unannotated = {};
+  
+  for (const [colName, colData] of Object.entries(data.properties)) {
+    const stdVar = colData.standardized_variable;
+    if (stdVar) {
+      if (!byStandardized[stdVar]) byStandardized[stdVar] = [];
+      byStandardized[stdVar].push({ name: colName, data: colData });
+    } else {
+      unannotated[colName] = colData;
+    }
+  }
+  
+  // Render sidebar
+  const sidebar = document.getElementById('neurobagelSidebar');
+  sidebar.innerHTML = '';
+  
+  for (const [stdVar, columns] of Object.entries(byStandardized)) {
+    const section = document.createElement('div');
+    section.style.marginBottom = '12px';
+    
+    for (const col of columns) {
+      const item = document.createElement('div');
+      item.className = 'nb-column-item';
+      item.innerHTML = `
+        ${col.name}
+        <span class="nb-column-item-type">${col.data.data_type}</span>
+      `;
+      item.onclick = () => window.selectNeurobagelColumn(col.name);
+      section.appendChild(item);
+    }
+    
+    sidebar.appendChild(section);
+  }
+  
+  // Render unannotated
+  const unannotatedDiv = document.getElementById('neurobagelUnannotated');
+  unannotatedDiv.innerHTML = '';
+  
+  for (const [colName, colData] of Object.entries(unannotated)) {
+    const item = document.createElement('div');
+    item.className = 'nb-column-item';
+    item.innerHTML = `
+      ${colName}
+      <span class="nb-column-item-type">${colData.data_type || 'unknown'}</span>
+    `;
+    item.onclick = () => window.selectNeurobagelColumn(colName);
+    unannotatedDiv.appendChild(item);
+  }
+};
+
+window.selectNeurobagelColumn = function(colName) {
+  window.neurobagelWidgetState.selectedColumn = colName;
+  
+  // Update active state
+  document.querySelectorAll('.nb-column-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  event.target.closest('.nb-column-item').classList.add('active');
+  
+  // Render editor
+  const colData = window.neurobagelWidgetState.allColumns[colName];
+  window.renderNeurobagelEditor(colName, colData);
+};
+
+window.renderNeurobagelEditor = function(colName, colData) {
+  const editor = document.getElementById('neurobagelEditor');
+  const dataType = colData.data_type || 'unknown';
+  
+  let html = `
+    <div class="nb-editor-header">
+      <div>
+        <div class="nb-editor-title">${colName}</div>
+        <div style="font-size: 12px; color: #666; margin-top: 3px;">
+          ${colData.description || 'No description'}
+        </div>
+      </div>
+      <div class="nb-editor-type-badge">${dataType}</div>
+    </div>
+  `;
+  
+  if (dataType === 'categorical' && colData.levels) {
+    html += `
+      <div class="nb-field-group">
+        <div class="nb-field-label">Categorical Levels</div>
+        <div class="nb-value-list">
+    `;
+    
+    for (const [levelKey, levelData] of Object.entries(colData.levels)) {
+      html += `
+        <div class="nb-value-item" onclick="window.applyNeurobagelLevel('${colName}', '${levelKey}')">
+          <div class="nb-value-header">${levelKey}</div>
+          <div class="nb-value-label">${levelData.label || levelKey}</div>
+          <div class="nb-value-label">${levelData.description || ''}</div>
+          ${levelData.uri ? `<div class="nb-value-uri">🔗 ${levelData.uri}</div>` : ''}
+        </div>
+      `;
+    }
+    
+    html += `
+        </div>
+      </div>
+    `;
+  } else if (dataType === 'continuous') {
+    html += `
+      <div class="nb-field-group">
+        <div class="nb-field-label">Continuous Field</div>
+        <div class="nb-field-description">
+          <strong>Unit:</strong> ${colData.unit || 'Not specified'}<br>
+          <strong>Description:</strong> ${colData.description || 'No description'}
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="nb-field-group">
+        <div class="nb-field-label">Field Information</div>
+        <div class="nb-field-description">
+          ${colData.description || 'No description available'}
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `
+    <div class="nb-button-group">
+      <button class="nb-btn nb-btn-primary" onclick="window.applyNeurobagelToForm('${colName}')">
+        ✓ Apply to Form
+      </button>
+      <button class="nb-btn" onclick="window.copyNeurobagelData('${colName}')">
+        📋 Copy
+      </button>
+    </div>
+  `;
+  
+  editor.innerHTML = html;
+};
+
+window.applyNeurobagelLevel = function(colName, levelKey) {
+  const colData = window.neurobagelWidgetState.allColumns[colName];
+  const levelData = colData.levels[levelKey];
+  
+  // Find matching form fields and fill with level info
+  const selector = `[data-json-path^="${colName}.levels.${levelKey}"]`;
+  const matches = Array.from(document.querySelectorAll(selector));
+  
+  if (matches.length > 0) {
+    const suggestion = `${levelData.label || levelKey}\nDescription: ${levelData.description}\nURI: ${levelData.uri || 'N/A'}`;
+    matches.forEach(el => { el.value = suggestion; });
+    if (typeof showAlert === 'function') {
+      showAlert(`Applied ${colName}/${levelKey} level annotation`, 'success');
+    }
+  }
+};
+
+window.applyNeurobagelToForm = function(colName) {
+  const colData = window.neurobagelWidgetState.allColumns[colName];
+  
+  // Find form fields for this column
+  const selector = `[data-json-path^="${colName}."]`;
+  const matches = Array.from(document.querySelectorAll(selector));
+  
+  if (matches.length === 0) {
+    if (typeof showAlert === 'function') {
+      showAlert(`No form fields found for ${colName}`, 'warning');
+    }
+    return;
+  }
+  
+  // Build comprehensive annotation
+  let annotation = `Column: ${colName}\n`;
+  annotation += `Type: ${colData.data_type}\n`;
+  annotation += `Standardized Variable: ${colData.standardized_variable || 'N/A'}\n`;
+  annotation += `Description: ${colData.description || 'N/A'}\n`;
+  
+  if (colData.data_type === 'categorical' && colData.levels) {
+    annotation += `\nCategorical Levels:\n`;
+    for (const [k, v] of Object.entries(colData.levels)) {
+      annotation += `  ${k}: ${v.label} (${v.uri || 'No URI'})\n`;
+    }
+  } else if (colData.data_type === 'continuous') {
+    annotation += `Unit: ${colData.unit || 'Not specified'}\n`;
+  }
+  
+  // Apply to first textarea
+  if (matches.length > 0) {
+    matches[0].value = annotation;
+  }
+  
+  if (typeof showAlert === 'function') {
+    showAlert(`Applied annotation to ${colName}`, 'success');
+  }
+};
+
+window.copyNeurobagelData = function(colName) {
+  const colData = window.neurobagelWidgetState.allColumns[colName];
+  const json = JSON.stringify(colData, null, 2);
+  
+  navigator.clipboard.writeText(json).then(() => {
+    if (typeof showAlert === 'function') {
+      showAlert(`Copied ${colName} data to clipboard`, 'success');
+    }
+  });
+};
+
+// Initialize widget when NeuroBagel data loads
+document.addEventListener('DOMContentLoaded', async function() {
+  // Wait for NeuroBagel data to be available
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await window.renderNeurobagelWidget();
+  document.getElementById('neurobagelAnnotationWidget').style.display = 'block';
+});
+</script>
