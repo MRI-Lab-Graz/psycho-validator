@@ -320,6 +320,15 @@ window.renderNeurobagelWidget = async function() {
     item.onclick = () => window.selectNeurobagelColumn(colName);
     unannotatedDiv.appendChild(item);
   }
+  
+  // Force widget to be visible
+  const widgetContent = document.getElementById('neurobagelWidgetContent');
+  if (widgetContent) {
+    widgetContent.style.display = 'flex';
+    console.log('✅ Widget content display set to flex');
+  }
+  
+  console.log('✅ renderNeurobagelWidget completed successfully');
 };
 
 window.selectNeurobagelColumn = function(colName) {
