@@ -6,8 +6,35 @@ async function fetchNeurobagelParticipants() {
     const json = await resp.json();
     return json.data;
   } catch (err) {
-    console.error('NeuroBagel fetch failed', err);
-    return null;
+    console.warn('NeuroBagel fetch failed, using fallback suggestions:', err);
+    // Provide sensible fallback suggestions when network is unavailable
+    return {
+      properties: {
+        participant_id: {
+          description: "A participant ID",
+          type: "string"
+        },
+        age: {
+          description: "Age of participant in years",
+          type: "integer",
+          examples: [25, 30, 35]
+        },
+        sex: {
+          description: "Biological sex of participant",
+          type: "string",
+          enum: ["M", "F", "O"]
+        },
+        group: {
+          description: "Participant group (e.g., control, patient)",
+          type: "string"
+        },
+        handedness: {
+          description: "Handedness of participant",
+          type: "string",
+          enum: ["L", "R", "A"]
+        }
+      }
+    };
   }
 }
 
@@ -15,7 +42,8 @@ async function fetchNeurobagelParticipants() {
 window.populateParticipantsSuggestions = async function populateParticipantsSuggestions(selectEl) {
   const data = await fetchNeurobagelParticipants();
   if (!data) {
-    // keep existing options if fetch failed
+    // Fallback: add a placeholder
+    selectEl.innerHTML = '<option>No suggestions available</option>';
     return;
   }
   // NeuroBagel participants format may vary; safely extract properties
