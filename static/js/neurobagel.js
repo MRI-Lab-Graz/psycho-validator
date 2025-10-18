@@ -48,28 +48,6 @@ async function fetchNeurobagelParticipants() {
           description: "Participant group (e.g., control, patient)",
           data_type: "categorical",
           standardized_variable: "participant_group"
-        },
-        handedness: {
-          description: "Handedness of participant",
-          data_type: "categorical",
-          standardized_variable: "handedness",
-          levels: {
-            "L": {
-              label: "Left",
-              description: "Left-handed",
-              uri: "http://purl.obolibrary.org/obo/PATO_0002200"
-            },
-            "R": {
-              label: "Right",
-              description: "Right-handed",
-              uri: "http://purl.obolibrary.org/obo/PATO_0002201"
-            },
-            "A": {
-              label: "Ambidextrous",
-              description: "Ambidextrous",
-              uri: "http://purl.obolibrary.org/obo/PATO_0002202"
-            }
-          }
         }
       }
     };

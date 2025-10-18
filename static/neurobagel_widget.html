@@ -261,24 +261,51 @@ window.renderNeurobagelWidget = async function() {
   }
   console.log('✅ Data has properties:', Object.keys(data.properties).length, 'columns');
   
-  window.neurobagelWidgetState.allColumns = data.properties;
+  // Merge TSV unique values with NeuroBagel data for categorical columns
+  const enrichedData = data.properties;
+  if (window.participantsTsvData) {
+    console.log('🔄 Merging TSV unique values with NeuroBagel data');
+    for (const [colName, colData] of Object.entries(enrichedData)) {
+      if (colData.data_type === 'categorical' && window.participantsTsvData[colName]) {
+        const uniqueValues = window.participantsTsvData[colName];
+        console.log(`📊 Column ${colName} - TSV values:`, uniqueValues);
+        
+        // Create levels from TSV unique values ONLY (don't use defaults)
+        colData.levels = {};
+        
+        // Add TSV values as levels
+        uniqueValues.forEach(value => {
+          colData.levels[value] = {
+            label: value,
+            description: '',  // User can add description later
+            uri: null
+          };
+        });
+        
+        console.log(`✅ Updated ${colName} with ${Object.keys(colData.levels).length} categorical levels from TSV`);
+      }
+    }
+  } else {
+    console.log('ℹ️ No TSV data available - using NeuroBagel defaults only');
+  }
   
-  // Group columns by standardized variable
-  const byStandardized = {};
-  const unannotated = {};
+  window.neurobagelWidgetState.allColumns = enrichedData;
   
-  for (const [colName, colData] of Object.entries(data.properties)) {
-    const stdVar = colData.standardized_variable;
-    if (stdVar) {
-      if (!byStandardized[stdVar]) byStandardized[stdVar] = [];
-      byStandardized[stdVar].push({ name: colName, data: colData });
+  // Categorize columns into AVAILABLE (in TSV) and TO ADD (suggestions)
+  const tsvColumns = window.participantsTsvData ? Object.keys(window.participantsTsvData) : [];
+  const available = {};  // Columns in the TSV file
+  const toAdd = {};      // NeuroBagel suggestions not in TSV
+  
+  for (const [colName, colData] of Object.entries(enrichedData)) {
+    if (tsvColumns.includes(colName)) {
+      available[colName] = colData;
     } else {
-      unannotated[colName] = colData;
+      toAdd[colName] = colData;
     }
   }
   
-  console.log('📊 Standardized variables:', Object.keys(byStandardized));
-  console.log('📊 Unannotated columns:', Object.keys(unannotated));
+  console.log('📊 Available columns (in TSV):', Object.keys(available));
+  console.log('📊 To Add (NeuroBagel suggestions):', Object.keys(toAdd));
   
   // Render sidebar
   const sidebar = document.getElementById('neurobagelSidebar');
@@ -288,37 +315,58 @@ window.renderNeurobagelWidget = async function() {
   }
   sidebar.innerHTML = '';
   
-  for (const [stdVar, columns] of Object.entries(byStandardized)) {
-    const section = document.createElement('div');
-    section.style.marginBottom = '12px';
+  // AVAILABLE section
+  if (Object.keys(available).length > 0) {
+    const availableSection = document.createElement('div');
+    availableSection.style.marginBottom = '16px';
     
-    for (const col of columns) {
+    const availableTitle = document.createElement('div');
+    availableTitle.className = 'nb-section-title';
+    availableTitle.style.marginTop = '0';
+    availableTitle.textContent = '✓ Available';
+    availableSection.appendChild(availableTitle);
+    
+    for (const [colName, colData] of Object.entries(available)) {
       const item = document.createElement('div');
       item.className = 'nb-column-item';
       item.innerHTML = `
-        ${col.name}
-        <span class="nb-column-item-type">${col.data.data_type}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <span>${colName}</span>
+          <span class="nb-column-item-type">${colData.data_type}</span>
+        </div>
       `;
-      item.onclick = () => window.selectNeurobagelColumn(col.name);
-      section.appendChild(item);
+      item.onclick = () => window.selectNeurobagelColumn(colName);
+      availableSection.appendChild(item);
     }
     
-    sidebar.appendChild(section);
+    sidebar.appendChild(availableSection);
   }
   
-  // Render unannotated
-  const unannotatedDiv = document.getElementById('neurobagelUnannotated');
-  unannotatedDiv.innerHTML = '';
-  
-  for (const [colName, colData] of Object.entries(unannotated)) {
-    const item = document.createElement('div');
-    item.className = 'nb-column-item';
-    item.innerHTML = `
-      ${colName}
-      <span class="nb-column-item-type">${colData.data_type || 'unknown'}</span>
-    `;
-    item.onclick = () => window.selectNeurobagelColumn(colName);
-    unannotatedDiv.appendChild(item);
+  // TO ADD section
+  if (Object.keys(toAdd).length > 0) {
+    const toAddSection = document.createElement('div');
+    
+    const toAddTitle = document.createElement('div');
+    toAddTitle.className = 'nb-section-title';
+    toAddTitle.textContent = '+ To Add';
+    toAddTitle.style.marginTop = Object.keys(available).length > 0 ? '12px' : '0';
+    toAddSection.appendChild(toAddTitle);
+    
+    for (const [colName, colData] of Object.entries(toAdd)) {
+      const item = document.createElement('div');
+      item.className = 'nb-column-item';
+      item.style.opacity = '0.7';
+      item.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <span>${colName}</span>
+          <span class="nb-column-item-type">${colData.data_type}</span>
+        </div>
+      `;
+      item.onclick = () => window.selectNeurobagelColumn(colName);
+      toAddSection.appendChild(item);
+    }
+    
+    sidebar.appendChild(toAddSection);
   }
   
   // Force widget to be visible
@@ -385,7 +433,7 @@ window.renderNeurobagelEditor = function(colName, colData) {
       </div>
     `;
   } else if (dataType === 'categorical' && colData.levels) {
-    // Categorical levels
+    // Categorical levels with editable descriptions
     html += `
       <div class="nb-field-group">
         <div class="nb-field-label">Categorical Levels</div>
@@ -393,12 +441,30 @@ window.renderNeurobagelEditor = function(colName, colData) {
     `;
     
     for (const [levelKey, levelData] of Object.entries(colData.levels)) {
+      const description = levelData.description || '';
+      const uniqueId = `nb-cat-${colName}-${levelKey}`;
+      
       html += `
-        <div class="nb-value-item" onclick="window.applyNeurobagelLevel('${colName}', '${levelKey}')">
-          <div class="nb-value-header">${levelKey}</div>
-          <div class="nb-value-label">${levelData.label || levelKey}</div>
-          <div class="nb-value-label">${levelData.description || ''}</div>
-          ${levelData.uri ? `<div class="nb-value-uri">🔗 ${levelData.uri}</div>` : ''}
+        <div class="nb-categorical-item" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 8px; background: #fff;">
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; min-width: 60px; padding: 4px 8px; background: #e7f1ff; border-radius: 4px; font-size: 12px;">${levelKey}</span>
+            <span style="color: #666; font-size: 12px;">→</span>
+            <input 
+              type="text" 
+              class="nb-categorical-label" 
+              id="${uniqueId}-label" 
+              placeholder="Label (e.g., Healthy Controls)"
+              value="${levelData.label || levelKey}"
+              style="flex: 1; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;"
+            />
+          </div>
+          <textarea 
+            class="nb-categorical-desc" 
+            id="${uniqueId}-desc" 
+            placeholder="Description (e.g., Healthy control group)"
+            style="width: 100%; height: 40px; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;"
+          >${description}</textarea>
+          ${levelData.uri ? `<div style="margin-top: 6px; font-size: 11px; color: #666;">🔗 <code>${levelData.uri}</code></div>` : ''}
         </div>
       `;
     }
@@ -438,6 +504,29 @@ window.renderNeurobagelEditor = function(colName, colData) {
       colData.unit = this.value;
       console.log(`Updated unit for ${colName}:`, this.value);
     });
+  }
+  
+  // Add listeners for categorical level edits
+  if (dataType === 'categorical' && colData.levels) {
+    for (const levelKey of Object.keys(colData.levels)) {
+      const uniqueId = `nb-cat-${colName}-${levelKey}`;
+      const labelField = document.getElementById(`${uniqueId}-label`);
+      const descField = document.getElementById(`${uniqueId}-desc`);
+      
+      if (labelField) {
+        labelField.addEventListener('change', function() {
+          colData.levels[levelKey].label = this.value || levelKey;
+          console.log(`Updated label for ${colName}/${levelKey}:`, this.value);
+        });
+      }
+      
+      if (descField) {
+        descField.addEventListener('change', function() {
+          colData.levels[levelKey].description = this.value;
+          console.log(`Updated description for ${colName}/${levelKey}:`, this.value);
+        });
+      }
+    }
   }
 };
 

@@ -890,9 +890,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentDatasetPath = null;
         
         // Extract metadata files - ONLY .json at root level
-        // Exclude: .tsv, .csv, .txt files
-        // Exclude: files in subject folders (containing 'sub-')
+        // Also extract participants.tsv if present (for categorical value mapping)
         const metadataFiles = [];
+        let participantsTsvFile = null;
         const skippedFiles = [];
         
         console.log('Processing', files.length, 'total files...');
@@ -902,6 +902,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const filePath = file.webkitRelativePath || file.name;
             
             console.log('Checking file:', filePath);
+            
+            // Check for participants.tsv at root level
+            if (fileName === 'participants.tsv' && !filePath.includes('sub-')) {
+                console.log('  -> Found participants.tsv for value mapping');
+                participantsTsvFile = file;
+                continue;
+            }
             
             // Only include .json files
             if (!fileName.endsWith('.json')) {
@@ -932,6 +939,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Parse participants.tsv if found
+        if (participantsTsvFile) {
+            parseParticipantsTsv(participantsTsvFile);
+        } else {
+            window.participantsTsvData = null;
+            console.log('No participants.tsv found');
+        }
+        
         // Populate file selector
         const fileList = metadataFiles.map(f => f.webkitRelativePath || f.name);
         populateFileSelector(fileList);
@@ -960,6 +975,55 @@ document.addEventListener('DOMContentLoaded', function() {
         
         uploadArea.style.display = 'none';
         showAlert(`Dataset loaded! Found ${metadataFiles.length} root-level JSON metadata files.`, 'success');
+    }
+
+    // Parse participants.tsv and extract unique values for each column
+    function parseParticipantsTsv(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const content = e.target.result;
+                const lines = content.trim().split('\n');
+                
+                if (lines.length < 2) {
+                    console.warn('participants.tsv is empty or has only header');
+                    return;
+                }
+                
+                // Parse header
+                const headers = lines[0].split('\t');
+                console.log('TSV headers:', headers);
+                
+                // Extract unique values for each column
+                const columnValues = {};
+                headers.forEach(header => {
+                    columnValues[header] = new Set();
+                });
+                
+                // Process data rows
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split('\t');
+                    headers.forEach((header, idx) => {
+                        if (idx < values.length && values[idx].trim()) {
+                            columnValues[header].add(values[idx].trim());
+                        }
+                    });
+                }
+                
+                // Convert Sets to sorted arrays
+                const uniqueValues = {};
+                Object.keys(columnValues).forEach(header => {
+                    uniqueValues[header] = Array.from(columnValues[header]).sort();
+                });
+                
+                window.participantsTsvData = uniqueValues;
+                console.log('Extracted TSV unique values:', uniqueValues);
+            } catch (err) {
+                console.error('Error parsing participants.tsv:', err);
+                window.participantsTsvData = null;
+            }
+        };
+        reader.readAsText(file);
     }
 
     function populateFileSelector(files) {
