@@ -93,16 +93,24 @@
                 <img src="{{ url_for('static', filename='img/MRI_Lab_Logo.png') }}" alt="MRI-Lab Graz logo" class="brand-logo me-3">
                 <div class="brand-text">
                     <div class="fw-bold text-uppercase">MRI-Lab Graz</div>
-                    <small class="text-muted">Psycho-Validator Web Interface</small>
+                    <small class="text-muted">Psycho-Validator</small>
                 </div>
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link text-muted" href="{{ url_for('index') }}">
-                    <i class="fas fa-home me-1"></i>Home
-                </a>
-                <a class="nav-link text-muted" href="{{ url_for('json_editor.editor_index') }}">
-                    <i class="fas fa-pen-fancy me-1"></i>JSON Editor
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="{{ url_for('index') }}">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                    <a class="nav-link" href="{{ url_for('index') }}">
+                        <i class="fas fa-check-circle me-1"></i>Validate Dataset
+                    </a>
+                    <a class="nav-link" href="{{ url_for('json_editor') }}">
+                        <i class="fas fa-pen-fancy me-1"></i>JSON Editor
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
