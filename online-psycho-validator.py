@@ -573,40 +573,41 @@ def augment_neurobagel_data(raw_data):
         'handedness': 'handedness',
     }
     
-    # Categorical value mappings with controlled vocabulary URIs
+    # Categorical value mappings with controlled vocabulary URIs (SNOMED CT and PATO)
+    # URIs are stored in shortened form for export (e.g., 'snomed:248153007')
     categorical_vocabularies = {
         'sex': {
             'M': {
                 'label': 'Male',
                 'description': 'Male biological sex',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0000384'
+                'uri': 'snomed:248153007'
             },
             'F': {
                 'label': 'Female',
                 'description': 'Female biological sex',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0000383'
+                'uri': 'snomed:248152002'
             },
             'O': {
                 'label': 'Other',
                 'description': 'Other biological sex',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0000385'
+                'uri': 'snomed:447964000'
             }
         },
         'handedness': {
             'L': {
                 'label': 'Left',
                 'description': 'Left-handed',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0002200'
+                'uri': 'snomed:87622008'
             },
             'R': {
                 'label': 'Right',
                 'description': 'Right-handed',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0002201'
+                'uri': 'snomed:78791000'
             },
             'A': {
                 'label': 'Ambidextrous',
                 'description': 'Ambidextrous',
-                'uri': 'http://purl.obolibrary.org/obo/PATO_0002202'
+                'uri': 'snomed:16022009'
             }
         }
     }
@@ -635,14 +636,14 @@ def augment_neurobagel_data(raw_data):
                     if level_key in categorical_vocabularies[col_name]:
                         aug_col['levels'][level_key] = categorical_vocabularies[col_name][level_key]
                     else:
-                        # Fallback: use provided label
+                        # Fallback: use provided label (no URI)
                         aug_col['levels'][level_key] = {
                             'label': level_label if isinstance(level_label, str) else str(level_key),
                             'description': f"Value: {level_key}",
                             'uri': None
                         }
             else:
-                # No vocabulary available, use raw levels
+                # No vocabulary available, use raw levels (no URIs)
                 aug_col['levels'] = {
                     k: {'label': v, 'description': f"Value: {k}", 'uri': None}
                     for k, v in col_data['Levels'].items()

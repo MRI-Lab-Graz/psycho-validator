@@ -382,9 +382,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     annotatedData[colName] = {};
                 }
                 
-                // Add description if available
-                if (colData.Description) {
-                    annotatedData[colName].Description = colData.Description;
+                // Add description if available (use 'description' or 'Description')
+                const desc = colData.description || colData.Description;
+                if (desc) {
+                    annotatedData[colName].Description = desc;
                 }
                 
                 // Add units if available (for continuous variables)
@@ -406,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         annotatedData[colName].Annotations = {};
                     }
                     
-                    // Add IsAbout annotation
+                    // Add IsAbout annotation (only if standardized variable exists)
                     if (colData.standardized_variable) {
                         annotatedData[colName].Annotations.IsAbout = {
                             TermURL: 'nb:' + colData.standardized_variable,
@@ -429,14 +430,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (colData.data_type === 'categorical' && colData.levels) {
                         annotatedData[colName].Annotations.Levels = {};
                         for (const [levelKey, levelData] of Object.entries(colData.levels)) {
-                            annotatedData[colName].Annotations.Levels[levelKey] = {
-                                Label: levelData.label || levelKey,
-                                TermURL: levelData.uri || undefined
+                            const levelEntry = {
+                                Label: levelData.label || levelKey
                             };
-                            // Remove undefined properties
-                            if (!annotatedData[colName].Annotations.Levels[levelKey].TermURL) {
-                                delete annotatedData[colName].Annotations.Levels[levelKey].TermURL;
+                            
+                            // Only add TermURL if it exists (don't add undefined/null)
+                            if (levelData.uri) {
+                                levelEntry.TermURL = levelData.uri;
                             }
+                            
+                            annotatedData[colName].Annotations.Levels[levelKey] = levelEntry;
                         }
                     }
                 }

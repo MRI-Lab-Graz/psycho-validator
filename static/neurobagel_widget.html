@@ -251,6 +251,50 @@ window.toggleNeurobagelWidget = function() {
   content.style.display = expanded ? 'none' : 'flex';
 };
 
+// Auto-detect data type for custom columns based on TSV values
+window.autoDetectDataType = function(colName, uniqueValues) {
+  if (!uniqueValues || uniqueValues.length === 0) {
+    return 'text';
+  }
+  
+  // Rule 1: If <= 10 unique values, treat as categorical
+  if (uniqueValues.length <= 10) {
+    // Additional check: make sure they're not all numbers with different values
+    const allNumeric = uniqueValues.every(v => !isNaN(v) && v !== '');
+    if (allNumeric) {
+      // If all numeric and > 5 unique values, could be continuous
+      // But if they look like IDs or codes, keep as categorical
+      const numericValues = uniqueValues.map(Number).sort((a, b) => a - b);
+      const range = numericValues[numericValues.length - 1] - numericValues[0];
+      const step = range > 0 ? range / (numericValues.length - 1) : 0;
+      
+      // If values are evenly spaced (like ages: 20, 21, 22...), likely continuous
+      // If they're sparse or with gaps, likely codes/categories
+      const isEvenlySpaced = numericValues.every((val, idx, arr) => {
+        if (idx === 0) return true;
+        const expectedDiff = step;
+        const actualDiff = val - arr[idx - 1];
+        return Math.abs(actualDiff - expectedDiff) < 1;
+      });
+      
+      if (isEvenlySpaced && range > 5) {
+        return 'continuous';
+      }
+    }
+    
+    return 'categorical';
+  }
+  
+  // Rule 2: If > 10 unique values, likely continuous or text
+  // Check if mostly numeric
+  const numericCount = uniqueValues.filter(v => !isNaN(v) && v !== '').length;
+  if (numericCount / uniqueValues.length > 0.8) {
+    return 'continuous';
+  }
+  
+  return 'text';
+};
+
 window.renderNeurobagelWidget = async function() {
   console.log('🧠 renderNeurobagelWidget called');
   const data = await fetchNeurobagelParticipants();
@@ -283,6 +327,34 @@ window.renderNeurobagelWidget = async function() {
         });
         
         console.log(`✅ Updated ${colName} with ${Object.keys(colData.levels).length} categorical levels from TSV`);
+      }
+    }
+    
+    // Auto-detect data types for custom columns in TSV (not in NeuroBagel)
+    for (const [colName, uniqueValues] of Object.entries(window.participantsTsvData)) {
+      if (!enrichedData[colName]) {
+        // This is a custom column not in NeuroBagel
+        const detectedType = window.autoDetectDataType(colName, uniqueValues);
+        console.log(`🔍 Auto-detected data type for custom column ${colName}:`, detectedType);
+        
+        enrichedData[colName] = {
+          description: `Column: ${colName}`,
+          data_type: detectedType,
+          standardized_variable: null
+        };
+        
+        // If detected as categorical, add levels from TSV
+        if (detectedType === 'categorical') {
+          enrichedData[colName].levels = {};
+          uniqueValues.forEach(value => {
+            enrichedData[colName].levels[value] = {
+              label: value,
+              description: '',
+              uri: null
+            };
+          });
+          console.log(`📊 Custom column ${colName} - added ${uniqueValues.length} categorical levels`);
+        }
       }
     }
   } else {
