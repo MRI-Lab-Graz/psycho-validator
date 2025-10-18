@@ -4,34 +4,72 @@ async function fetchNeurobagelParticipants() {
     const resp = await fetch('/api/neurobagel/participants');
     if (!resp.ok) throw new Error('Network response not ok');
     const json = await resp.json();
-    return json.data;
+    // Return augmented data with hierarchical structure
+    return json.augmented || json.data;
   } catch (err) {
     console.warn('NeuroBagel fetch failed, using fallback suggestions:', err);
-    // Provide sensible fallback suggestions when network is unavailable
+    // Provide sensible fallback suggestions with hierarchical structure when network is unavailable
     return {
       properties: {
         participant_id: {
           description: "A participant ID",
-          type: "string"
+          data_type: "text",
+          standardized_variable: "participant_id"
         },
         age: {
           description: "Age of participant in years",
-          type: "integer",
-          examples: [25, 30, 35]
+          data_type: "continuous",
+          unit: "years",
+          standardized_variable: "age"
         },
         sex: {
           description: "Biological sex of participant",
-          type: "string",
-          enum: ["M", "F", "O"]
+          data_type: "categorical",
+          standardized_variable: "biological_sex",
+          levels: {
+            "M": {
+              label: "Male",
+              description: "Male biological sex",
+              uri: "http://purl.obolibrary.org/obo/PATO_0000384"
+            },
+            "F": {
+              label: "Female",
+              description: "Female biological sex",
+              uri: "http://purl.obolibrary.org/obo/PATO_0000383"
+            },
+            "O": {
+              label: "Other",
+              description: "Other biological sex",
+              uri: "http://purl.obolibrary.org/obo/PATO_0000385"
+            }
+          }
         },
         group: {
           description: "Participant group (e.g., control, patient)",
-          type: "string"
+          data_type: "categorical",
+          standardized_variable: "participant_group"
         },
         handedness: {
           description: "Handedness of participant",
-          type: "string",
-          enum: ["L", "R", "A"]
+          data_type: "categorical",
+          standardized_variable: "handedness",
+          levels: {
+            "L": {
+              label: "Left",
+              description: "Left-handed",
+              uri: "http://purl.obolibrary.org/obo/PATO_0002200"
+            },
+            "R": {
+              label: "Right",
+              description: "Right-handed",
+              uri: "http://purl.obolibrary.org/obo/PATO_0002201"
+            },
+            "A": {
+              label: "Ambidextrous",
+              description: "Ambidextrous",
+              uri: "http://purl.obolibrary.org/obo/PATO_0002202"
+            }
+          }
         }
       }
     };
@@ -46,7 +84,7 @@ window.populateParticipantsSuggestions = async function populateParticipantsSugg
     selectEl.innerHTML = '<option>No suggestions available</option>';
     return;
   }
-  // NeuroBagel participants format may vary; safely extract properties
+  // Extract properties and build options with additional metadata
   const fields = Object.keys((data && data.properties) || {});
   selectEl.innerHTML = '';
   if (fields.length === 0) {
@@ -59,7 +97,12 @@ window.populateParticipantsSuggestions = async function populateParticipantsSugg
   fields.forEach(f => {
     const opt = document.createElement('option');
     opt.value = f;
-    opt.textContent = f;
+    const colData = data.properties[f];
+    const dataType = colData.data_type || 'unknown';
+    // Show field name with data type hint
+    opt.textContent = `${f} (${dataType})`;
+    // Store metadata on the option element
+    opt.dataset.columnMetadata = JSON.stringify(colData);
     selectEl.appendChild(opt);
   });
   // cache the raw NeuroBagel data on window for reuse
@@ -87,12 +130,28 @@ window.applyNeurobagelSuggestion = async function applyNeurobagelSuggestion(fiel
     return;
   }
 
-  // Determine a reasonable suggestion string: prefer description, then examples, then type
+  // Build suggestion based on hierarchical data type
   let suggestion = '';
-  if (fieldDef.description) suggestion = fieldDef.description;
-  else if (Array.isArray(fieldDef.examples) && fieldDef.examples.length > 0) suggestion = JSON.stringify(fieldDef.examples[0]);
-  else if (fieldDef.type) suggestion = String(fieldDef.type);
-  else suggestion = JSON.stringify(fieldDef);
+  const dataType = fieldDef.data_type;
+  
+  if (dataType === 'categorical' && fieldDef.levels) {
+    // For categorical: show all levels with descriptions
+    const levelsList = Object.entries(fieldDef.levels)
+      .map(([k, v]) => {
+        const label = v.label || k;
+        const uri = v.uri ? ` (${v.uri})` : '';
+        return `${k}: ${label}${uri}`;
+      })
+      .join('\n');
+    suggestion = `Categorical levels:\n${levelsList}`;
+  } else if (dataType === 'continuous' && fieldDef.unit) {
+    // For continuous: show unit + description
+    suggestion = `${fieldDef.description} (Unit: ${fieldDef.unit})`;
+  } else if (fieldDef.description) {
+    suggestion = fieldDef.description;
+  } else {
+    suggestion = JSON.stringify(fieldDef, null, 2);
+  }
 
   // Find all textareas in the participants form that have a data-json-path starting with the fieldKey
   const selector = `[data-json-path^="${fieldKey}"]`;
@@ -106,7 +165,7 @@ window.applyNeurobagelSuggestion = async function applyNeurobagelSuggestion(fiel
     }
     fallback.forEach(el => { el.value = suggestion; });
     // Notify user
-    if (typeof showAlert === 'function') showAlert(`Inserted NeuroBagel suggestion for ${fieldKey}`, 'success');
+    if (typeof showAlert === 'function') showAlert(`Inserted NeuroBagel suggestion for ${fieldKey} (${dataType})`, 'success');
     return;
   }
 
@@ -114,5 +173,5 @@ window.applyNeurobagelSuggestion = async function applyNeurobagelSuggestion(fiel
     el.value = suggestion;
   });
 
-  if (typeof showAlert === 'function') showAlert(`Inserted NeuroBagel suggestion for ${fieldKey}`, 'success');
+  if (typeof showAlert === 'function') showAlert(`Inserted NeuroBagel suggestion for ${fieldKey} (${dataType})`, 'success');
 };

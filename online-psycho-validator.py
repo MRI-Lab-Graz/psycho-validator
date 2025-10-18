@@ -552,16 +552,135 @@ def fetch_neurobagel_participants():
         return None
 
 
+def augment_neurobagel_data(raw_data):
+    """Augment raw NeuroBagel data with standardized variable mappings and categorical details.
+    
+    Transforms flat NeuroBagel data into a hierarchical structure with:
+    - Standardized variable mappings (e.g., sex -> biological_sex)
+    - Data type classification (categorical vs continuous)
+    - Categorical level details with URIs and descriptions
+    - Column-level metadata
+    """
+    if not raw_data or not raw_data.get('properties'):
+        return raw_data
+    
+    # Mapping of column names to standardized variables
+    standardized_mappings = {
+        'participant_id': 'participant_id',
+        'age': 'age',
+        'sex': 'biological_sex',
+        'group': 'participant_group',
+        'handedness': 'handedness',
+    }
+    
+    # Categorical value mappings with controlled vocabulary URIs
+    categorical_vocabularies = {
+        'sex': {
+            'M': {
+                'label': 'Male',
+                'description': 'Male biological sex',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0000384'
+            },
+            'F': {
+                'label': 'Female',
+                'description': 'Female biological sex',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0000383'
+            },
+            'O': {
+                'label': 'Other',
+                'description': 'Other biological sex',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0000385'
+            }
+        },
+        'handedness': {
+            'L': {
+                'label': 'Left',
+                'description': 'Left-handed',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0002200'
+            },
+            'R': {
+                'label': 'Right',
+                'description': 'Right-handed',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0002201'
+            },
+            'A': {
+                'label': 'Ambidextrous',
+                'description': 'Ambidextrous',
+                'uri': 'http://purl.obolibrary.org/obo/PATO_0002202'
+            }
+        }
+    }
+    
+    # Augmented structure
+    augmented = {'properties': {}}
+    
+    for col_name, col_data in raw_data.get('properties', {}).items():
+        aug_col = {
+            'description': col_data.get('description', ''),
+            'original_data': col_data
+        }
+        
+        # Add standardized variable mapping
+        if col_name in standardized_mappings:
+            aug_col['standardized_variable'] = standardized_mappings[col_name]
+        
+        # Infer data type from Levels (if present, it's categorical)
+        if 'Levels' in col_data and isinstance(col_data['Levels'], dict):
+            aug_col['data_type'] = 'categorical'
+            
+            # Augment with vocabulary if available
+            if col_name in categorical_vocabularies:
+                aug_col['levels'] = {}
+                for level_key, level_label in col_data['Levels'].items():
+                    if level_key in categorical_vocabularies[col_name]:
+                        aug_col['levels'][level_key] = categorical_vocabularies[col_name][level_key]
+                    else:
+                        # Fallback: use provided label
+                        aug_col['levels'][level_key] = {
+                            'label': level_label if isinstance(level_label, str) else str(level_key),
+                            'description': f"Value: {level_key}",
+                            'uri': None
+                        }
+            else:
+                # No vocabulary available, use raw levels
+                aug_col['levels'] = {
+                    k: {'label': v, 'description': f"Value: {k}", 'uri': None}
+                    for k, v in col_data['Levels'].items()
+                }
+        elif col_name in ['age']:
+            aug_col['data_type'] = 'continuous'
+            if 'Units' in col_data:
+                aug_col['unit'] = col_data['Units']
+        else:
+            aug_col['data_type'] = 'text'
+        
+        augmented['properties'][col_name] = aug_col
+    
+    return augmented
+
+
 @app.route('/api/neurobagel/participants')
 def neurobagel_participants():
-    """Return NeuroBagel participants dictionary (cached).
+    """Return NeuroBagel participants dictionary (cached) with augmented annotations.
 
-    The frontend can call this to populate suggestions for participants.tsv fields.
+    The frontend can call this to populate hierarchical suggestions for participants.json fields.
+    Returns augmented data with:
+    - Standardized variable mappings
+    - Data type classifications
+    - Categorical value vocabularies with URIs
     """
     data = fetch_neurobagel_participants()
     if not data:
         return jsonify({'error': 'Could not fetch NeuroBagel data'}), 502
-    return jsonify({'source': 'neurobagel', 'data': data})
+    
+    # Augment raw data with standardized mappings and vocabularies
+    augmented = augment_neurobagel_data(data)
+    
+    return jsonify({
+        'source': 'neurobagel',
+        'raw': data,
+        'augmented': augmented
+    })
 
 
 def shorten_path(file_path, max_parts=3):
