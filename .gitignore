@@ -23,6 +23,7 @@ psycho_validator.egg-info/
 htmlcov/
 .tox/
 .cache/
+.ruff_cache/
 
 # Logs
 *.log
