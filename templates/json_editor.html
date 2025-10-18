@@ -465,7 +465,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Folder button click
     folderBtn.addEventListener('click', function() {
+        console.log('Folder button clicked');
+        console.log('supportsFolderUpload:', supportsFolderUpload);
+        console.log('folderInput:', folderInput);
         if (supportsFolderUpload) {
+            console.log('Clicking folder input...');
             folderInput.click();
         } else {
             showAlert('Folder upload is not supported in this browser. Please use the ZIP file option or try a modern browser like Chrome, Firefox, or Edge.', 'warning');
