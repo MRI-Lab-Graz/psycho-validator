@@ -2,6 +2,9 @@
 
 {% block title %}JSON Editor - Psycho-Validator{% endblock %}
 
+{% block styles %}
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -190,41 +193,11 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Include JSON Editor CSS -->
-<link rel="stylesheet" href="{{ url_for('json_editor.static', filename='css/style.css') }}">
-
 <!-- Include JSON Editor JavaScript -->
 <script src="{{ url_for('json_editor.static', filename='js/api.js') }}"></script>
 <script src="{{ url_for('json_editor.static', filename='js/form-builder.js') }}"></script>
 <!-- NeuroBagel helpers -->
 <script src="{{ url_for('static', filename='js/neurobagel.js') }}"></script>
-
-<style>
-    .upload-area {
-        border: 2px dashed #ccc;
-        border-radius: 0.5rem;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-area:hover {
-        border-color: #0d6efd;
-        background-color: #f8f9ff;
-    }
-    
-    .upload-area.dragover {
-        border-color: #0d6efd;
-        background-color: #e7f1ff;
-    }
-    
-    .feature-card {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        border: none;
-        border-radius: 0.5rem;
-    }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
