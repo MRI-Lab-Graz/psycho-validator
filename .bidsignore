@@ -7,7 +7,7 @@ code/
 sub-*/ses-*/audio/
 sub-*/ses-*/image/
 sub-*/movie/
-
+.ruff_cache/
 # Optional extra MRI container not in BIDS
 sub-*/ses-*/mri/
 
