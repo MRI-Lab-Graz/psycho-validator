@@ -213,8 +213,8 @@ is_system_file = simple_is_system_file
 app = Flask(__name__)
 app.secret_key = "psycho-validator-secret-key"  # Change this in production
 app.config["MAX_CONTENT_LENGTH"] = (
-    100 * 1024 * 1024
-)  # 100MB max file size (metadata only)
+    1024 * 1024 * 1024
+)  # 1GB max file size (increased to support large batches of text files)
 
 # Register JSON Editor blueprint if available
 try:
