@@ -212,9 +212,14 @@ is_system_file = simple_is_system_file
 
 app = Flask(__name__)
 app.secret_key = "psycho-validator-secret-key"  # Change this in production
-app.config["MAX_CONTENT_LENGTH"] = (
-    1024 * 1024 * 1024
-)  # 1GB max file size (increased to support large batches of text files)
+
+# Configuration for large uploads (batch processing)
+# 1. Max total size (10GB)
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024 * 1024
+# 2. Max number of files/fields (Flask 2.3+)
+app.config["DATA_UPLOAD_MAX_NUMBER_FIELDS"] = 100000
+# 3. Max form parts (Werkzeug/Older Flask)
+app.request_class.max_form_parts = 100000
 
 # Register JSON Editor blueprint if available
 try:
