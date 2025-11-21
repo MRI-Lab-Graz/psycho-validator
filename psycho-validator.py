@@ -192,6 +192,11 @@ Examples:
     parser.add_argument(
         "--list-versions", action="store_true", help="List available schema versions"
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Strict mode: Disable BIDS fallback and require rich schema compliance",
+    )
     parser.add_argument("--version", action="version", version="Psycho-Validator 1.3.0")
 
     args = parser.parse_args()
@@ -231,7 +236,10 @@ Examples:
 
     try:
         issues, stats = validate_dataset(
-            args.dataset, verbose=args.verbose, schema_version=schema_version
+            args.dataset,
+            verbose=args.verbose,
+            schema_version=schema_version,
+            strict=args.strict,
         )
 
         # Print results

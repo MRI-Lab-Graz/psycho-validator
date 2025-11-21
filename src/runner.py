@@ -18,13 +18,14 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
 
-def validate_dataset(root_dir, verbose=False, schema_version=None):
+def validate_dataset(root_dir, verbose=False, schema_version=None, strict=False):
     """Main dataset validation function (refactored from psycho-validator.py)
 
     Args:
         root_dir: Root directory of the dataset
         verbose: Enable verbose output
         schema_version: Schema version to use (e.g., 'stable', 'v0.1', '0.1')
+        strict: If True, disable BIDS fallback and require rich schema compliance
 
     Returns: (issues, stats)
     """
@@ -42,6 +43,8 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
         if bids_schemas:
             print(f"📋 Loaded {len(bids_schemas)} BIDS fallback schemas")
         print(f"📁 Scanning modalities: {list(MODALITY_PATTERNS.keys())}")
+        if strict:
+            print("🔒 Strict mode enabled: BIDS fallback disabled")
 
     # Initialize validator
     validator = DatasetValidator(schemas, bids_schemas)
@@ -53,7 +56,7 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
     else:
         # Validate dataset_description.json
         desc_issues = validator.validate_sidecar(
-            dataset_desc_path, "dataset_description", root_dir
+            dataset_desc_path, "dataset_description", root_dir, strict=strict
         )
         issues.extend(desc_issues)
 
@@ -69,7 +72,7 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
         item_path = os.path.join(root_dir, item)
         if os.path.isdir(item_path) and item.startswith("sub-"):
             subject_issues = _validate_subject(
-                item_path, item, validator, stats, root_dir
+                item_path, item, validator, stats, root_dir, strict
             )
             issues.extend(subject_issues)
 
@@ -80,7 +83,7 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
     return issues, stats
 
 
-def _validate_subject(subject_dir, subject_id, validator, stats, root_dir):
+def _validate_subject(subject_dir, subject_id, validator, stats, root_dir, strict):
     issues = []
 
     all_items = os.listdir(subject_dir)
@@ -92,20 +95,20 @@ def _validate_subject(subject_dir, subject_id, validator, stats, root_dir):
             if item.startswith("ses-"):
                 issues.extend(
                     _validate_session(
-                        item_path, subject_id, item, validator, stats, root_dir
+                        item_path, subject_id, item, validator, stats, root_dir, strict
                     )
                 )
             elif item in MODALITY_PATTERNS:
                 issues.extend(
                     _validate_modality_dir(
-                        item_path, subject_id, None, item, validator, stats, root_dir
+                        item_path, subject_id, None, item, validator, stats, root_dir, strict
                     )
                 )
 
     return issues
 
 
-def _validate_session(session_dir, subject_id, session_id, validator, stats, root_dir):
+def _validate_session(session_dir, subject_id, session_id, validator, stats, root_dir, strict):
     issues = []
 
     all_items = os.listdir(session_dir)
@@ -116,7 +119,7 @@ def _validate_session(session_dir, subject_id, session_id, validator, stats, roo
         if os.path.isdir(item_path) and item in MODALITY_PATTERNS:
             issues.extend(
                 _validate_modality_dir(
-                    item_path, subject_id, session_id, item, validator, stats, root_dir
+                    item_path, subject_id, session_id, item, validator, stats, root_dir, strict
                 )
             )
 
@@ -124,7 +127,7 @@ def _validate_session(session_dir, subject_id, session_id, validator, stats, roo
 
 
 def _validate_modality_dir(
-    modality_dir, subject_id, session_id, modality, validator, stats, root_dir
+    modality_dir, subject_id, session_id, modality, validator, stats, root_dir, strict
 ):
     issues = []
 
@@ -153,7 +156,7 @@ def _validate_modality_dir(
             # Validate sidecar if not JSON file itself
             if not fname.endswith(".json"):
                 sidecar_issues = validator.validate_sidecar(
-                    file_path, modality, root_dir
+                    file_path, modality, root_dir, strict=strict
                 )
                 issues.extend(sidecar_issues)
 

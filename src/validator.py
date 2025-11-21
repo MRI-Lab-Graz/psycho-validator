@@ -108,7 +108,7 @@ class DatasetValidator:
 
         return issues
 
-    def validate_sidecar(self, file_path, modality, root_dir):
+    def validate_sidecar(self, file_path, modality, root_dir, strict=False):
         """Validate JSON sidecar against schema"""
         sidecar_path = derive_sidecar_path(file_path)
         issues = []
@@ -130,7 +130,7 @@ class DatasetValidator:
                     validate(instance=sidecar_data, schema=schema)
                 except ValidationError as e:
                     # Primary schema failed. Check if we can fallback to BIDS
-                    if bids_schema:
+                    if bids_schema and not strict:
                         try:
                             validate(instance=sidecar_data, schema=bids_schema)
                             # BIDS passed
@@ -149,14 +149,14 @@ class DatasetValidator:
                                 )
                             )
                     else:
-                        # No BIDS fallback, report error
+                        # No BIDS fallback or strict mode, report error
                         issues.append(
                             (
                                 "ERROR",
                                 f"{normalize_path(sidecar_path)} schema error: {e.message}",
                             )
                         )
-            elif bids_schema:
+            elif bids_schema and not strict:
                 # No primary schema, but BIDS schema exists
                 try:
                     validate(instance=sidecar_data, schema=bids_schema)
@@ -167,6 +167,13 @@ class DatasetValidator:
                             f"{normalize_path(sidecar_path)} BIDS schema error: {e.message}",
                         )
                     )
+            elif strict and not schema:
+                 issues.append(
+                    (
+                        "ERROR",
+                        f"No rich schema found for {modality} and strict mode is enabled.",
+                    )
+                )
 
         except json.JSONDecodeError as e:
             issues.append(
