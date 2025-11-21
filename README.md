@@ -210,6 +210,67 @@ See [`docs/NEUROBAGEL_INTEGRATION_STRATEGY.md`](docs/NEUROBAGEL_INTEGRATION_STRA
 
 ---
 
+## 🔄 BIDS Compatibility & Workflow
+
+Psycho-Validator uses a **PRISM** (Psychological Research Information System Model) metadata structure, which is richer and more nested than standard BIDS. However, we fully support BIDS interoperability.
+
+### 1. Validation Modes
+
+The validator supports two modes:
+
+*   **Flexible Mode (Default)**: Accepts both PRISM (rich) and standard BIDS metadata.
+    *   If a file matches the PRISM schema: **Pass**.
+    *   If a file fails PRISM but matches BIDS: **Pass (with Warning)**.
+    *   Use this for mixed datasets or when transitioning.
+
+    ```bash
+    python psycho-validator.py /path/to/dataset
+    ```
+
+*   **Strict Mode**: Enforces PRISM compliance. BIDS-only files will fail.
+    *   Use this to ensure your lab's high-quality metadata standards are met.
+
+    ```bash
+    python psycho-validator.py /path/to/dataset --strict
+    ```
+
+### 2. BIDS-Apps Workflow (fMRIPrep, MRIQC, etc.)
+
+To use standard BIDS-Apps with your PRISM dataset, use the **Snapshot Workflow**. This creates a temporary, BIDS-compliant view of your data using hardlinks (fast & space-efficient).
+
+**Step 1: Create Snapshot**
+```bash
+# Creates a BIDS-compliant copy at /tmp/bids_view
+python3 scripts/bids_snapshot.py my_dataset/ /tmp/bids_view
+```
+
+**Step 2: Run BIDS-App**
+```bash
+# Run fMRIPrep on the snapshot
+fmriprep-docker /tmp/bids_view my_dataset/derivatives participant
+```
+
+**Step 3: Cleanup**
+```bash
+rm -rf /tmp/bids_view
+```
+
+See [`docs/BIDS_APPS_WORKFLOW.md`](docs/BIDS_APPS_WORKFLOW.md) for the complete guide.
+
+### 3. Permanent Conversion
+
+You can also permanently convert your metadata between formats using the CLI tool:
+
+```bash
+# Convert PRISM -> BIDS (Flatten)
+python3 prism-convert.py /path/to/dataset --to-bids
+
+# Convert BIDS -> PRISM (Enrich)
+python3 prism-convert.py /path/to/dataset --to-prism
+```
+
+---
+
 ## 📚 Additional Resources
 
 - **[Web Interface Documentation](docs/WEB_INTERFACE.md)** - Detailed UI guide
