@@ -89,13 +89,15 @@ class DatasetValidator:
             issues.append(("ERROR", f"Invalid BIDS filename format: {filename}"))
 
         # Check modality pattern
-        if not pattern.match(filename):
-            issues.append(
-                (
-                    "WARNING",
-                    f"Filename doesn't match expected pattern for {modality}: {filename}",
+        # Skip pattern check for JSON sidecars - they are always allowed if they follow BIDS naming
+        if not filename.endswith(".json"):
+            if not pattern.match(filename):
+                issues.append(
+                    (
+                        "WARNING",
+                        f"Filename doesn't match expected pattern for {modality}: {filename}",
+                    )
                 )
-            )
 
         # Check MRI-specific patterns
         if modality in ("anat", "func", "fmap", "dwi"):
