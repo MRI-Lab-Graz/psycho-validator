@@ -43,7 +43,7 @@ except Exception as import_error:
 
 
 # Use subprocess to run the main validator script - single source of truth
-def run_main_validator(dataset_path, verbose=False, schema_version=None):
+def run_main_validator(dataset_path, verbose=False, schema_version=None, strict=False):
     """
     Run the main psycho-validator.py script via subprocess.
     This ensures the web interface uses exactly the same logic as the terminal version.
@@ -52,6 +52,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
         dataset_path: Path to the dataset to validate
         verbose: Enable verbose output
         schema_version: Schema version to use (e.g., 'stable', 'v0.1', '0.1')
+        strict: Enable strict mode (disable BIDS fallback)
     """
     import subprocess
     import re
@@ -63,6 +64,8 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
             cmd.append("--verbose")
         if schema_version:
             cmd.extend(["--schema-version", schema_version])
+        if strict:
+            cmd.append("--strict")
 
         result = subprocess.run(
             cmd, capture_output=True, text=True, cwd=os.path.dirname(__file__)
@@ -778,6 +781,7 @@ def upload_dataset():
 
     # Get schema version from form
     schema_version = request.form.get("schema_version", "stable")
+    strict_mode = request.form.get("strict_mode") == "true"
 
     # Create temporary directory for processing
     temp_dir = tempfile.mkdtemp(prefix="psycho_validator_")
@@ -828,11 +832,11 @@ def upload_dataset():
         # Validate the dataset using core validator when available
         if callable(core_validate_dataset):
             issues, dataset_stats = core_validate_dataset(
-                dataset_path, verbose=True, schema_version=schema_version
+                dataset_path, verbose=True, schema_version=schema_version, strict=strict_mode
             )
         else:
             issues, dataset_stats = run_main_validator(
-                dataset_path, verbose=True, schema_version=schema_version
+                dataset_path, verbose=True, schema_version=schema_version, strict=strict_mode
             )
         results = format_validation_results(issues, dataset_stats, dataset_path)
 
@@ -842,6 +846,7 @@ def upload_dataset():
         results["timestamp"] = datetime.now().isoformat()
         results["upload_type"] = "structure_only"
         results["schema_version"] = schema_version
+        results["strict_mode"] = strict_mode
 
         # Check if manifest exists and add details
         manifest_path = os.path.join(dataset_path, ".upload_manifest.json")
@@ -1215,6 +1220,7 @@ def validate_folder():
 
     # Get schema version from form
     schema_version = request.form.get("schema_version", "stable")
+    strict_mode = request.form.get("strict_mode") == "true"
 
     try:
         # Print validation start info to terminal
@@ -1229,16 +1235,17 @@ def validate_folder():
         # Use the core validator when available for direct integration
         if callable(core_validate_dataset):
             issues, stats = core_validate_dataset(
-                folder_path, verbose=True, schema_version=schema_version
+                folder_path, verbose=True, schema_version=schema_version, strict=strict_mode
             )
         else:
             issues, stats = run_main_validator(
-                folder_path, verbose=True, schema_version=schema_version
+                folder_path, verbose=True, schema_version=schema_version, strict=strict_mode
             )
 
         # Format results for web display
         formatted_results = format_validation_results(issues, stats, folder_path)
         formatted_results["schema_version"] = schema_version
+        formatted_results["strict_mode"] = strict_mode
 
         # Print validation results to terminal
         print("📊 [VALIDATE_FOLDER] Validation complete:")

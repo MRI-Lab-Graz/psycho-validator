@@ -68,6 +68,17 @@
                                 Select the schema version to use for validation. "stable" is recommended.
                             </small>
                         </div>
+
+                        <!-- Strict Mode Checkbox -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="strict_mode" name="strict_mode" value="true">
+                            <label class="form-check-label" for="strict_mode">
+                                <strong>Strict Mode</strong> (Enforce PRISM compliance)
+                            </label>
+                            <div class="form-text">
+                                If checked, BIDS-only files will be rejected. Uncheck to allow BIDS fallback (recommended for compatibility).
+                            </div>
+                        </div>
                         
                         <div class="upload-area" id="uploadArea">
                             <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
@@ -127,6 +138,14 @@
                                             </option>
                                             {% endfor %}
                                         </select>
+                                    </div>
+
+                                    <!-- Strict Mode Checkbox for Local Folder -->
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="folder_strict_mode" name="strict_mode" value="true">
+                                        <label class="form-check-label" for="folder_strict_mode">
+                                            <strong>Strict Mode</strong> (Enforce PRISM compliance)
+                                        </label>
                                     </div>
                                     
                                     <div class="input-group input-group-lg">
