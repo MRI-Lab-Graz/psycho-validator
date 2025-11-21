@@ -1,0 +1,3 @@
+participant_id	age	sex	handedness	education_years	group
+sub-001	25	female	right	16	control
+sub-002	28	male	left	14	experimental

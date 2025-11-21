@@ -1,0 +1,7 @@
+{
+  "Modality": "eeg",
+  "TaskName": "Auditory oddball",
+  "SamplingFrequency": 500,
+  "EEGReference": "Cz",
+  "Description": "Dummy EEG metadata for PRISM demo (sub-002)"
+}

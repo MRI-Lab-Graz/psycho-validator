@@ -2,6 +2,7 @@
 scripts/
 code/
 **/.DS_Store
+branding/
 
 # Custom modality folders (kept for psycho-validator)
 sub-*/ses-*/audio/

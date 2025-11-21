@@ -1,0 +1,7 @@
+{
+  "Name": "PRISM Demo Dataset",
+  "BIDSEquivalent": "dataset_description.json",
+  "PRISMVersion": "0.1.0",
+  "Authors": ["Demo Researcher"],
+  "Description": "Minimal PRISM-style demonstration dataset for live presentation."
+}

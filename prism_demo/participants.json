@@ -1,0 +1,39 @@
+{
+  "Description": "Column metadata for participants.tsv in PRISM demo dataset.",
+  "Columns": {
+    "participant_id": {
+      "Description": "Unique participant identifier (PRISM/BIDS style)",
+      "Pattern": "^sub-[0-9]+$"
+    },
+    "age": {
+      "Description": "Age in years",
+      "Type": "integer",
+      "Range": [18, 120]
+    },
+    "sex": {
+      "Description": "Self-reported biological sex",
+      "Allowed": ["female", "male", "other", "unknown"]
+    },
+    "handedness": {
+      "Description": "Dominant hand for fine motor tasks",
+      "Allowed": ["right", "left", "ambidextrous", "unknown"]
+    },
+    "education_years": {
+      "Description": "Completed formal education in years",
+      "Type": "integer",
+      "Range": [0, 30]
+    },
+    "group": {
+      "Description": "Study group / condition assignment",
+      "Allowed": ["control", "experimental", "pilot"]
+    },
+    "notes": {
+      "Description": "Free-text notes (screening, conditions, relevant context)",
+      "Type": "string"
+    }
+  },
+  "Provenance": {
+    "Created": "2025-11-20",
+    "SchemaIntent": "Demo sidecar for PRISM participants; illustrative only."
+  }
+}

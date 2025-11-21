@@ -1,0 +1,10 @@
+{
+  "Modality": "eyetracking",
+  "TaskName": "Auditory oddball",
+  "Columns": {
+    "onset": {"Description": "Sample onset in seconds"},
+    "duration": {"Description": "Sample duration in seconds"},
+    "x": {"Description": "Gaze X position in pixels"},
+    "y": {"Description": "Gaze Y position in pixels"}
+  }
+}
