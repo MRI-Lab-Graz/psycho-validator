@@ -489,7 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Send the complete file list so server can create structure
         formData.append('all_files', JSON.stringify(allFilePaths));
-        metadataPaths.forEach(path => formData.append('metadata_paths[]', path));
+        // Optimize: Send metadata paths as a single JSON string instead of thousands of form fields
+        formData.append('metadata_paths_json', JSON.stringify(metadataPaths));
         
         console.log(`Uploading ${includedCount} metadata files (${(totalSize/1024/1024).toFixed(2)} MB), skipping ${skippedCount} data files`);
         

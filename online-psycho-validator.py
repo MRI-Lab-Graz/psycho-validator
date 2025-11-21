@@ -791,7 +791,17 @@ def upload_dataset():
     # Create temporary directory for processing
     temp_dir = tempfile.mkdtemp(prefix="psycho_validator_")
 
-    metadata_paths = request.form.getlist("metadata_paths[]")
+    # Try to get metadata paths from JSON (optimized for large datasets)
+    metadata_paths_json = request.form.get("metadata_paths_json")
+    if metadata_paths_json:
+        try:
+            metadata_paths = json.loads(metadata_paths_json)
+        except json.JSONDecodeError:
+            print("⚠️ Failed to parse metadata_paths_json")
+            metadata_paths = []
+    else:
+        # Fallback to list (legacy)
+        metadata_paths = request.form.getlist("metadata_paths[]")
 
     try:
         # Check if this is a folder upload (multiple files) or ZIP upload (single file)
