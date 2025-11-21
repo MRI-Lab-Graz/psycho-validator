@@ -7,7 +7,7 @@ without executing the top-level CLI script.
 import os
 import sys
 
-from schema_manager import load_all_schemas
+from schema_manager import load_all_schemas, load_bids_schemas
 from validator import DatasetValidator, MODALITY_PATTERNS
 from stats import DatasetStats
 from system_files import filter_system_files
@@ -34,19 +34,28 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
     # Load schemas with specified version
     schema_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "schemas")
     schemas = load_all_schemas(schema_dir, version=schema_version)
+    bids_schemas = load_bids_schemas(schema_dir)
 
     if verbose:
         version_tag = schema_version or "stable"
         print(f"📋 Loaded {len(schemas)} schemas (version: {version_tag})")
+        if bids_schemas:
+            print(f"📋 Loaded {len(bids_schemas)} BIDS fallback schemas")
         print(f"📁 Scanning modalities: {list(MODALITY_PATTERNS.keys())}")
 
     # Initialize validator
-    validator = DatasetValidator(schemas)
+    validator = DatasetValidator(schemas, bids_schemas)
 
     # Check for dataset description
     dataset_desc_path = os.path.join(root_dir, "dataset_description.json")
     if not os.path.exists(dataset_desc_path):
         issues.append(("ERROR", "Missing dataset_description.json"))
+    else:
+        # Validate dataset_description.json
+        desc_issues = validator.validate_sidecar(
+            dataset_desc_path, "dataset_description", root_dir
+        )
+        issues.extend(desc_issues)
 
     # Walk through subject directories
     all_items = os.listdir(root_dir)

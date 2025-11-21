@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bids.neuroimaging.io/schemas/eeg.json",
+  "title": "BIDS EEG Sidecar Schema",
+  "description": "Standard BIDS schema for EEG sidecar files",
+  "type": "object",
+  "properties": {
+    "TaskName": {
+      "type": "string",
+      "description": "Name of the task"
+    },
+    "SamplingFrequency": {
+      "type": "number",
+      "description": "Sampling frequency in Hz"
+    },
+    "PowerLineFrequency": {
+      "type": "number",
+      "description": "Frequency of the power line in Hz"
+    },
+    "EEGChannelCount": {
+      "type": "integer",
+      "description": "Number of EEG channels"
+    },
+    "EOGChannelCount": {
+      "type": "integer",
+      "description": "Number of EOG channels"
+    },
+    "ECGChannelCount": {
+      "type": "integer",
+      "description": "Number of ECG channels"
+    },
+    "EMGChannelCount": {
+      "type": "integer",
+      "description": "Number of EMG channels"
+    },
+    "MiscChannelCount": {
+      "type": "integer",
+      "description": "Number of miscellaneous channels"
+    },
+    "TriggerChannelCount": {
+      "type": "integer",
+      "description": "Number of trigger channels"
+    },
+    "RecordingDuration": {
+      "type": "number",
+      "description": "Duration of the recording in seconds"
+    },
+    "RecordingType": {
+      "type": "string",
+      "enum": ["continuous", "epoched", "discontinuous"],
+      "description": "Type of recording"
+    },
+    "EpochLength": {
+      "type": "number",
+      "description": "Length of epochs in seconds"
+    },
+    "SoftwareFilters": {
+      "type": "object",
+      "description": "Software filters applied"
+    },
+    "HardwareFilters": {
+      "type": "object",
+      "description": "Hardware filters applied"
+    },
+    "SubjectArtefactDescription": {
+      "type": "string",
+      "description": "Description of subject artefacts"
+    },
+    "Manufacturer": {
+      "type": "string",
+      "description": "Manufacturer of the EEG system"
+    },
+    "ManufacturersModelName": {
+      "type": "string",
+      "description": "Model name of the EEG system"
+    },
+    "CapManufacturer": {
+      "type": "string",
+      "description": "Manufacturer of the EEG cap"
+    },
+    "CapManufacturersModelName": {
+      "type": "string",
+      "description": "Model name of the EEG cap"
+    },
+    "EEGReference": {
+      "type": "string",
+      "description": "Description of the reference electrode"
+    },
+    "GroundElectrode": {
+      "type": "string",
+      "description": "Description of the ground electrode"
+    },
+    "InstitutionName": {
+      "type": "string",
+      "description": "Name of the institution"
+    },
+    "InstitutionAddress": {
+      "type": "string",
+      "description": "Address of the institution"
+    },
+    "InstitutionalDepartmentName": {
+      "type": "string",
+      "description": "Name of the department"
+    }
+  },
+  "required": ["TaskName", "SamplingFrequency", "PowerLineFrequency", "EEGChannelCount", "EEGReference"]
+}

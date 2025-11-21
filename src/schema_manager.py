@@ -118,6 +118,43 @@ def load_all_schemas(schema_dir="schemas", version=None):
     return schemas
 
 
+def load_bids_schemas(schema_dir="schemas"):
+    """Load BIDS fallback schemas
+
+    Args:
+        schema_dir: Base schemas directory
+    """
+    schemas = {}
+    bids_dir = os.path.join(schema_dir, "bids")
+
+    if not os.path.exists(bids_dir):
+        return schemas
+
+    # Standard modalities that might have BIDS schemas
+    modalities = [
+        "image",
+        "movie",
+        "audio",
+        "eyetracking",
+        "eeg",
+        "behavior",
+        "physiological",
+        "dataset_description",
+    ]
+
+    for modality in modalities:
+        schema_path = os.path.join(bids_dir, f"{modality}.schema.json")
+        if os.path.exists(schema_path):
+            try:
+                with open(schema_path) as f:
+                    schema = json.load(f)
+                schemas[modality] = schema
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Warning: Could not load BIDS schema {schema_path}: {e}")
+
+    return schemas
+
+
 def get_available_schema_versions(schema_dir="schemas"):
     """Get list of available schema versions
 

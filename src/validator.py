@@ -68,8 +68,9 @@ def derive_sidecar_path(file_path):
 class DatasetValidator:
     """Main dataset validation class"""
 
-    def __init__(self, schemas=None):
+    def __init__(self, schemas=None, bids_schemas=None):
         self.schemas = schemas or {}
+        self.bids_schemas = bids_schemas or {}
 
     def validate_filename(self, filename, modality):
         """Validate filename against BIDS conventions and modality patterns"""
@@ -120,13 +121,51 @@ class DatasetValidator:
 
             # Validate against schema if available
             schema = self.schemas.get(modality)
-            if schema:
-                validate(instance=sidecar_data, schema=schema)
+            bids_schema = self.bids_schemas.get(modality)
 
-        except ValidationError as e:
-            issues.append(
-                ("ERROR", f"{normalize_path(sidecar_path)} schema error: {e.message}")
-            )
+            if schema:
+                try:
+                    validate(instance=sidecar_data, schema=schema)
+                except ValidationError as e:
+                    # Primary schema failed. Check if we can fallback to BIDS
+                    if bids_schema:
+                        try:
+                            validate(instance=sidecar_data, schema=bids_schema)
+                            # BIDS passed
+                            issues.append(
+                                (
+                                    "WARNING",
+                                    f"File {normalize_path(sidecar_path)} is valid BIDS but does not match the rich schema.",
+                                )
+                            )
+                        except ValidationError:
+                            # Both failed. Report primary error
+                            issues.append(
+                                (
+                                    "ERROR",
+                                    f"{normalize_path(sidecar_path)} schema error: {e.message}",
+                                )
+                            )
+                    else:
+                        # No BIDS fallback, report error
+                        issues.append(
+                            (
+                                "ERROR",
+                                f"{normalize_path(sidecar_path)} schema error: {e.message}",
+                            )
+                        )
+            elif bids_schema:
+                # No primary schema, but BIDS schema exists
+                try:
+                    validate(instance=sidecar_data, schema=bids_schema)
+                except ValidationError as e:
+                    issues.append(
+                        (
+                            "ERROR",
+                            f"{normalize_path(sidecar_path)} BIDS schema error: {e.message}",
+                        )
+                    )
+
         except json.JSONDecodeError as e:
             issues.append(
                 ("ERROR", f"{normalize_path(sidecar_path)} is not valid JSON: {e}")

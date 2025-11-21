@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bids.neuroimaging.io/schemas/eyetracking.json",
+  "title": "BIDS Eyetracking Sidecar Schema",
+  "description": "Standard BIDS schema for Eyetracking sidecar files",
+  "type": "object",
+  "properties": {
+    "SamplingFrequency": {
+      "type": "number",
+      "description": "Sampling frequency in Hz"
+    },
+    "PupilPositionType": {
+      "type": "string",
+      "description": "Type of pupil position data"
+    },
+    "EyeTrackingMethod": {
+      "type": "string",
+      "description": "Method used for eye tracking"
+    },
+    "Manufacturer": {
+      "type": "string",
+      "description": "Manufacturer of the eye tracker"
+    },
+    "ManufacturersModelName": {
+      "type": "string",
+      "description": "Model name of the eye tracker"
+    },
+    "CalibrationType": {
+      "type": "string",
+      "description": "Type of calibration"
+    },
+    "MaximalCalibrationError": {
+      "type": "number",
+      "description": "Maximal calibration error"
+    },
+    "AverageCalibrationError": {
+      "type": "number",
+      "description": "Average calibration error"
+    },
+    "GazeMappingError": {
+      "type": "number",
+      "description": "Gaze mapping error"
+    },
+    "RecordedEye": {
+      "type": "string",
+      "description": "Eye(s) recorded"
+    },
+    "TaskName": {
+      "type": "string",
+      "description": "Name of the task"
+    },
+    "InstitutionName": {
+      "type": "string",
+      "description": "Name of the institution"
+    },
+    "InstitutionAddress": {
+      "type": "string",
+      "description": "Address of the institution"
+    }
+  },
+  "required": ["SamplingFrequency", "Manufacturer", "TaskName"]
+}

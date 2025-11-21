@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bids.neuroimaging.io/schemas/dataset_description.json",
+  "title": "BIDS Dataset Description Schema",
+  "description": "Standard BIDS schema for dataset_description.json",
+  "type": "object",
+  "properties": {
+    "Name": {
+      "type": "string",
+      "description": "Name of the dataset"
+    },
+    "BIDSVersion": {
+      "type": "string",
+      "description": "The version of the BIDS standard that was used"
+    },
+    "HEDVersion": {
+      "type": "string",
+      "description": "The version of the HED standard that was used"
+    },
+    "DatasetType": {
+      "type": "string",
+      "enum": ["raw", "derivative"],
+      "description": "The type of the dataset"
+    },
+    "License": {
+      "type": "string",
+      "description": "The license for the dataset"
+    },
+    "Authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of individuals who contributed to the creation/curation of the dataset"
+    },
+    "Acknowledgements": {
+      "type": "string",
+      "description": "Text acknowledging contributions of individuals or institutions"
+    },
+    "HowToAcknowledge": {
+      "type": "string",
+      "description": "Instructions on how to acknowledge the dataset"
+    },
+    "Funding": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of sources of funding"
+    },
+    "EthicsApprovals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of ethics committee approvals"
+    },
+    "ReferencesAndLinks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of references to publication or web resources"
+    },
+    "DatasetDOI": {
+      "type": "string",
+      "description": "The DOI of the dataset"
+    }
+  },
+  "required": ["Name", "BIDSVersion"]
+}
