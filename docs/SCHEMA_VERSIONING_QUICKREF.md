@@ -4,25 +4,25 @@
 
 ### List Available Versions
 ```bash
-python psycho-validator.py --list-versions
+python prism-validator.py --list-versions
 ```
 
 ### Validate with Specific Version
 ```bash
 # Using stable (default)
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Using version 0.1
-python psycho-validator.py /path/to/dataset --schema-version 0.1
-python psycho-validator.py /path/to/dataset --schema-version v0.1
+python prism-validator.py /path/to/dataset --schema-version 0.1
+python prism-validator.py /path/to/dataset --schema-version v0.1
 
 # Explicitly using stable
-python psycho-validator.py /path/to/dataset --schema-version stable
+python prism-validator.py /path/to/dataset --schema-version stable
 ```
 
 ### Verbose Mode with Version
 ```bash
-python psycho-validator.py /path/to/dataset --schema-version v0.1 --verbose
+python prism-validator.py /path/to/dataset --schema-version v0.1 --verbose
 ```
 
 ## Web Interface Usage
@@ -99,7 +99,7 @@ cp schemas/stable/*.json schemas/v0.2/
 # ... make your changes ...
 
 # Test thoroughly
-python psycho-validator.py test_dataset --schema-version v0.2
+python prism-validator.py test_dataset --schema-version v0.2
 
 # When ready, promote to stable
 rm -rf schemas/stable
@@ -123,9 +123,9 @@ cp -r schemas/v0.2 schemas/stable
 ### Default to stable
 If no version is specified, the system automatically uses `stable`:
 ```bash
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 # Equivalent to:
-python psycho-validator.py /path/to/dataset --schema-version stable
+python prism-validator.py /path/to/dataset --schema-version stable
 ```
 
 ## Related Documentation

@@ -10,7 +10,7 @@ The Psycho-Validator includes a user-friendly web interface that makes dataset v
 # Activate virtual environment first
 .venv\Scripts\activate
 # Then run
-online-psycho-validator
+prism-validator-web
 ```
 
 **Linux/macOS users:**
@@ -18,7 +18,7 @@ online-psycho-validator
 # Activate virtual environment first
 source .venv/bin/activate
 # Then run
-online-psycho-validator
+prism-validator-web
 ```
 
 ### Option 2: Manual Start

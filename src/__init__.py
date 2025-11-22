@@ -1,7 +1,7 @@
-# src package marker for psycho-validator
+# src package marker for prism-validator
 __all__ = []
 """
-Psycho-Validator: BIDS-inspired validation tool for psychological research data
+Prism-Validator: BIDS-inspired validation tool for psychological research data
 
 This package provides validation tools for multi-modal psychological/experimental datasets
 following BIDS principles with custom schemas for different stimulus modalities.

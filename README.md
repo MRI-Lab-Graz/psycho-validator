@@ -1,4 +1,4 @@
-# Psycho-Validator: BIDS-inspired Validation Tool
+# Prism-Validator: BIDS-inspired Validation Tool
 
 ## 🚀 Quick Start
 
@@ -6,7 +6,7 @@
 
 ```bash
 bash setup.sh              # One-time setup (macOS/Linux)
-python online-psycho-validator.py
+python prism-validator-web.py
 ```
 
 The web interface will open automatically at `http://localhost:5001`. No additional configuration needed!
@@ -15,7 +15,7 @@ The web interface will open automatically at `http://localhost:5001`. No additio
 
 ## Overview
 
-Psycho-Validator validates datasets containing psychological/psychophysical stimuli and experimental data following a BIDS-inspired structure. It's designed specifically for experiments involving multiple stimulus modalities like images, videos, audio, etc.
+Prism-Validator validates datasets containing psychological/psychophysical stimuli and experimental data following a BIDS-inspired structure. It's designed specifically for experiments involving multiple stimulus modalities like images, videos, audio, etc.
 
 ## ✨ Key Features
 
@@ -35,6 +35,7 @@ Psycho-Validator validates datasets containing psychological/psychophysical stim
 
 ### ✅ Validation Features
 - **Multi-modal validation**: Supports images, movies, audio, EEG, eye-tracking, and behavioral data
+- **BIDS-App Compatibility**: Automatically updates `.bidsignore` to ensure custom modalities (like `image/`, `movie/`) are ignored by standard BIDS tools (e.g., fMRIPrep), preventing crashes.
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
 - **JSON schema validation**: Validates sidecar metadata against modality-specific schemas
 - **Schema versioning**: Multiple schema versions (stable, v0.1, etc.) selectable in UI
@@ -92,12 +93,12 @@ Each stimulus file must have a corresponding `.json` sidecar file with the same 
 
 ### Basic validation:
 ```bash
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 ```
 
 ### Verbose output (shows scanning details):
 ```bash
-python psycho-validator.py /path/to/dataset -v
+python prism-validator.py /path/to/dataset -v
 ```
 
 ### Example Output:
@@ -175,16 +176,17 @@ The included `test_dataset/` demonstrates:
 
 ## 📁 Repository Structure
 
-- **`online-psycho-validator.py`** - **✨ MAIN ENTRY POINT** - Web interface with NeuroBagel integration
+- **`prism-validator-web.py`** - **✨ MAIN ENTRY POINT** - Web interface with NeuroBagel integration
 - `schemas/` - JSON schemas for each modality
 - `docs/` - Documentation (web interface guide, examples, NeuroBagel integration)
 - `tests/` - Test dataset and test scripts
 - `src/` - Core validation and utility modules
 - `static/` - Web interface assets (CSS, JavaScript, NeuroBagel widget)
 - `templates/` - Web interface templates (HTML)
+- `archive/` - Legacy scripts
 
 ### Additional Files
-- `psycho-validator.py` - Command-line tool (see footnote below)
+- `prism-validator.py` - Command-line tool (see footnote below)
 - `setup.sh` / `setup-windows.bat` - Installation scripts
 - `requirements.txt` - Python dependencies
 
@@ -234,18 +236,18 @@ See [`docs/NEUROBAGEL_INTEGRATION_STRATEGY.md`](docs/NEUROBAGEL_INTEGRATION_STRA
 
 **macOS/Linux:**
 ```bash
-git clone https://github.com/MRI-Lab-Graz/psycho-validator.git
-cd psycho-validator
+git clone https://github.com/MRI-Lab-Graz/prism-validator.git
+cd prism-validator
 bash setup.sh
-python online-psycho-validator.py
+python prism-validator-web.py
 ```
 
 **Windows:**
 ```cmd
-git clone https://github.com/MRI-Lab-Graz/psycho-validator.git
-cd psycho-validator
+git clone https://github.com/MRI-Lab-Graz/prism-validator.git
+cd prism-validator
 scripts\setup-windows.bat
-python online-psycho-validator.py
+python prism-validator-web.py
 ```
 
 The web interface opens automatically! 🌐
@@ -261,7 +263,7 @@ source .venv/bin/activate  # macOS/Linux or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
 # Run web interface
-python online-psycho-validator.py
+python prism-validator-web.py
 ```
 
 ---
@@ -272,7 +274,7 @@ python online-psycho-validator.py
 
 Simply run:
 ```bash
-python online-psycho-validator.py
+python prism-validator-web.py
 ```
 
 The interface opens at `http://localhost:5001` with three main sections:
@@ -320,19 +322,19 @@ source .venv/bin/activate  # macOS/Linux
 .venv\Scripts\activate     # Windows
 
 # Basic validation (uses stable schema)
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Validate with specific schema version
-python psycho-validator.py /path/to/dataset --schema-version v0.1
+python prism-validator.py /path/to/dataset --schema-version v0.1
 
 # List available schema versions
-python psycho-validator.py --list-versions
+python prism-validator.py --list-versions
 
 # Verbose output
-python psycho-validator.py /path/to/dataset -v
+python prism-validator.py /path/to/dataset -v
 
 # Show help
-python psycho-validator.py --help
+python prism-validator.py --help
 ```
 
 **Note:** This is primarily for automation and batch processing. The web interface is recommended for interactive use.
@@ -360,11 +362,11 @@ Optional (for dummy file generation):
 
 ## 📝 Footnote: Command-Line Tool
 
-While the **web interface is the primary and recommended method** for using Psycho-Validator, a command-line interface is also available for automation and batch processing.
+While the **web interface is the primary and recommended method** for using Prism-Validator, a command-line interface is also available for automation and batch processing.
 
 **Command-line tool usage:**
 ```bash
-python psycho-validator.py /path/to/dataset [--schema-version VERSION] [-v]
+python prism-validator.py /path/to/dataset [--schema-version VERSION] [-v]
 ```
 
 This is useful for:
@@ -381,4 +383,4 @@ For most users and interactive validation, please use the web interface instead.
 
 See LICENSE file for details.
 
-For questions or contributions, visit the [GitHub repository](https://github.com/MRI-Lab-Graz/psycho-validator).
+For questions or contributions, visit the [GitHub repository](https://github.com/MRI-Lab-Graz/prism-validator).

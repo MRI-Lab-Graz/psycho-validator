@@ -1,6 +1,6 @@
 # Windows Installation and Usage Guide
 
-This guide covers Windows-specific setup and usage for the psycho-validator.
+This guide covers Windows-specific setup and usage for the prism-validator.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ Install [Git for Windows](https://git-scm.com/download/win) if you want to clone
 
 ### Method 1: Automatic Setup (Recommended)
 1. Open Command Prompt or PowerShell
-2. Navigate to the psycho-validator directory
+2. Navigate to the prism-validator directory
 3. Run the setup script:
    ```cmd
    scripts\setup-windows.bat
@@ -50,7 +50,7 @@ Always activate the virtual environment before using the validator:
 
 ### Basic Validation
 ```cmd
-python psycho-validator.py "C:\path\to\your\dataset"
+python prism-validator.py "C:\path\to\your\dataset"
 ```
 
 ### Windows-Specific Path Handling
@@ -61,13 +61,13 @@ python psycho-validator.py "C:\path\to\your\dataset"
 ### Example Commands
 ```cmd
 # Validate a local dataset
-python psycho-validator.py "C:\Users\username\Documents\my_dataset"
+python prism-validator.py "C:\Users\username\Documents\my_dataset"
 
 # Validate with verbose output
-python psycho-validator.py --verbose "D:\research\experiment_data"
+python prism-validator.py --verbose "D:\research\experiment_data"
 
 # Show help
-python psycho-validator.py --help
+python prism-validator.py --help
 
 # Run tests
 python -m pytest tests\
@@ -200,7 +200,7 @@ To create a standalone Windows executable:
 pip install pyinstaller
 
 # Create executable
-pyinstaller --onefile psycho-validator.py
+pyinstaller --onefile prism-validator.py
 ```
 
 ## Getting Help

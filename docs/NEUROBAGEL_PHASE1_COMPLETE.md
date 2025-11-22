@@ -7,7 +7,7 @@
 ## What Was Implemented
 
 ### Backend Enhancement
-**File**: `online-psycho-validator.py`
+**File**: `prism-validator-web.py`
 
 New function: `augment_neurobagel_data(raw_data)`
 - Transforms flat NeuroBagel JSON into hierarchical structure
@@ -124,7 +124,7 @@ Create a `participants.json` file or use existing BIDS dataset:
 ```
 
 ### Step 2: Access Web Interface
-1. Start server: `python online-psycho-validator.py --port 5001`
+1. Start server: `python prism-validator-web.py --port 5001`
 2. Open: http://127.0.0.1:5001/editor
 3. Upload dataset folder or select participants.json
 

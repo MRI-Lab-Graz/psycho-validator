@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Web interface for psycho-validator
+Web interface for prism-validator
 A simple Flask web app that provides a user-friendly interface for dataset validation
 """
 
@@ -45,7 +45,7 @@ except Exception as import_error:
 # Use subprocess to run the main validator script - single source of truth
 def run_main_validator(dataset_path, verbose=False, schema_version=None):
     """
-    Run the main psycho-validator.py script via subprocess.
+    Run the main prism-validator.py script via subprocess.
     This ensures the web interface uses exactly the same logic as the terminal version.
 
     Args:
@@ -58,7 +58,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
 
     try:
         # Run the main validator script
-        cmd = [sys.executable, "psycho-validator.py", dataset_path]
+        cmd = [sys.executable, "prism-validator.py", dataset_path]
         if verbose:
             cmd.append("--verbose")
         if schema_version:
@@ -147,7 +147,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
             return issues, stats
 
     except FileNotFoundError:
-        error_msg = "psycho-validator.py script not found"
+        error_msg = "prism-validator.py script not found"
         print(f"❌ {error_msg}")
         stats = SimpleStats()
         issues = [("ERROR", error_msg, dataset_path)]
@@ -208,7 +208,7 @@ def simple_is_system_file(filename):
 is_system_file = simple_is_system_file
 
 app = Flask(__name__)
-app.secret_key = "psycho-validator-secret-key"  # Change this in production
+app.secret_key = "prism-validator-secret-key"  # Change this in production
 app.config["MAX_CONTENT_LENGTH"] = (
     100 * 1024 * 1024
 )  # 100MB max file size (metadata only)
@@ -272,9 +272,9 @@ def format_validation_results(issues, dataset_stats, dataset_path):
         # If it's a temp path, try to extract the relative path
         if (
             "/tmp/" in file_path
-            or "/T/psycho_validator_" in file_path
+            or "/T/prism_validator_" in file_path
             or "/var/folders/" in file_path
-            or "psycho_validator_" in file_path
+            or "prism_validator_" in file_path
         ):
             # Find the dataset root marker - typically after 'dataset/'
             if "/dataset/" in file_path:
@@ -361,9 +361,9 @@ def format_validation_results(issues, dataset_stats, dataset_path):
             import re
 
             # Replace temp folder paths in the message with just the relative path
-            # Match various temp folder patterns: /tmp/, /T/, /var/folders/, psycho_validator_
+            # Match various temp folder patterns: /tmp/, /T/, /var/folders/, prism_validator_
             msg = re.sub(
-                r"(/tmp/[^\s,:]+/dataset/|/T/psycho_validator_[^\s,:]+/dataset/|/var/folders/[^\s,:]+/dataset/|psycho_validator_[^\s,:]+/dataset/)([^\s,:]+)",
+                r"(/tmp/[^\s,:]+/dataset/|/T/prism_validator_[^\s,:]+/dataset/|/var/folders/[^\s,:]+/dataset/|prism_validator_[^\s,:]+/dataset/)([^\s,:]+)",
                 r"\2",
                 msg,
             )
@@ -526,7 +526,7 @@ def get_error_documentation_url(error_code):
     """Get documentation URL for an error code"""
     # Map error codes to documentation anchors
     base_url = (
-        "https://github.com/MRI-Lab-Graz/psycho-validator/blob/main/docs/ERROR_CODES.md"
+        "https://github.com/MRI-Lab-Graz/prism-validator/blob/main/docs/ERROR_CODES.md"
     )
 
     doc_anchors = {
@@ -780,7 +780,7 @@ def upload_dataset():
     schema_version = request.form.get("schema_version", "stable")
 
     # Create temporary directory for processing
-    temp_dir = tempfile.mkdtemp(prefix="psycho_validator_")
+    temp_dir = tempfile.mkdtemp(prefix="prism_validator_")
 
     metadata_paths = request.form.getlist("metadata_paths[]")
 
@@ -1401,7 +1401,7 @@ def main():
     """Run the web application"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Psycho-Validator Web Interface")
+    parser = argparse.ArgumentParser(description="Prism-Validator Web Interface")
     parser.add_argument(
         "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
     )
@@ -1426,7 +1426,7 @@ def main():
     display_host = "localhost" if host == "127.0.0.1" else host
     url = f"http://{display_host}:{args.port}"
 
-    print("🌐 Starting Psycho-Validator Web Interface")
+    print("🌐 Starting Prism-Validator Web Interface")
     print(f"🔗 URL: {url}")
     if args.public:
         print("⚠️  Warning: Running in public mode - accessible from other computers")

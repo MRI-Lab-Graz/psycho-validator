@@ -7,9 +7,9 @@ You were absolutely right! The repository had poor organization with scripts sca
 
 ### Before (Messy Root):
 ```
-psycho-validator/
-├── psycho-validator.py           # Main script
-├── psycho-validator-streamlined.py # Alternative script  
+prism-validator/
+├── prism-validator.py           # Main script
+├── prism-validator-streamlined.py # Alternative script  
 ├── create_dummy_files.py         # Utility script
 ├── create_multimodal_demo.py     # Demo script
 ├── demo_validator.py             # Demo script
@@ -30,11 +30,11 @@ psycho-validator/
 
 ### After (Clean Root) ✅:
 ```
-psycho-validator/
+prism-validator/
 ├── README.md                     # ✅ Project docs
 ├── requirements.txt              # ✅ Dependencies  
 ├── setup.py                      # ✅ Package setup
-├── psycho-validator.py           # ✅ Main entry point (only one!)
+├── prism-validator.py           # ✅ Main entry point (only one!)
 │
 ├── src/                          # ✅ Core modules
 ├── scripts/                      # ✅ ALL utilities
@@ -49,7 +49,7 @@ psycho-validator/
 - ✅ `setup.sh`, `setup-simple.sh`, `setup.bat` → `scripts/`
 - ✅ `create_dummy_files.py` → `scripts/`
 - ✅ `demo_*.py` → `scripts/`
-- ✅ `psycho-validator.py` (legacy) → `scripts/psycho-validator-legacy.py`
+- ✅ `prism-validator.py` (legacy) → `scripts/prism-validator-legacy.py`
 
 ### Tests & Test Data → `tests/`
 - ✅ `test_validator.py` → `tests/`
@@ -73,7 +73,7 @@ psycho-validator/
 1. `README.md` - Project information
 2. `requirements.txt` - Dependencies
 3. `setup.py` - Package installation
-4. `psycho-validator.py` - **Single main entry point**
+4. `prism-validator.py` - **Single main entry point**
 5. `.gitignore` - Git configuration
 6. `.bidsignore` - BIDS validator configuration
 

@@ -2,11 +2,11 @@
 
 ## Root Directory (Essential Files Only)
 ```
-psycho-validator/
+prism-validator/
 ├── README.md                     # Main project documentation
 ├── requirements.txt              # Python dependencies  
 ├── setup.py                      # Package installation
-├── psycho-validator.py           # Main entry point (streamlined)
+├── prism-validator.py           # Main entry point (streamlined)
 ├── .gitignore                    # Git ignore rules
 └── .bidsignore                   # BIDS validator ignore rules
 ```
@@ -47,7 +47,7 @@ scripts/
 ├── create_multimodal_demo.py     # Multimodal demo
 ├── demo_validator.py             # Validator demonstration
 ├── demo_schema_versioning.py     # Schema versioning demo
-└── psycho-validator-legacy.py    # Full-featured legacy version
+└── prism-validator-legacy.py    # Full-featured legacy version
 ```
 
 ### Tests & Test Data
@@ -78,7 +78,7 @@ docs/
 ### ✅ Clean Root Directory
 - Only 6 essential files in root
 - No scattered utility scripts
-- Clear entry point (`psycho-validator.py`)
+- Clear entry point (`prism-validator.py`)
 
 ### ✅ Logical Organization
 - Source code in `src/`
@@ -101,10 +101,10 @@ bash scripts/setup-simple.sh
 source .venv/bin/activate
 
 # Validate a dataset
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # View help
-python psycho-validator.py --help
+python prism-validator.py --help
 ```
 
 ### Development
@@ -116,7 +116,7 @@ python tests/test_reorganization.py
 python scripts/create_dummy_files.py
 
 # Use legacy full-featured version
-python scripts/psycho-validator-legacy.py /path/to/dataset --fair-check
+python scripts/prism-validator-legacy.py /path/to/dataset --fair-check
 ```
 
 This structure makes the project much more maintainable and professional while keeping all functionality accessible.

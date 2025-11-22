@@ -1,6 +1,6 @@
-# Psycho-Validator v1.0.0 - First Major Release 🎉
+# Prism-Validator v1.0.0 - First Major Release 🎉
 
-We're excited to announce the first major release of **Psycho-Validator**, a comprehensive BIDS-inspired validation tool for psychological and psychophysical research datasets!
+We're excited to announce the first major release of **Prism-Validator**, a comprehensive BIDS-inspired validation tool for psychological and psychophysical research datasets!
 
 ## 🌟 Highlights
 

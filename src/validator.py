@@ -1,5 +1,5 @@
 """
-Core validation logic for psycho-validator
+Core validation logic for prism-validator
 """
 
 import os

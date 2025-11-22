@@ -1,6 +1,6 @@
 # Implementation Summary: B, C, A Tasks
 
-This document summarizes the comprehensive refactoring and improvements made to the psycho-validator project.
+This document summarizes the comprehensive refactoring and improvements made to the prism-validator project.
 
 ## Task B: Clean Package Boundary ✅
 
@@ -14,7 +14,7 @@ This document summarizes the comprehensive refactoring and improvements made to 
 
 2. **Created `src/runner.py`**
    - New module containing the canonical `validate_dataset()` function
-   - Moved all validation helpers from `psycho-validator.py`:
+   - Moved all validation helpers from `prism-validator.py`:
      - `validate_dataset(root_dir, verbose=False)` - main validation entry point
      - `_validate_subject()` - subject directory validation
      - `_validate_session()` - session directory validation
@@ -22,7 +22,7 @@ This document summarizes the comprehensive refactoring and improvements made to 
    - Uses relative imports (`.schema_manager`, `.validator`, etc.)
    - Returns: `(issues, stats)` tuple
 
-3. **Updated `psycho-validator.py`**
+3. **Updated `prism-validator.py`**
    - Removed duplicate validation functions (~100 lines)
    - Now imports `validate_dataset` from `src.runner`
    - Remains as CLI entry point with argparse interface
@@ -84,7 +84,7 @@ This document summarizes the comprehensive refactoring and improvements made to 
    - Quick fixes checklist at end
 
 5. **Updated Error Code URLs**
-   - Base URL: `https://github.com/MRI-Lab-Graz/psycho-validator/blob/main/docs/ERROR_CODES.md`
+   - Base URL: `https://github.com/MRI-Lab-Graz/prism-validator/blob/main/docs/ERROR_CODES.md`
    - Anchored links to specific error sections (e.g., `#invalid_bids_filename`)
    - Fallback to main docs for unknown codes
 
@@ -221,7 +221,7 @@ All components verified working:
 
 1. **Code compiles:** ✅
    ```bash
-   python3 -m py_compile src/runner.py web_interface.py psycho-validator.py
+   python3 -m py_compile src/runner.py web_interface.py prism-validator.py
    ```
 
 2. **Imports work:** ✅
@@ -251,7 +251,7 @@ All components verified working:
 - `tests/test_web_formatting.py` - Formatting unit tests (230 lines)
 
 ### Modified Files:
-- `psycho-validator.py` - Removed ~100 lines, now imports from runner
+- `prism-validator.py` - Removed ~100 lines, now imports from runner
 - `web_interface.py` - Added utility functions, cleaned imports
 - `templates/results.html` - Uses utility functions for cleaner display
 
@@ -266,7 +266,7 @@ All components verified working:
 
 ### Before:
 ```
-psycho-validator.py (185 lines)
+prism-validator.py (185 lines)
   ├── validate_dataset() [duplicate]
   ├── validate_subject() [duplicate]
   └── validate_session() [duplicate]
@@ -274,7 +274,7 @@ psycho-validator.py (185 lines)
 web_interface.py
   ├── try: import from src
   ├── except: try import from src.*
-  ├── except: exec(psycho-validator.py)
+  ├── except: exec(prism-validator.py)
   └── fallback validation logic
 ```
 
@@ -290,7 +290,7 @@ src/
   ├── stats.py
   └── reporting.py
 
-psycho-validator.py (90 lines)
+prism-validator.py (90 lines)
   └── from src.runner import validate_dataset
 
 web_interface.py

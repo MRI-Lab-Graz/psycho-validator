@@ -42,7 +42,7 @@
 ### 🎯 **New Structure**
 
 ```
-psycho-validator/
+prism-validator/
 ├── src/                          # Core modules (NEW)
 │   ├── validator.py              # Core validation logic
 │   ├── schema_manager.py         # Schema loading & versioning
@@ -57,8 +57,8 @@ psycho-validator/
 ├── tests/                        # Tests (MOVED)
 │   ├── test_validator.py
 │   └── test_reorganization.py
-├── psycho-validator.py           # Full-featured (LEGACY)
-└── psycho-validator-streamlined.py # Clean version (NEW)
+├── prism-validator.py           # Full-featured (LEGACY)
+└── prism-validator-streamlined.py # Clean version (NEW)
 ```
 
 ### 🚀 **Key Improvements**
@@ -70,8 +70,8 @@ psycho-validator/
    - Better testability
 
 2. **Dual Entry Points**
-   - `psycho-validator.py` - Full-featured legacy version
-   - `psycho-validator-streamlined.py` - Clean, modular version
+   - `prism-validator.py` - Full-featured legacy version
+   - `prism-validator-streamlined.py` - Clean, modular version
 
 3. **Professional Setup**
    - Virtual environment support via `setup-simple.sh`
@@ -132,7 +132,7 @@ psycho-validator/
 
 ## Conclusion
 
-The psycho-validator has a **strong foundation and excellent concept**. The reorganization successfully addressed the main structural issues while preserving all functionality. The project is now ready for:
+The prism-validator has a **strong foundation and excellent concept**. The reorganization successfully addressed the main structural issues while preserving all functionality. The project is now ready for:
 
 - Professional development workflows
 - Community contributions

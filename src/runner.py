@@ -11,6 +11,7 @@ from schema_manager import load_all_schemas
 from validator import DatasetValidator, MODALITY_PATTERNS
 from stats import DatasetStats
 from system_files import filter_system_files
+from bids_integration import check_and_update_bidsignore
 
 # Add current directory to path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +20,7 @@ if current_dir not in sys.path:
 
 
 def validate_dataset(root_dir, verbose=False, schema_version=None):
-    """Main dataset validation function (refactored from psycho-validator.py)
+    """Main dataset validation function (refactored from prism-validator.py)
 
     Args:
         root_dir: Root directory of the dataset
@@ -47,6 +48,19 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
     dataset_desc_path = os.path.join(root_dir, "dataset_description.json")
     if not os.path.exists(dataset_desc_path):
         issues.append(("ERROR", "Missing dataset_description.json"))
+
+    # Check and update .bidsignore for BIDS-App compatibility
+    try:
+        added_rules = check_and_update_bidsignore(
+            root_dir, list(MODALITY_PATTERNS.keys())
+        )
+        if added_rules and verbose:
+            print(f"ℹ️  Updated .bidsignore for BIDS-App compatibility:")
+            for rule in added_rules:
+                print(f"   + {rule}")
+    except Exception as e:
+        if verbose:
+            print(f"⚠️  Failed to update .bidsignore: {e}")
 
     # Walk through subject directories
     all_items = os.listdir(root_dir)

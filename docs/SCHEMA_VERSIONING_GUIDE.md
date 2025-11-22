@@ -19,18 +19,18 @@ To specify a schema version when validating a dataset:
 
 ```bash
 # Use stable version (default)
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Use specific version
-python psycho-validator.py /path/to/dataset --schema-version 0.1
-python psycho-validator.py /path/to/dataset --schema-version v0.1
-python psycho-validator.py /path/to/dataset --schema-version stable
+python prism-validator.py /path/to/dataset --schema-version 0.1
+python prism-validator.py /path/to/dataset --schema-version v0.1
+python prism-validator.py /path/to/dataset --schema-version stable
 ```
 
 List available schema versions:
 
 ```bash
-python psycho-validator.py --list-versions
+python prism-validator.py --list-versions
 ```
 
 ### Web Interface

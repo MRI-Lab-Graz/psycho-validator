@@ -1,0 +1,8 @@
+# .bidsignore created by psycho-validator
+# Ignores custom modalities to ensure BIDS-App compatibility
+audio/
+behavior/
+eyetracking/
+image/
+movie/
+physiological/

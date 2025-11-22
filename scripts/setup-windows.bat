@@ -97,12 +97,12 @@ echo To activate the virtual environment, run:
 echo %VENV_DIR%\Scripts\activate
 echo.
 echo To run the validator:
-echo python psycho-validator.py /path/to/dataset
+echo python prism-validator.py /path/to/dataset
 echo.
 echo Windows-specific notes:
 echo - Use backslashes or forward slashes for paths
 echo - File paths with spaces should be quoted
-echo - Example: python psycho-validator.py "C:\My Data\dataset"
+echo - Example: python prism-validator.py "C:\My Data\dataset"
 echo --------------------------------------------------
 
 goto :eof

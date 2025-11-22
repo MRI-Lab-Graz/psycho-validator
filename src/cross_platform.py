@@ -1,5 +1,5 @@
 """
-Cross-platform compatibility utilities for psycho-validator
+Cross-platform compatibility utilities for prism-validator
 """
 
 import os

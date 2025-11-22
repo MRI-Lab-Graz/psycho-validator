@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Psycho-Validator: Streamlined main entry point
+Prism-Validator: Streamlined main entry point
 
 A modular, BIDS-inspired validation tool for psychological research datasets.
 """
@@ -13,7 +13,7 @@ import argparse
 # Check if running inside the venv
 venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv")
 if not sys.prefix.startswith(venv_path):
-    print("❌ Error: You are not running inside the psycho-validator virtual environment!")
+    print("❌ Error: You are not running inside the prism-validator virtual environment!")
     print("   Please activate the venv first:")
     if os.name == 'nt':  # Windows
         print(f"     {venv_path}\\Scripts\\activate")
@@ -32,6 +32,7 @@ try:
     from validator import DatasetValidator, MODALITY_PATTERNS
     from stats import DatasetStats
     from reporting import print_dataset_summary, print_validation_results
+    from bids_integration import check_and_update_bidsignore
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Make sure you're running from the project root directory")
@@ -161,7 +162,7 @@ def validate_modality_dir(
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="Psycho-Validator: BIDS-inspired validation for psychological research data",
+        description="Prism-Validator: BIDS-inspired validation for psychological research data",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -192,7 +193,7 @@ Examples:
     parser.add_argument(
         "--list-versions", action="store_true", help="List available schema versions"
     )
-    parser.add_argument("--version", action="version", version="Psycho-Validator 1.3.0")
+    parser.add_argument("--version", action="version", version="Prism-Validator 1.3.0")
 
     args = parser.parse_args()
 
@@ -212,7 +213,7 @@ Examples:
     if args.schema_info:
         # Import and show schema info (simplified for this streamlined version)
         print(f"Schema information for modality: {args.schema_info}")
-        print("(Use the full psycho-validator.py for detailed schema inspection)")
+        print("(Use the full prism-validator.py for detailed schema inspection)")
         return
 
     # Validate required arguments
@@ -222,6 +223,19 @@ Examples:
     if not os.path.exists(args.dataset):
         print(f"❌ Dataset directory not found: {args.dataset}")
         sys.exit(1)
+
+    # Check and update .bidsignore for BIDS-App compatibility
+    try:
+        added_rules = check_and_update_bidsignore(
+            args.dataset, list(MODALITY_PATTERNS.keys())
+        )
+        if added_rules:
+            print(f"ℹ️  Updated .bidsignore for BIDS-App compatibility:")
+            for rule in added_rules:
+                print(f"   + {rule}")
+    except Exception as e:
+        if args.verbose:
+            print(f"⚠️  Failed to update .bidsignore: {e}")
 
     # Run validation with schema version
     schema_version = args.schema_version or "stable"

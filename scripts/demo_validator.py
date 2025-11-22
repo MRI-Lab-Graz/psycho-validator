@@ -30,7 +30,7 @@ def run_validator_demo():
 
         try:
             result = subprocess.run(
-                [sys.executable, "psycho-validator.py", dataset_path],
+                [sys.executable, "prism-validator.py", dataset_path],
                 capture_output=True,
                 text=True,
                 cwd=os.path.dirname(os.path.abspath(__file__)),

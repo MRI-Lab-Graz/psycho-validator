@@ -55,7 +55,7 @@ We've successfully created a comprehensive web interface for the Psycho-Validato
 
 ### 📋 **File Structure**
 ```
-psycho-validator/
+prism-validator/
 ├── web_interface.py           # Main Flask app
 ├── launch_web.py             # Cross-platform launcher
 ├── launch_web.bat           # Windows launcher

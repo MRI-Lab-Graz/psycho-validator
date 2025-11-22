@@ -10,7 +10,7 @@
 │                        DIRECTORY STRUCTURE                           │
 └─────────────────────────────────────────────────────────────────────┘
 
-psycho-validator/
+prism-validator/
 │
 ├── schemas/
 │   ├── stable/  ←─────────────── Default (Recommended)
@@ -29,7 +29,7 @@ psycho-validator/
 │   ├── schema_manager.py  ←──── Version-aware loading
 │   └── runner.py  ←───────────── Version support
 │
-├── psycho-validator.py  ←─────── CLI with --schema-version
+├── prism-validator.py  ←─────── CLI with --schema-version
 ├── web_interface.py  ←────────── Web UI with dropdown
 │
 └── docs/
@@ -43,14 +43,14 @@ psycho-validator/
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌────────────────────────────────────────────────────────────────┐
-│  $ python psycho-validator.py --list-versions                  │
+│  $ python prism-validator.py --list-versions                  │
 │  Available schema versions:                                    │
 │    • stable (default)                                          │
 │    • v0.1                                                      │
 └────────────────────────────────────────────────────────────────┘
 
 ┌────────────────────────────────────────────────────────────────┐
-│  $ python psycho-validator.py dataset --schema-version v0.1    │
+│  $ python prism-validator.py dataset --schema-version v0.1    │
 │  🔍 Validating dataset: dataset                                │
 │  📋 Using schema version: v0.1                                 │
 │  📋 Loaded 7 schemas (version: v0.1)                           │
@@ -200,10 +200,10 @@ Status: 🚀 Production Ready
 └─────────────────────────────────────────────────────────────────────┘
 
 1. List versions:
-   $ python psycho-validator.py --list-versions
+   $ python prism-validator.py --list-versions
 
 2. Validate with version:
-   $ python psycho-validator.py dataset --schema-version v0.1
+   $ python prism-validator.py dataset --schema-version v0.1
 
 3. Web interface:
    $ python launch_web.py

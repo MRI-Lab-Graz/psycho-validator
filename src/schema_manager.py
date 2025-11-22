@@ -1,5 +1,5 @@
 """
-Schema management for psycho-validator
+Schema management for prism-validator
 """
 
 import os

@@ -1,6 +1,6 @@
 # Quick Start Guide - After Refactoring
 
-This guide shows how to use the improved psycho-validator after the B, C, A refactoring.
+This guide shows how to use the improved prism-validator after the B, C, A refactoring.
 
 ## For End Users
 
@@ -11,10 +11,10 @@ This guide shows how to use the improved psycho-validator after the B, C, A refa
 source .venv/bin/activate
 
 # Start web interface
-online-psycho-validator
+prism-validator-web
 
 # Or specify port
-online-psycho-validator --port 5000
+prism-validator-web --port 5000
 ```
 
 Then open http://127.0.0.1:5000 in your browser.
@@ -35,10 +35,10 @@ Then open http://127.0.0.1:5000 in your browser.
 source .venv/bin/activate
 
 # Validate a dataset
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Verbose output
-python psycho-validator.py /path/to/dataset --verbose
+python prism-validator.py /path/to/dataset --verbose
 ```
 
 ## For Developers
@@ -47,7 +47,7 @@ python psycho-validator.py /path/to/dataset --verbose
 
 ```python
 import sys
-sys.path.insert(0, '/path/to/psycho-validator')
+sys.path.insert(0, '/path/to/prism-validator')
 
 from src.runner import validate_dataset
 
@@ -143,7 +143,7 @@ When validation finds issues, they're grouped by error code:
 
 Each error code has comprehensive documentation:
 
-**Online:** https://github.com/MRI-Lab-Graz/psycho-validator/blob/main/docs/ERROR_CODES.md
+**Online:** https://github.com/MRI-Lab-Graz/prism-validator/blob/main/docs/ERROR_CODES.md
 
 **Local:** `docs/ERROR_CODES.md`
 
@@ -197,7 +197,7 @@ For each error:
 ## File Structure After Refactoring
 
 ```
-psycho-validator/
+prism-validator/
 ├── src/                          # Core package
 │   ├── __init__.py               # Package marker
 │   ├── runner.py                 # ⭐ Canonical validation entry point
@@ -230,8 +230,8 @@ psycho-validator/
 │   ├── index.html                # Upload page
 │   └── results.html              # ⭐ Improved results display
 │
-├── psycho-validator.py           # ⭐ CLI entry (now uses src.runner)
-├── online-psycho-validator.py    # ⭐ Web interface (executable)
+├── prism-validator.py           # ⭐ CLI entry (now uses src.runner)
+├── prism-validator-web.py    # ⭐ Web interface (executable)
 ├── requirements.txt
 ├── setup.sh / setup.bat
 └── README.md
@@ -330,7 +330,7 @@ waitress-serve --host 0.0.0.0 --port 8000 web_interface:app
 
 ```bash
 # Make sure you're in project root
-cd /path/to/psycho-validator
+cd /path/to/prism-validator
 
 # Make sure .venv is activated
 source .venv/bin/activate  # Mac/Linux
@@ -392,12 +392,12 @@ app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1GB
 1. **Error Documentation:** `docs/ERROR_CODES.md`
 2. **Implementation Details:** `docs/IMPLEMENTATION_SUMMARY.md`
 3. **Web Interface Guide:** `docs/WEB_INTERFACE.md`
-4. **GitHub Issues:** https://github.com/MRI-Lab-Graz/psycho-validator/issues
+4. **GitHub Issues:** https://github.com/MRI-Lab-Graz/prism-validator/issues
 5. **BIDS Specification:** https://bids-specification.readthedocs.io/
 
 ## Success! 🎉
 
-You're now ready to use the improved psycho-validator with:
+You're now ready to use the improved prism-validator with:
 - ✅ Clean importable validation functions
 - ✅ Better error messages with documentation links
 - ✅ Comprehensive unit tests

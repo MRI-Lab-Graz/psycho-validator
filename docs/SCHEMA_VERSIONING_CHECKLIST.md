@@ -18,7 +18,7 @@
 - [x] Updated help text with examples
 - [x] Updated `validate_dataset()` to accept schema_version parameter
 - [x] Schema version displayed in verbose output
-- [x] Updated main entry point in `psycho-validator.py`
+- [x] Updated main entry point in `prism-validator.py`
 
 ### Web Interface
 - [x] Updated `run_main_validator()` to support schema_version
@@ -85,7 +85,7 @@
 ### Files Modified
 ```
 ✅ src/schema_manager.py - Version support
-✅ psycho-validator.py - CLI flags
+✅ prism-validator.py - CLI flags
 ✅ src/runner.py - Version parameter
 ✅ web_interface.py - Version selection
 ✅ templates/index.html - Version dropdown
@@ -146,13 +146,13 @@
 ### Command Line
 ```bash
 # List versions
-✅ python psycho-validator.py --list-versions
+✅ python prism-validator.py --list-versions
 
 # Validate with version
-✅ python psycho-validator.py dataset --schema-version v0.1
-✅ python psycho-validator.py dataset --schema-version 0.1
-✅ python psycho-validator.py dataset --schema-version stable
-✅ python psycho-validator.py dataset  # defaults to stable
+✅ python prism-validator.py dataset --schema-version v0.1
+✅ python prism-validator.py dataset --schema-version 0.1
+✅ python prism-validator.py dataset --schema-version stable
+✅ python prism-validator.py dataset  # defaults to stable
 ```
 
 ### Web Interface

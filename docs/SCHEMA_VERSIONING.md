@@ -1,7 +1,7 @@
 # Schema Versioning System
 
 ## Overview
-The psycho-validator includes a schema versioning system to handle the evolution of metadata schemas over time.
+The prism-validator includes a schema versioning system to handle the evolution of metadata schemas over time.
 
 ## Semantic Versioning
 Schemas follow semantic versioning (MAJOR.MINOR.PATCH):
@@ -16,7 +16,7 @@ Each schema includes version metadata:
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://psycho-validator.org/schemas/image/v1.0.0",
+  "$id": "https://prism-validator.org/schemas/image/v1.0.0",
   "version": "1.0.0",
   "title": "Image Stimulus Metadata"
 }
@@ -39,9 +39,9 @@ All stimulus metadata must include a SchemaVersion field:
 ```
 
 ## CLI Features
-- List versions: `python psycho-validator.py --list-versions`
-- Schema info: `python psycho-validator.py --schema-info image`
-- Check compatibility: `python psycho-validator.py --check-compatibility 1.0.1 1.0.0`
+- List versions: `python prism-validator.py --list-versions`
+- Schema info: `python prism-validator.py --schema-info image`
+- Check compatibility: `python prism-validator.py --check-compatibility 1.0.1 1.0.0`
 
 ## Compatibility Rules
 - Compatible: Same major version, schema version >= required version

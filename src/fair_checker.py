@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FAIR Compliance Checker for Psycho-Validator
+FAIR Compliance Checker for Prism-Validator
 Evaluates datasets against FAIR principles and provides recommendations
 """
 

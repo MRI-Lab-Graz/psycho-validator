@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FAIR Data Export Module for Psycho-Validator
+FAIR Data Export Module for Prism-Validator
 Implements Dublin Core and DataCite metadata export for FAIR compliance
 """
 

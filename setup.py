@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for psycho-validator
+Setup script for prism-validator
 """
 
 from setuptools import setup
@@ -20,14 +20,14 @@ def read_requirements(filename):
 
 
 setup(
-    name="psycho-validator",
+    name="prism-validator",
     version="1.3.0",
     description="BIDS-inspired validation tool for psychological research datasets",
     long_description=read_file("README.md"),
     long_description_content_type="text/markdown",
     author="MRI-Lab-Graz",
     author_email="contact@mri-lab-graz.at",
-    url="https://github.com/MRI-Lab-Graz/psycho-validator",
+    url="https://github.com/MRI-Lab-Graz/prism-validator",
     packages=["src"],
     package_dir={"src": "src"},
     package_data={
@@ -41,8 +41,8 @@ setup(
         "demo": ["Pillow", "numpy", "matplotlib"],
     },
     scripts=[
-        "psycho-validator.py",
-        "online-psycho-validator.py",
+        "prism-validator.py",
+        "prism-validator-web.py",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

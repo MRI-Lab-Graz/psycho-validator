@@ -2,7 +2,7 @@
 
 ## Summary
 
-Schema versioning has been successfully implemented for psycho-validator! Users can now validate datasets against different versions of validation schemas, similar to Docker's image tagging system.
+Schema versioning has been successfully implemented for prism-validator! Users can now validate datasets against different versions of validation schemas, similar to Docker's image tagging system.
 
 ## What's New
 
@@ -45,13 +45,13 @@ Schema versioning has been successfully implemented for psycho-validator! Users 
 
 ```bash
 # List available versions
-python psycho-validator.py --list-versions
+python prism-validator.py --list-versions
 
 # Use default (stable)
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Use specific version
-python psycho-validator.py /path/to/dataset --schema-version v0.1
+python prism-validator.py /path/to/dataset --schema-version v0.1
 ```
 
 ### Web Interface
@@ -65,7 +65,7 @@ python psycho-validator.py /path/to/dataset --schema-version v0.1
 
 ### Modified Files
 - `src/schema_manager.py` - Added version support
-- `psycho-validator.py` - Added CLI flags
+- `prism-validator.py` - Added CLI flags
 - `src/runner.py` - Updated for version parameter
 - `web_interface.py` - Added version selection
 - `templates/index.html` - Added version dropdown
@@ -102,7 +102,7 @@ python psycho-validator.py /path/to/dataset --schema-version v0.1
 ## Architecture
 
 ```
-psycho-validator/
+prism-validator/
 ├── schemas/
 │   ├── stable/              # Default, recommended version
 │   │   ├── behavior.schema.json
@@ -116,7 +116,7 @@ psycho-validator/
 │       └── (same structure)
 ├── src/
 │   └── schema_manager.py    # Version-aware schema loading
-├── psycho-validator.py      # CLI with version support
+├── prism-validator.py      # CLI with version support
 ├── web_interface.py         # Web UI with version selection
 └── docs/
     ├── SCHEMA_VERSIONING_GUIDE.md

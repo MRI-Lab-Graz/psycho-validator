@@ -31,7 +31,7 @@ schemas/
 - Added `get_available_schema_versions()` function to list available versions
 - Version normalization (supports both `0.1` and `v0.1` formats)
 
-#### `psycho-validator.py`
+#### `prism-validator.py`
 - Updated `validate_dataset()` to accept `schema_version` parameter
 - Added `--schema-version` command-line flag
 - Added `--list-versions` command to show available schema versions
@@ -76,15 +76,15 @@ Comprehensive guide covering:
 
 ```bash
 # Default (uses stable)
-python psycho-validator.py /path/to/dataset
+python prism-validator.py /path/to/dataset
 
 # Specify version explicitly
-python psycho-validator.py /path/to/dataset --schema-version 0.1
-python psycho-validator.py /path/to/dataset --schema-version v0.1
-python psycho-validator.py /path/to/dataset --schema-version stable
+python prism-validator.py /path/to/dataset --schema-version 0.1
+python prism-validator.py /path/to/dataset --schema-version v0.1
+python prism-validator.py /path/to/dataset --schema-version stable
 
 # List available versions
-python psycho-validator.py --list-versions
+python prism-validator.py --list-versions
 ```
 
 Output:

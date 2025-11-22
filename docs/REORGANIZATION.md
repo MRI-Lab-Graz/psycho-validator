@@ -1,16 +1,16 @@
 # Psycho-Validator Project Structure
 
-This document outlines the reorganized structure of the psycho-validator project.
+This document outlines the reorganized structure of the prism-validator project.
 
 ## Directory Structure
 
 ```
-psycho-validator/
+prism-validator/
 ├── README.md                     # Main project documentation
 ├── requirements.txt              # Python dependencies
 ├── setup.py                      # Package installation script
-├── psycho-validator.py           # Full-featured main script (legacy)
-├── psycho-validator-streamlined.py # Streamlined modular version
+├── prism-validator.py           # Full-featured main script (legacy)
+├── prism-validator-streamlined.py # Streamlined modular version
 │
 ├── src/                          # Core source code modules
 │   ├── __init__.py
@@ -63,8 +63,8 @@ psycho-validator/
 - `docs/` centralizes documentation
 
 ### 3. **Dual Entry Points**
-- `psycho-validator.py` - Full-featured legacy script
-- `psycho-validator-streamlined.py` - Clean, modular version
+- `prism-validator.py` - Full-featured legacy script
+- `prism-validator-streamlined.py` - Clean, modular version
 
 ### 4. **Improved Maintainability**
 - Smaller, focused files (~200-300 lines each)
@@ -77,10 +77,10 @@ psycho-validator/
 ### For Users
 ```bash
 # Use the streamlined version for basic validation
-python psycho-validator-streamlined.py /path/to/dataset
+python prism-validator-streamlined.py /path/to/dataset
 
 # Use the full version for advanced features
-python psycho-validator.py /path/to/dataset --fair-check
+python prism-validator.py /path/to/dataset --fair-check
 ```
 
 ### For Developers
