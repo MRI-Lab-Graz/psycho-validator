@@ -1,0 +1,211 @@
+{
+  "TaskName": "ADS",
+  "participant_id": {
+    "Description": "Unique participant identifier"
+  },
+  "session_id": {
+    "Description": "Session identifier"
+  },
+  "ADS-01": {
+    "Description": "1. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-02": {
+    "Description": "2. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-03": {
+    "Description": "3. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-04": {
+    "Description": "4. Item of the Questionnaire ADS",
+    "Levels": {
+      "3": "Rarely or none of the time (less than 1 day)",
+      "2": "Some or a little of the time (1-2 days)",
+      "1": "Occasionally or a moderate amount of time (3-4 days)",
+      "0": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-05": {
+    "Description": "5. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-06": {
+    "Description": "6. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-07": {
+    "Description": "7. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-08": {
+    "Description": "8. Item of the Questionnaire ADS",
+    "Levels": {
+      "3": "Rarely or none of the time (less than 1 day)",
+      "2": "Some or a little of the time (1-2 days)",
+      "1": "Occasionally or a moderate amount of time (3-4 days)",
+      "0": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-09": {
+    "Description": "9. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-10": {
+    "Description": "10. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-11": {
+    "Description": "11. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-12": {
+    "Description": "12. Item of the Questionnaire ADS",
+    "Levels": {
+      "3": "Rarely or none of the time (less than 1 day)",
+      "2": "Some or a little of the time (1-2 days)",
+      "1": "Occasionally or a moderate amount of time (3-4 days)",
+      "0": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-13": {
+    "Description": "13. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-14": {
+    "Description": "14. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-15": {
+    "Description": "15. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-16": {
+    "Description": "16. Item of the Questionnaire ADS",
+    "Levels": {
+      "3": "Rarely or none of the time (less than 1 day)",
+      "2": "Some or a little of the time (1-2 days)",
+      "1": "Occasionally or a moderate amount of time (3-4 days)",
+      "0": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-17": {
+    "Description": "17. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-18": {
+    "Description": "18. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-19": {
+    "Description": "19. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "ADS-20": {
+    "Description": "20. Item of the Questionnaire ADS",
+    "Levels": {
+      "0": "Rarely or none of the time (less than 1 day)",
+      "1": "Some or a little of the time (1-2 days)",
+      "2": "Occasionally or a moderate amount of time (3-4 days)",
+      "3": "Most or all of the time (5-7 days)"
+    }
+  },
+  "Technical": {
+    "StimulusType": "Behavior",
+    "FileFormat": "tsv",
+    "ResponseType": [
+      "keypress"
+    ],
+    "SoftwarePlatform": "custom"
+  },
+  "Study": {
+    "Task": "ads",
+    "Subject": "sub-001",
+    "Run": "run-01",
+    "TaskType": "reaction_time",
+    "TrialStructure": {
+      "TrialCount": 1
+    }
+  },
+  "Metadata": {
+    "SchemaVersion": "1.0.0",
+    "CreationDate": "2025-11-22",
+    "Creator": "Prism Importer"
+  }
+}

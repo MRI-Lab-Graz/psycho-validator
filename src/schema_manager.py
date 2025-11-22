@@ -93,8 +93,7 @@ def load_all_schemas(schema_dir="schemas", version=None):
         "movie",
         "audio",
         "eyetracking",
-        "eeg",
-        "behavior",
+        "survey",
         "physiological",
         "dataset_description",
     ]

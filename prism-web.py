@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Web interface for prism-validator
+Web interface for psycho-validator
 A simple Flask web app that provides a user-friendly interface for dataset validation
 """
 
@@ -45,7 +45,7 @@ except Exception as import_error:
 # Use subprocess to run the main validator script - single source of truth
 def run_main_validator(dataset_path, verbose=False, schema_version=None):
     """
-    Run the main prism-validator.py script via subprocess.
+    Run the main psycho-validator.py script via subprocess.
     This ensures the web interface uses exactly the same logic as the terminal version.
 
     Args:
@@ -58,7 +58,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
 
     try:
         # Run the main validator script
-        cmd = [sys.executable, "prism-validator.py", dataset_path]
+        cmd = [sys.executable, "psycho-validator.py", dataset_path]
         if verbose:
             cmd.append("--verbose")
         if schema_version:
@@ -147,7 +147,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
             return issues, stats
 
     except FileNotFoundError:
-        error_msg = "prism-validator.py script not found"
+        error_msg = "psycho-validator.py script not found"
         print(f"❌ {error_msg}")
         stats = SimpleStats()
         issues = [("ERROR", error_msg, dataset_path)]
@@ -208,7 +208,7 @@ def simple_is_system_file(filename):
 is_system_file = simple_is_system_file
 
 app = Flask(__name__)
-app.secret_key = "prism-validator-secret-key"  # Change this in production
+app.secret_key = "psycho-validator-secret-key"  # Change this in production
 app.config["MAX_CONTENT_LENGTH"] = (
     100 * 1024 * 1024
 )  # 100MB max file size (metadata only)
@@ -272,9 +272,9 @@ def format_validation_results(issues, dataset_stats, dataset_path):
         # If it's a temp path, try to extract the relative path
         if (
             "/tmp/" in file_path
-            or "/T/prism_validator_" in file_path
+            or "/T/psycho_validator_" in file_path
             or "/var/folders/" in file_path
-            or "prism_validator_" in file_path
+            or "psycho_validator_" in file_path
         ):
             # Find the dataset root marker - typically after 'dataset/'
             if "/dataset/" in file_path:
@@ -361,9 +361,9 @@ def format_validation_results(issues, dataset_stats, dataset_path):
             import re
 
             # Replace temp folder paths in the message with just the relative path
-            # Match various temp folder patterns: /tmp/, /T/, /var/folders/, prism_validator_
+            # Match various temp folder patterns: /tmp/, /T/, /var/folders/, psycho_validator_
             msg = re.sub(
-                r"(/tmp/[^\s,:]+/dataset/|/T/prism_validator_[^\s,:]+/dataset/|/var/folders/[^\s,:]+/dataset/|prism_validator_[^\s,:]+/dataset/)([^\s,:]+)",
+                r"(/tmp/[^\s,:]+/dataset/|/T/psycho_validator_[^\s,:]+/dataset/|/var/folders/[^\s,:]+/dataset/|psycho_validator_[^\s,:]+/dataset/)([^\s,:]+)",
                 r"\2",
                 msg,
             )
@@ -526,7 +526,7 @@ def get_error_documentation_url(error_code):
     """Get documentation URL for an error code"""
     # Map error codes to documentation anchors
     base_url = (
-        "https://github.com/MRI-Lab-Graz/prism-validator/blob/main/docs/ERROR_CODES.md"
+        "https://github.com/MRI-Lab-Graz/psycho-validator/blob/main/docs/ERROR_CODES.md"
     )
 
     doc_anchors = {
@@ -780,7 +780,7 @@ def upload_dataset():
     schema_version = request.form.get("schema_version", "stable")
 
     # Create temporary directory for processing
-    temp_dir = tempfile.mkdtemp(prefix="prism_validator_")
+    temp_dir = tempfile.mkdtemp(prefix="psycho_validator_")
 
     metadata_paths = request.form.getlist("metadata_paths[]")
 
@@ -1400,7 +1400,7 @@ def main():
     """Run the web application"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Prism-Validator Web Interface")
+    parser = argparse.ArgumentParser(description="Psycho-Validator Web Interface")
     parser.add_argument(
         "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
     )
@@ -1425,7 +1425,7 @@ def main():
     display_host = "localhost" if host == "127.0.0.1" else host
     url = f"http://{display_host}:{args.port}"
 
-    print("🌐 Starting Prism-Validator Web Interface")
+    print("🌐 Starting Psycho-Validator Web Interface")
     print(f"🔗 URL: {url}")
     if args.public:
         print("⚠️  Warning: Running in public mode - accessible from other computers")
@@ -1448,6 +1448,72 @@ def main():
         browser_thread.start()
 
     app.run(host=host, port=args.port, debug=args.debug)
+
+
+@app.route("/survey-generator")
+def survey_generator():
+    """Survey generator page"""
+    return render_template("survey_generator.html")
+
+
+@app.route("/api/save-survey-template", methods=["POST"])
+def save_survey_template():
+    """Save a survey template to the templates/surveys directory"""
+    try:
+        data = request.get_json()
+        if not data or "name" not in data or "data" not in data:
+            return jsonify({"success": False, "error": "Invalid data"}), 400
+
+        name = secure_filename(data["name"])
+        if not name.endswith(".json"):
+            name += ".json"
+
+        # Ensure templates/surveys directory exists
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        os.makedirs(template_dir, exist_ok=True)
+
+        file_path = os.path.join(template_dir, name)
+        
+        with open(file_path, "w") as f:
+            json.dump(data["data"], f, indent=2)
+
+        return jsonify({"success": True, "filename": name})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/list-survey-templates")
+def list_survey_templates():
+    """List available survey templates"""
+    try:
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        if not os.path.exists(template_dir):
+            return jsonify({"templates": []})
+        
+        templates = [f for f in os.listdir(template_dir) if f.endswith(".json")]
+        return jsonify({"templates": sorted(templates)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/load-survey-template/<filename>")
+def load_survey_template(filename):
+    """Load a specific survey template"""
+    try:
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        filename = secure_filename(filename)
+        file_path = os.path.join(template_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "Template not found"}), 404
+            
+        with open(file_path, "r") as f:
+            data = json.load(f)
+            
+        return jsonify({"data": data})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

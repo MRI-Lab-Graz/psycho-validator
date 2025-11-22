@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Prism-Validator - Survey Generator{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-poll-h text-primary me-2"></i>Survey Template Generator</h2>
+            <p class="text-muted">Create and manage JSON sidecars for survey data (TSV files).</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Form -->
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Add Question / Column</h5>
+                </div>
+                <div class="card-body">
+                    <form id="questionForm">
+                        <div class="mb-3">
+                            <label for="columnName" class="form-label">Column Name (ID)</label>
+                            <input type="text" class="form-control" id="columnName" placeholder="e.g., q1, age, gender" required>
+                            <div class="form-text">The column header in your TSV file.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="questionText" class="form-label">Question / Description</label>
+                            <textarea class="form-control" id="questionText" rows="2" placeholder="e.g., How well did you sleep?" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="responseType" class="form-label">Response Type</label>
+                            <select class="form-select" id="responseType">
+                                <option value="text">Free Text</option>
+                                <option value="numeric">Numeric</option>
+                                <option value="scale">Likert Scale / Categorical</option>
+                            </select>
+                        </div>
+
+                        <!-- Scale Options (Hidden by default) -->
+                        <div id="scaleOptions" class="mb-3 d-none">
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">Quick Scale Template</label>
+                                <select class="form-select form-select-sm" id="scaleTemplate">
+                                    <option value="">Custom...</option>
+                                    <option value="agreement_5">Agreement (5-point)</option>
+                                    <option value="frequency_5">Frequency (5-point)</option>
+                                    <option value="quality_5">Quality (5-point)</option>
+                                    <option value="yes_no">Yes / No</option>
+                                </select>
+                            </div>
+                            <label class="form-label">Response Levels</label>
+                            <div id="levelsContainer">
+                                <div class="input-group mb-2 level-row">
+                                    <input type="text" class="form-control" placeholder="Value (e.g., 1)" name="levelValue">
+                                    <input type="text" class="form-control" placeholder="Label (e.g., Very Bad)" name="levelLabel">
+                                    <button type="button" class="btn btn-outline-danger remove-level"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="addLevelBtn">
+                                <i class="fas fa-plus me-1"></i>Add Level
+                            </button>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add to Survey
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Template Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="loadTemplateSelect" class="form-label">Load Template</label>
+                        <div class="input-group">
+                            <select class="form-select" id="loadTemplateSelect">
+                                <option value="">Select a template...</option>
+                            </select>
+                            <button class="btn btn-outline-secondary" type="button" id="loadTemplateBtn">Load</button>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="templateName" class="form-label">Save as Template</label>
+                        <div class="input-group">
+                            <span class="input-group-text">task-</span>
+                            <input type="text" class="form-control" id="templateName" placeholder="e.g., sleep">
+                            <span class="input-group-text">_survey.json</span>
+                        </div>
+                        <div class="form-text">Will be saved as task-[name]_survey.json</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" id="saveTemplateBtn">
+                            <i class="fas fa-save me-2"></i>Save Template
+                        </button>
+                        <button class="btn btn-info text-white" id="downloadJsonBtn">
+                            <i class="fas fa-download me-2"></i>Download JSON
+                        </button>
+                        <button class="btn btn-secondary" id="editMetadataBtn">
+                            <i class="fas fa-cog me-2"></i>Edit Prism Metadata
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Preview -->
+        <div class="col-md-7">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Survey Structure</h5>
+                    <button class="btn btn-sm btn-outline-danger" id="clearAllBtn">Clear All</button>
+                </div>
+                <div class="card-body">
+                    <div id="questionsList" class="list-group mb-3">
+                        <!-- Questions will be added here -->
+                        <div class="text-center text-muted py-5" id="emptyState">
+                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                            <p>No questions added yet.</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>JSON Preview</h6>
+                    <pre class="bg-light p-3 border rounded" id="jsonPreview" style="max-height: 300px; overflow-y: auto;">{}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metadata Modal -->
+<div class="modal fade" id="metadataModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Prism Metadata</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="metadataForm">
+                    <h6>Technical</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Stimulus Type</label>
+                            <input type="text" class="form-control" id="metaStimulusType" value="Behavior" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">File Format</label>
+                            <select class="form-select" id="metaFileFormat">
+                                <option value="tsv">tsv</option>
+                                <option value="csv">csv</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h6>Study</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-control" id="metaTaskName">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Task Type</label>
+                            <select class="form-select" id="metaTaskType">
+                                <option value="reaction_time">Reaction Time</option>
+                                <option value="decision_making">Decision Making</option>
+                                <option value="memory_task">Memory Task</option>
+                                <option value="attention_task">Attention Task</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6>Metadata</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Creator</label>
+                            <input type="text" class="form-control" id="metaCreator">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Schema Version</label>
+                            <input type="text" class="form-control" id="metaSchemaVersion" value="1.0.0" readonly>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveMetadataBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('questionForm');
+    const responseType = document.getElementById('responseType');
+    const scaleOptions = document.getElementById('scaleOptions');
+    const levelsContainer = document.getElementById('levelsContainer');
+    const addLevelBtn = document.getElementById('addLevelBtn');
+    const questionsList = document.getElementById('questionsList');
+    const emptyState = document.getElementById('emptyState');
+    const jsonPreview = document.getElementById('jsonPreview');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+    const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+    const loadTemplateSelect = document.getElementById('loadTemplateSelect');
+    const loadTemplateBtn = document.getElementById('loadTemplateBtn');
+    const editMetadataBtn = document.getElementById('editMetadataBtn');
+    const saveMetadataBtn = document.getElementById('saveMetadataBtn');
+    const metadataModal = new bootstrap.Modal(document.getElementById('metadataModal'));
+    const scaleTemplate = document.getElementById('scaleTemplate');
+
+    let surveyData = {};
+
+    // Scale Templates
+    const scaleDefinitions = {
+        'agreement_5': {
+            '1': 'Strongly Disagree',
+            '2': 'Disagree',
+            '3': 'Neutral',
+            '4': 'Agree',
+            '5': 'Strongly Agree'
+        },
+        'frequency_5': {
+            '1': 'Never',
+            '2': 'Rarely',
+            '3': 'Sometimes',
+            '4': 'Often',
+            '5': 'Always'
+        },
+        'quality_5': {
+            '1': 'Very Poor',
+            '2': 'Poor',
+            '3': 'Fair',
+            '4': 'Good',
+            '5': 'Excellent'
+        },
+        'yes_no': {
+            '0': 'No',
+            '1': 'Yes'
+        }
+    };
+
+    // Edit Metadata Button
+    editMetadataBtn.addEventListener('click', function() {
+        // Populate form
+        document.getElementById('metaFileFormat').value = surveyData.Technical?.FileFormat || 'tsv';
+        document.getElementById('metaTaskName').value = surveyData.Study?.Task || '';
+        document.getElementById('metaTaskType').value = surveyData.Study?.TaskType || 'reaction_time';
+        document.getElementById('metaCreator').value = surveyData.Metadata?.Creator || '';
+        
+        metadataModal.show();
+    });
+
+    // Save Metadata Button
+    saveMetadataBtn.addEventListener('click', function() {
+        // Ensure sections exist
+        if (!surveyData.Technical) surveyData.Technical = { StimulusType: 'Behavior' };
+        if (!surveyData.Study) surveyData.Study = { TrialStructure: { TrialCount: 1 } };
+        if (!surveyData.Metadata) surveyData.Metadata = { SchemaVersion: '1.0.0', CreationDate: new Date().toISOString().split('T')[0] };
+
+        // Update values
+        surveyData.Technical.FileFormat = document.getElementById('metaFileFormat').value;
+        surveyData.Study.Task = document.getElementById('metaTaskName').value;
+        surveyData.Study.TaskType = document.getElementById('metaTaskType').value;
+        surveyData.Metadata.Creator = document.getElementById('metaCreator').value;
+
+        updateUI();
+        metadataModal.hide();
+    });
+
+    // Load template list
+    function loadTemplateList() {
+        fetch('/api/list-survey-templates')
+            .then(response => response.json())
+            .then(data => {
+                if (data.templates) {
+                    loadTemplateSelect.innerHTML = '<option value="">Select a template...</option>';
+                    data.templates.forEach(t => {
+                        const option = document.createElement('option');
+                        option.value = t;
+                        option.textContent = t;
+                        loadTemplateSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => console.error('Error loading templates:', err));
+    }
+
+    // Initial load
+    loadTemplateList();
+
+    // Load Template Button
+    loadTemplateBtn.addEventListener('click', function() {
+        const filename = loadTemplateSelect.value;
+        if (!filename) return;
+
+        if (Object.keys(surveyData).length > 0 && !confirm('This will overwrite your current work. Continue?')) {
+            return;
+        }
+
+        fetch('/api/load-survey-template/' + filename)
+            .then(response => response.json())
+            .then(data => {
+                if (data.data) {
+                    surveyData = data.data;
+                    updateUI();
+                    // Also set the save name to the loaded filename (without extension)
+                    document.getElementById('templateName').value = filename.replace('.json', '');
+                } else {
+                    alert('Error loading template');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error loading template');
+            });
+    });
+
+    scaleTemplate.addEventListener('change', function() {
+        const templateKey = this.value;
+        if (!templateKey || !scaleDefinitions[templateKey]) return;
+
+        const levels = scaleDefinitions[templateKey];
+        levelsContainer.innerHTML = ''; // Clear existing
+
+        Object.entries(levels).forEach(([val, label]) => {
+            const row = document.createElement('div');
+            row.className = 'input-group mb-2 level-row';
+            row.innerHTML = `
+                <input type="text" class="form-control" placeholder="Value" name="levelValue" value="${val}">
+                <input type="text" class="form-control" placeholder="Label" name="levelLabel" value="${label}">
+                <button type="button" class="btn btn-outline-danger remove-level"><i class="fas fa-times"></i></button>
+            `;
+            levelsContainer.appendChild(row);
+        });
+    });
+
+    // Toggle scale options
+    responseType.addEventListener('change', function() {
+        if (this.value === 'scale') {
+            scaleOptions.classList.remove('d-none');
+        } else {
+            scaleOptions.classList.add('d-none');
+        }
+    });
+
+    // Add level row
+    addLevelBtn.addEventListener('click', function() {
+        const row = document.createElement('div');
+        row.className = 'input-group mb-2 level-row';
+        row.innerHTML = `
+            <input type="text" class="form-control" placeholder="Value" name="levelValue">
+            <input type="text" class="form-control" placeholder="Label" name="levelLabel">
+            <button type="button" class="btn btn-outline-danger remove-level"><i class="fas fa-times"></i></button>
+        `;
+        levelsContainer.appendChild(row);
+    });
+
+    // Remove level row
+    levelsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-level')) {
+            e.target.closest('.level-row').remove();
+        }
+    });
+
+    // Add question
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('columnName').value.trim();
+        const description = document.getElementById('questionText').value.trim();
+        const type = responseType.value;
+
+        if (!id) return;
+
+        const questionObj = {
+            Description: description
+        };
+
+        if (type === 'scale') {
+            const levels = {};
+            document.querySelectorAll('.level-row').forEach(row => {
+                const val = row.querySelector('[name="levelValue"]').value.trim();
+                const label = row.querySelector('[name="levelLabel"]').value.trim();
+                if (val && label) {
+                    levels[val] = label;
+                }
+            });
+            if (Object.keys(levels).length > 0) {
+                questionObj.Levels = levels;
+            }
+        }
+
+        surveyData[id] = questionObj;
+        updateUI();
+        form.reset();
+        // Reset scale options visibility
+        scaleOptions.classList.add('d-none');
+        // Reset levels to one empty row
+        levelsContainer.innerHTML = `
+            <div class="input-group mb-2 level-row">
+                <input type="text" class="form-control" placeholder="Value" name="levelValue">
+                <input type="text" class="form-control" placeholder="Label" name="levelLabel">
+                <button type="button" class="btn btn-outline-danger remove-level"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+    });
+
+    // Clear all
+    clearAllBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all questions?')) {
+            surveyData = {};
+            updateUI();
+        }
+    });
+
+    // Update UI
+    function updateUI() {
+        // Update JSON preview
+        jsonPreview.textContent = JSON.stringify(surveyData, null, 2);
+
+        // Update list
+        questionsList.innerHTML = '';
+        
+        // Filter out Prism reserved keys
+        const reservedKeys = ['Technical', 'Study', 'Metadata', 'Categories', 'TaskName'];
+        const keys = Object.keys(surveyData).filter(k => !reservedKeys.includes(k));
+        
+        if (keys.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+            keys.forEach(key => {
+                const q = surveyData[key];
+                const item = document.createElement('div');
+                item.className = 'list-group-item list-group-item-action';
+                
+                let levelsHtml = '';
+                if (q.Levels) {
+                    levelsHtml = '<div class="mt-2 small text-muted">Levels: ' + 
+                        Object.entries(q.Levels).map(([k, v]) => `${k}=${v}`).join(', ') + 
+                        '</div>';
+                }
+
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold">${key}</h6>
+                        <button class="btn btn-sm btn-outline-danger delete-q" data-id="${key}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <p class="mb-1">${q.Description || ''}</p>
+                    ${levelsHtml}
+                `;
+                questionsList.appendChild(item);
+            });
+        }
+    }
+
+    // Delete question
+    questionsList.addEventListener('click', function(e) {
+        const btn = e.target.closest('.delete-q');
+        if (btn) {
+            const id = btn.dataset.id;
+            delete surveyData[id];
+            updateUI();
+        }
+    });
+
+    // Save Template
+    saveTemplateBtn.addEventListener('click', function() {
+        let name = document.getElementById('templateName').value.trim();
+        if (!name) {
+            alert('Please enter a template name');
+            return;
+        }
+        
+        // Enforce naming convention
+        if (!name.startsWith('task-')) name = 'task-' + name;
+        if (!name.endsWith('_survey.json')) name = name + '_survey.json';
+        
+        fetch('/api/save-survey-template', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                data: surveyData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Template saved successfully!');
+                loadTemplateList(); // Refresh list
+            } else {
+                alert('Error saving template: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving template');
+        });
+    });
+
+    // Download JSON
+    downloadJsonBtn.addEventListener('click', function() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(surveyData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        
+        let name = document.getElementById('templateName').value.trim() || "survey";
+        if (!name.startsWith('task-')) name = 'task-' + name;
+        if (!name.endsWith('_survey.json')) name = name + '_survey.json';
+        
+        downloadAnchorNode.setAttribute("download", name);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    });
+
+    // Edit Metadata Button
+    editMetadataBtn.addEventListener('click', function() {
+        // Open metadata modal
+        const metadata = surveyData.Metadata || {};
+        document.getElementById('metaStimulusType').value = metadata.StimulusType || 'Behavior';
+        document.getElementById('metaFileFormat').value = metadata.FileFormat || 'tsv';
+        document.getElementById('metaTaskName').value = metadata.TaskName || '';
+        document.getElementById('metaTaskType').value = metadata.TaskType || 'reaction_time';
+        document.getElementById('metaCreator').value = metadata.Creator || '';
+        // Show modal
+        const metadataModal = new bootstrap.Modal(document.getElementById('metadataModal'));
+        metadataModal.show();
+    });
+
+    // Save Metadata
+    document.getElementById('saveMetadataBtn').addEventListener('click', function() {
+        const metadata = {
+            StimulusType: document.getElementById('metaStimulusType').value,
+            FileFormat: document.getElementById('metaFileFormat').value,
+            TaskName: document.getElementById('metaTaskName').value,
+            TaskType: document.getElementById('metaTaskType').value,
+            Creator: document.getElementById('metaCreator').value,
+            SchemaVersion: '1.0.0'
+        };
+
+        surveyData.Metadata = metadata;
+        updateUI();
+
+        // Close modal
+        const metadataModal = bootstrap.Modal.getInstance(document.getElementById('metadataModal'));
+        metadataModal.hide();
+    });
+});
+</script>
+{% endblock %}

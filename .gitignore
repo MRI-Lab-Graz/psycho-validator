@@ -16,6 +16,7 @@ psycho_validator.egg-info/
 *.swp
 *.swo
 *~
+rawdata/
 
 # Testing and coverage
 .pytest_cache/

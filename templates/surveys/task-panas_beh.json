@@ -1,0 +1,231 @@
+{
+  "TaskName": "PANAS",
+  "participant_id": {
+    "Description": "Unique participant identifier"
+  },
+  "session_id": {
+    "Description": "Session identifier"
+  },
+  "PANAS-01": {
+    "Description": "1. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-02": {
+    "Description": "2. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-03": {
+    "Description": "3. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-04": {
+    "Description": "4. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-05": {
+    "Description": "5. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-06": {
+    "Description": "6. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-07": {
+    "Description": "7. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-08": {
+    "Description": "8. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-09": {
+    "Description": "9. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-10": {
+    "Description": "10. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-11": {
+    "Description": "11. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-12": {
+    "Description": "12. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-13": {
+    "Description": "13. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-14": {
+    "Description": "14. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-15": {
+    "Description": "15. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-16": {
+    "Description": "16. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-17": {
+    "Description": "17. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-18": {
+    "Description": "18. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-19": {
+    "Description": "19. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "PANAS-20": {
+    "Description": "20. Item of the Questionnaire PANAS",
+    "Levels": {
+      "1": "not at all",
+      "2": "a little",
+      "3": "moderately",
+      "4": "quite a bit",
+      "5": "extremely"
+    }
+  },
+  "Technical": {
+    "StimulusType": "Behavior",
+    "FileFormat": "tsv",
+    "ResponseType": [
+      "keypress"
+    ],
+    "SoftwarePlatform": "custom"
+  },
+  "Study": {
+    "Task": "panas",
+    "Subject": "sub-001",
+    "Run": "run-01",
+    "TaskType": "reaction_time",
+    "TrialStructure": {
+      "TrialCount": 1
+    }
+  },
+  "Metadata": {
+    "SchemaVersion": "1.0.0",
+    "CreationDate": "2025-11-22",
+    "Creator": "Prism Importer"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "TaskName": "PSS",
+  "participant_id": {
+    "Description": "Unique participant identifier"
+  },
+  "session_id": {
+    "Description": "Session identifier"
+  },
+  "PSS-01": {
+    "Description": "1. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "PSS-02": {
+    "Description": "2. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "PSS-03": {
+    "Description": "3. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "PSS-04": {
+    "Description": "4. Item of the Questionnaire PSS",
+    "Levels": {
+      "4": "never",
+      "3": "almost never",
+      "2": "sometimes",
+      "1": "fairly often",
+      "0": "very often"
+    }
+  },
+  "PSS-05": {
+    "Description": "5. Item of the Questionnaire PSS",
+    "Levels": {
+      "4": "never",
+      "3": "almost never",
+      "2": "sometimes",
+      "1": "fairly often",
+      "0": "very often"
+    }
+  },
+  "PSS-06": {
+    "Description": "6. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "PSS-07": {
+    "Description": "7. Item of the Questionnaire PSS",
+    "Levels": {
+      "4": "never",
+      "3": "almost never",
+      "2": "sometimes",
+      "1": "fairly often",
+      "0": "very often"
+    }
+  },
+  "PSS-08": {
+    "Description": "8. Item of the Questionnaire PSS",
+    "Levels": {
+      "4": "never",
+      "3": "almost never",
+      "2": "sometimes",
+      "1": "fairly often",
+      "0": "very often"
+    }
+  },
+  "PSS-09": {
+    "Description": "9. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "PSS-10": {
+    "Description": "10. Item of the Questionnaire PSS",
+    "Levels": {
+      "0": "never",
+      "1": "almost never",
+      "2": "sometimes",
+      "3": "fairly often",
+      "4": "very often"
+    }
+  },
+  "Technical": {
+    "StimulusType": "Behavior",
+    "FileFormat": "tsv",
+    "ResponseType": [
+      "keypress"
+    ],
+    "SoftwarePlatform": "custom"
+  },
+  "Study": {
+    "Task": "pss",
+    "Subject": "sub-001",
+    "Run": "run-01",
+    "TaskType": "reaction_time",
+    "TrialStructure": {
+      "TrialCount": 1
+    }
+  },
+  "Metadata": {
+    "SchemaVersion": "1.0.0",
+    "CreationDate": "2025-11-22",
+    "Creator": "Prism Importer"
+  }
+}

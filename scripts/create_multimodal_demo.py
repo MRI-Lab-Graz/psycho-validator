@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate dummy files for new modalities (EEG, Eyetracking, Physiological, Behavior)
+Generate dummy files for new modalities (Eyetracking, Physiological, Survey)
 """
 
 import os
@@ -197,32 +197,6 @@ def create_demo_metadata():
     # Subject 001 - Multiple modalities
     for modality, file_ext, creator_func, metadata in [
         (
-            "eeg",
-            "edf",
-            create_eeg_dummy_data,
-            {
-                "Technical": {
-                    "StimulusType": "EEG",
-                    "FileFormat": "edf",
-                    "SamplingRate": 500,
-                    "ChannelCount": 10,
-                    "ChannelLayout": "10-20",
-                    "ReferenceType": "common_average",
-                },
-                "Study": {
-                    "Paradigm": "oddball",
-                    "TrialCount": 200,
-                    "BaselinePeriod": [-200, 0],
-                },
-                "Categories": {
-                    "AnalysisType": ["erp"],
-                    "ERPComponents": ["P3", "N1"],
-                    "CognitiveProcesses": ["attention"],
-                    "DataQuality": "excellent",
-                },
-            },
-        ),
-        (
             "eyetracking",
             "tsv",
             create_eyetracking_dummy_data,
@@ -278,12 +252,12 @@ def create_demo_metadata():
             },
         ),
         (
-            "behavior",
+            "survey",
             "tsv",
             create_behavioral_dummy_data,
             {
                 "Technical": {
-                    "StimulusType": "Behavior",
+                    "StimulusType": "Survey",
                     "FileFormat": "tsv",
                     "ResponseType": ["keypress"],
                     "SoftwarePlatform": "PsychoPy",
@@ -319,7 +293,7 @@ def create_demo_metadata():
 
     print("✅ Comprehensive demo dataset created successfully!")
     print(f"📂 Location: {base_dir}/")
-    print("🧠 Includes: EEG, Eyetracking, Physiological, Behavioral data")
+    print("🧠 Includes: Eyetracking, Physiological, Survey/Behavioral data")
     print("📋 With proper metadata and inheritance structure")
 
 

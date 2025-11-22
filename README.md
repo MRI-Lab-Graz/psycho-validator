@@ -34,7 +34,7 @@ Prism-Validator validates datasets containing psychological/psychophysical stimu
 - **Responsive design** - Works on desktop and mobile browsers
 
 ### ✅ Validation Features
-- **Multi-modal validation**: Supports images, movies, audio, EEG, eye-tracking, and behavioral data
+- **Multi-modal validation**: Supports images, movies, audio, eye-tracking, and survey/behavioral data
 - **BIDS-App Compatibility**: Automatically updates `.bidsignore` to ensure custom modalities (like `image/`, `movie/`) are ignored by standard BIDS tools (e.g., fMRIPrep), preventing crashes.
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
 - **JSON schema validation**: Validates sidecar metadata against modality-specific schemas
@@ -69,8 +69,7 @@ dataset/
 | `movie` | .mp4, .avi, .mov | StimulusType, FileFormat, Resolution, Duration, TaskName |
 | `audio` | .wav, .mp3, .flac | StimulusType, FileFormat, SampleRate, Duration, TaskName |
 | `eyetracking` | .tsv, .edf | (Schema not implemented yet) |
-| `eeg` | .edf, .bdf, .eeg | (Schema not implemented yet) |
-| `behavior` | .tsv | (Schema not implemented yet) |
+| `survey` | .tsv | (Schema not implemented yet) |
 
 ## Schema Structure
 
@@ -224,7 +223,7 @@ See [`docs/NEUROBAGEL_INTEGRATION_STRATEGY.md`](docs/NEUROBAGEL_INTEGRATION_STRA
 
 ## 🔮 Future Enhancements
 
-1. **Additional modalities**: Add schemas for EEG, eye-tracking, and behavioral data
+1. **Additional modalities**: Add schemas for eye-tracking and survey data
 2. **Cross-file validation**: Validate stimulus-response timing relationships
 3. **BIDS compatibility**: Ensure full compatibility with official BIDS standard
 4. **Batch processing**: Support for validating multiple datasets via web UI

@@ -18,9 +18,8 @@ MODALITY_PATTERNS = {
     "movie": r".+\.mp4$",
     "image": r".+\.(png|jpg|jpeg|tiff)$",
     "eyetracking": r".+\.(tsv|edf)$",
-    "eeg": r".+\.(edf|bdf|eeg)$",
     "audio": r".+\.(wav|mp3)$",
-    "behavior": r".+\.tsv$",
+    "survey": r".+\.tsv$",
     "physiological": r".+\.(edf|bdf|txt|csv)$",
     # MRI submodalities
     "anat": r".+_(T1w|T2w|T2star|FLAIR|PD|PDw|T1map|T2map)\.nii(\.gz)?$",
