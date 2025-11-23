@@ -85,6 +85,35 @@ python scripts/prism_to_limesurvey.py task-bdi_beh.json bdi.lss
 2.  In LimeSurvey, go to **Create Survey** > **Import**.
 3.  Select the generated `.lss` file.
 
+## 6. Advanced: Logic & Combining Surveys
+
+### Combining Surveys
+To create a large study from multiple questionnaires (e.g., BDI + STAI):
+1.  **Do not merge .lss files directly.**
+2.  Instead, export each questionnaire as a **Question Group (.lsg)** from LimeSurvey.
+3.  Create a new empty survey.
+4.  Import each `.lsg` file as a new group.
+5.  This preserves all structure and avoids ID conflicts.
+
+### Logic & Dependencies
+If you need logic (e.g., "Show Q3 only if Q2=Yes"), you have two options:
+
+**Option A: Define in LimeSurvey (Recommended)**
+1.  Import your structure.
+2.  Use the LimeSurvey interface to set "Conditions" or "Relevance Equations".
+3.  This is the most robust method.
+
+**Option B: Define in JSON (Reverse Engineering)**
+If you are generating the survey from JSON, you can add a `Relevance` key to your question object. The script will map this to the LimeSurvey relevance equation.
+
+```json
+"Q03": {
+  "Description": "Why did you say yes?",
+  "Levels": { ... },
+  "Relevance": "Q02 == 1"
+}
+```
+
 ## Example Workflow
 
 1.  You create a survey "Depression Scale" with code `ADS`.

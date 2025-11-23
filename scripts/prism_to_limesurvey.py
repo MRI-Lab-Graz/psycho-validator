@@ -89,6 +89,14 @@ def json_to_lss(json_path, output_path):
         description = q_data.get("Description", q_code)
         levels = q_data.get("Levels", {})
         
+        # Logic / Relevance
+        # Check for "Relevance" key directly, or inside a "LimeSurvey" object
+        relevance = "1" # Default: Always visible
+        if "Relevance" in q_data:
+            relevance = q_data["Relevance"]
+        elif "LimeSurvey" in q_data and "Relevance" in q_data["LimeSurvey"]:
+            relevance = q_data["LimeSurvey"]["Relevance"]
+        
         # Determine Type
         # L = List (Radio) - if levels exist
         # T = Long Free Text - if no levels
@@ -109,7 +117,7 @@ def json_to_lss(json_path, output_path):
             "language": "en",
             "scale_id": "0",
             "same_default": "0",
-            "relevance": "1"
+            "relevance": relevance
         })
         
         # Add Answers if applicable
