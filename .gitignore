@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+survey_library/*
 .venv/
 .DS_Store
 psycho_validator.egg-info/
