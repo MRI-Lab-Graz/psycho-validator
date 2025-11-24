@@ -221,12 +221,15 @@ Prism-Validator now includes a complete workflow for integrating LimeSurvey ques
   - `LimeSurvey (.lss) -> PRISM JSON`: Create sidecars from survey structures
   - `PRISM JSON -> LimeSurvey (.lss)`: Generate importable surveys from sidecars
 - **Data Merging**: Combine multiple questionnaire templates into a single BIDS sidecar
+- **Dataset-level sidecars**: Validator now resolves shared `survey-<name>_beh.json` files at the dataset root, so you only keep one canonical JSON per instrument.
+- **Redaction tooling**: `scripts/redact_sidecar.py` can strip or hash copyrighted prompts before publishing.
 
 ### Workflow:
 1. **Create/Export**: Design survey in LimeSurvey (using standard naming `BDI_01`, `ADS_01`) and export structure (`.lss`).
 2. **Convert**: Run `scripts/limesurvey_to_prism.py` to generate the JSON sidecar.
 3. **Collect**: Run study, export data to TSV.
 4. **Combine**: Use `scripts/combine_survey_json.py` to merge multiple sidecars for the final dataset.
+5. **Redact (optional)**: Run `scripts/redact_sidecar.py` to produce a public-safe copy of the sidecar if the instrument text is licensed.
 
 See [`docs/LIMESURVEY_INTEGRATION.md`](docs/LIMESURVEY_INTEGRATION.md) for the full guide.
 

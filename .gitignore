@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .Python
 env/
+prism_demo/*
 venv/
 survey_library/*
 .venv/

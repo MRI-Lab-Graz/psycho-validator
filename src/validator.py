@@ -32,7 +32,7 @@ MODALITY_PATTERNS = {
 BIDS_REGEX = re.compile(
     r"^sub-[a-zA-Z0-9]+"
     r"(_ses-[a-zA-Z0-9]+)?"
-    r"(_task-[a-zA-Z0-9]+)?"
+    r"(_(task|survey)-[a-zA-Z0-9]+)?"
     r"(_run-[0-9]+)?"
 )
 
@@ -62,6 +62,51 @@ def derive_sidecar_path(file_path):
     fname = os.path.basename(file_path)
     stem, _ext = split_compound_ext(fname)
     return safe_path_join(dirname, f"{stem}.json")
+
+
+def _extract_entity_value(stem, key):
+    match = re.search(rf"_{key}-([a-zA-Z0-9]+)", stem)
+    if match:
+        return match.group(1)
+    return None
+
+
+def resolve_sidecar_path(file_path, root_dir):
+    """Return best-matching sidecar path, supporting dataset-level survey sidecars."""
+    candidate = derive_sidecar_path(file_path)
+    if os.path.exists(candidate):
+        return candidate
+
+    stem, _ext = split_compound_ext(os.path.basename(file_path))
+    suffix = ""
+    if "_" in stem:
+        suffix = stem.split("_")[-1]
+
+    survey_value = _extract_entity_value(stem, "survey")
+    task_value = _extract_entity_value(stem, "task")
+
+    label_candidates = []
+    if survey_value:
+        label_candidates.append(("survey", survey_value))
+    if task_value:
+        label_candidates.append(("task", task_value))
+        if not survey_value:
+            label_candidates.append(("survey", task_value))
+
+    search_dirs = [root_dir, safe_path_join(root_dir, "surveys")]
+
+    for prefix, value in label_candidates:
+        base_name = f"{prefix}-{value}"
+        suffix_part = f"_{suffix}" if suffix and suffix != base_name else ""
+        file_name = f"{base_name}{suffix_part}.json"
+        for directory in search_dirs:
+            if not directory:
+                continue
+            dataset_candidate = safe_path_join(directory, file_name)
+            if os.path.exists(dataset_candidate):
+                return dataset_candidate
+
+    return candidate
 
 
 class DatasetValidator:
@@ -106,7 +151,7 @@ class DatasetValidator:
 
     def validate_sidecar(self, file_path, modality, root_dir):
         """Validate JSON sidecar against schema"""
-        sidecar_path = derive_sidecar_path(file_path)
+        sidecar_path = resolve_sidecar_path(file_path, root_dir)
         issues = []
 
         if not os.path.exists(sidecar_path):

@@ -1,7 +1,0 @@
-{
-  "Modality": "eeg",
-  "TaskName": "Stroop",
-  "SamplingFrequency": 500,
-  "EEGReference": "Cz",
-  "Description": "Dummy EEG metadata for PRISM demo"
-}
