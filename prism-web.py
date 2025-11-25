@@ -68,6 +68,11 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
             cmd, capture_output=True, text=True, cwd=os.path.dirname(__file__)
         )
 
+        # Helper to strip ANSI codes
+        def strip_ansi(text):
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            return ansi_escape.sub('', text)
+
         # The validator script exits with 0 for success, 1 for validation errors.
         # We need to parse the output in both cases.
         if result.returncode in [0, 1]:
@@ -81,38 +86,49 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
 
             # Parse output for file counts and issues
             for line in stdout.split("\n") + stderr.split("\n"):
-                line = line.strip()
+                clean_line = strip_ansi(line).strip()
+
                 # Parse file count from the new output format
-                if "Total files:" in line:
-                    match = re.search(r"Total files:\s*(\d+)", line)
+                if "Total files:" in clean_line:
+                    match = re.search(r"Total files:\s*(\d+)", clean_line)
                     if match:
                         stats.total_files = int(match.group(1))
-                elif "📊 Found" in line and "files" in line:
-                    match = re.search(r"Found (\d+) files", line)
+                elif "📊 Found" in clean_line and "files" in clean_line:
+                    match = re.search(r"Found (\d+) files", clean_line)
                     if match:
                         stats.total_files = int(match.group(1))
                 # Parse error and warning counts
-                elif "Errors:" in line:
-                    match = re.search(r"Errors:\s*(\d+)", line)
+                elif "Errors:" in clean_line:
+                    match = re.search(r"Errors:\s*(\d+)", clean_line)
                     if match and int(match.group(1)) > 0:
                         # Add a generic error - we'll get the specific errors from other lines
                         pass
-                elif "Warnings:" in line:
-                    match = re.search(r"Warnings:\s*(\d+)", line)
+                elif "Warnings:" in clean_line:
+                    match = re.search(r"Warnings:\s*(\d+)", clean_line)
                     if match and int(match.group(1)) > 0:
                         # Add a generic warning - we'll get the specific warnings from other lines
                         pass
-                # Parse specific error messages
-                elif line.startswith("•") and ("❌" in stdout or "ERROR" in stdout):
+                # Parse specific error messages (bullet style)
+                elif clean_line.startswith("•") and ("❌" in stdout or "ERROR" in stdout):
                     # This is a specific error message
                     issues.append(
-                        ("ERROR", line.replace("•", "").strip(), dataset_path)
+                        ("ERROR", clean_line.replace("•", "").strip(), dataset_path)
                     )
-                elif line.startswith("•") and ("⚠️" in stdout or "WARNING" in stdout):
+                # Parse numbered error messages (reporting.py style)
+                elif re.search(r"^\d+\.\s+", clean_line) and ("❌" in stdout or "ERROR" in stdout):
+                     # Remove the number and dot
+                     msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
+                     issues.append(("ERROR", msg, dataset_path))
+
+                elif clean_line.startswith("•") and ("⚠️" in stdout or "WARNING" in stdout):
                     # This is a specific warning message
                     issues.append(
-                        ("WARNING", line.replace("•", "").strip(), dataset_path)
+                        ("WARNING", clean_line.replace("•", "").strip(), dataset_path)
                     )
+                # Parse numbered warning messages
+                elif re.search(r"^\d+\.\s+", clean_line) and ("⚠️" in stdout or "WARNING" in stdout):
+                     msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
+                     issues.append(("WARNING", msg, dataset_path))
 
             # If we got valid output, extract more detailed info
             if "✅ Dataset is valid!" in stdout:

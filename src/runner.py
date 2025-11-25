@@ -94,6 +94,14 @@ def _validate_subject(subject_dir, subject_id, validator, stats, root_dir):
     for item in filtered_items:
         item_path = os.path.join(subject_dir, item)
         if os.path.isdir(item_path):
+            # Check for empty directory
+            dir_contents = os.listdir(item_path)
+            filtered_contents = filter_system_files(dir_contents)
+
+            if not filtered_contents:
+                issues.append(("ERROR", f"Empty directory found: {item_path}"))
+                continue
+
             if item.startswith("ses-"):
                 issues.extend(
                     _validate_session(
@@ -118,12 +126,21 @@ def _validate_session(session_dir, subject_id, session_id, validator, stats, roo
 
     for item in filtered_items:
         item_path = os.path.join(session_dir, item)
-        if os.path.isdir(item_path) and item in MODALITY_PATTERNS:
-            issues.extend(
-                _validate_modality_dir(
-                    item_path, subject_id, session_id, item, validator, stats, root_dir
+        if os.path.isdir(item_path):
+            # Check for empty directory
+            dir_contents = os.listdir(item_path)
+            filtered_contents = filter_system_files(dir_contents)
+
+            if not filtered_contents:
+                issues.append(("ERROR", f"Empty directory found: {item_path}"))
+                continue
+
+            if item in MODALITY_PATTERNS:
+                issues.extend(
+                    _validate_modality_dir(
+                        item_path, subject_id, session_id, item, validator, stats, root_dir
+                    )
                 )
-            )
 
     return issues
 
@@ -152,7 +169,9 @@ def _validate_modality_dir(
             stats.add_file(subject_id, session_id, modality, task, fname)
 
             # Validate filename
-            filename_issues = validator.validate_filename(fname, modality)
+            filename_issues = validator.validate_filename(
+                fname, modality, subject_id=subject_id, session_id=session_id
+            )
             issues.extend(filename_issues)
 
             # Validate sidecar if not JSON file itself

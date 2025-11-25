@@ -6,6 +6,7 @@ import os
 import re
 import json
 import csv
+from datetime import datetime
 from jsonschema import validate, ValidationError
 from cross_platform import (
     normalize_path,
@@ -189,6 +190,60 @@ class DatasetValidator:
                                         issues.append(
                                             ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid float")
                                         )
+                                elif dtype == "date":
+                                    valid_date = False
+                                    date_val = None
+                                    formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
+                                    
+                                    for fmt in formats:
+                                        try:
+                                            date_val = datetime.strptime(value, fmt)
+                                            valid_date = True
+                                            break
+                                        except ValueError:
+                                            continue
+                                            
+                                    if valid_date:
+                                        if date_val > datetime.now():
+                                            issues.append(
+                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future")
+                                            )
+                                        if date_val.year < 1900:
+                                            issues.append(
+                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900")
+                                            )
+                                    else:
+                                        issues.append(
+                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])")
+                                        )
+
+                            # Check Units="date" if DataType is missing
+                            elif col_def.get("Units") == "date":
+                                valid_date = False
+                                date_val = None
+                                formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
+                                
+                                for fmt in formats:
+                                    try:
+                                        date_val = datetime.strptime(value, fmt)
+                                        valid_date = True
+                                        break
+                                    except ValueError:
+                                        continue
+                                        
+                                if valid_date:
+                                    if date_val > datetime.now():
+                                        issues.append(
+                                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future")
+                                        )
+                                    if date_val.year < 1900:
+                                        issues.append(
+                                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900")
+                                        )
+                                else:
+                                    issues.append(
+                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])")
+                                    )
 
                             # Check MinValue/MaxValue/WarnMinValue/WarnMaxValue
                             if any(k in col_def for k in ["MinValue", "MaxValue", "WarnMinValue", "WarnMaxValue"]):
@@ -234,7 +289,7 @@ class DatasetValidator:
             
         return issues
 
-    def validate_filename(self, filename, modality):
+    def validate_filename(self, filename, modality, subject_id=None, session_id=None):
         """Validate filename against BIDS conventions and modality patterns"""
         issues = []
 
@@ -264,6 +319,30 @@ class DatasetValidator:
             if ext in (".nii", ".nii.gz") and not MRI_SUFFIX_REGEX.search(base):
                 issues.append(
                     ("ERROR", f"Invalid MRI suffix for {modality}: {filename}")
+                )
+
+        # Check subject consistency
+        if subject_id:
+            if not filename.startswith(subject_id + "_"):
+                issues.append(
+                    ("ERROR", f"Filename {filename} does not start with subject ID {subject_id}")
+                )
+
+        # Check session consistency
+        if session_id:
+            # Expecting sub-XX_ses-YY_...
+            expected_prefix = f"{subject_id}_{session_id}_"
+            if not filename.startswith(expected_prefix):
+                issues.append(
+                    ("ERROR", f"Filename {filename} does not match session directory {session_id}")
+                )
+        elif subject_id:
+            # If no session directory, filename should not contain session entity
+            # But we need to be careful not to match "ses-" if it appears elsewhere (unlikely in BIDS but possible)
+            # BIDS session entity is always "_ses-<label>"
+            if "_ses-" in filename:
+                issues.append(
+                    ("ERROR", f"Filename {filename} contains session entity but is not in a session directory")
                 )
 
         return issues

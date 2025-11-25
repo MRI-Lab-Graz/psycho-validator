@@ -54,6 +54,7 @@ Prism-Validator is a **BIDS Extension** framework and validation tool designed t
   - Dataset summary with subject/session counts
   - Modality breakdown with file counts
   - Task detection and listing
+  - **Survey & Biometrics listing**: Lists found instruments with their full names (e.g., `ads - Allgemeine Depressions Skala`)
   - File statistics (data files vs sidecars)
   - Cross-subject consistency warnings
   - Clear error and warning categorization
@@ -77,7 +78,7 @@ dataset/
 | Modality | File Extensions | Required Fields |
 |----------|----------------|-----------------|
 | `survey` | .tsv | StimulusType, FileFormat, TaskName, OriginalName |
-| `biometrics` | .tsv | StimulusType, FileFormat, Equipment, TaskName |
+| `biometrics` | .tsv | StimulusType, FileFormat, Equipment, BiometricName, OriginalName |
 | `physiological` | .edf, .bdf, .txt, .csv | (Standard BIDS physio) |
 
 ## Schema Structure
@@ -92,6 +93,26 @@ Each stimulus file must have a corresponding `.json` sidecar file with the same 
   "TaskName": "bdi",
   "OriginalName": "Beck Depression Inventory",
   "SchemaVersion": "1.0.0"
+}
+```
+
+### Example Biometrics Metadata (`.json` sidecar):
+```json
+{
+  "Technical": {
+    "StimulusType": "Biometrics",
+    "FileFormat": "tsv",
+    "Equipment": "Stopwatch"
+  },
+  "Study": {
+    "BiometricName": "UKK",
+    "OriginalName": "UKK Walk Test",
+    "Protocol": "2k walk"
+  },
+  "Metadata": {
+    "SchemaVersion": "1.0.0",
+    "CreationDate": "2023-01-01"
+  }
 }
 ```
 
@@ -124,9 +145,14 @@ For a valid dataset:
   ✅ survey: 2 files
   ✅ biometrics: 2 files
 
-📝 TASKS (2 found):
-  • bdi
-  • vo2max
+📝 TASKS (0 found):
+  No tasks detected
+
+📋 SURVEYS (1 found):
+  • bdi - Beck Depression Inventory
+
+🧬 BIOMETRICS (1 found):
+  • ukk - UKK Walk Test
 
 📄 FILES:
   • Data files: 4
