@@ -36,10 +36,10 @@
       "type": "object",
       "description": "Study-specific assessment parameters",
       "properties": {
-        "TaskName": {
+        "BiometricName": {
           "type": "string",
           "pattern": "^[a-zA-Z0-9]+$",
-          "description": "Short task identifier (e.g., vo2max, planks)"
+          "description": "Short biometric identifier (e.g., vo2max, planks)"
         },
         "OriginalName": {
           "type": "string",
@@ -50,7 +50,7 @@
           "description": "Reference to the protocol used"
         }
       },
-      "required": ["TaskName", "OriginalName"]
+      "required": ["BiometricName", "OriginalName"]
     },
     "Metadata": {
       "type": "object",
@@ -82,6 +82,34 @@
       "Units": {
         "type": "string",
         "description": "Unit of measurement (e.g., kg, sec, ml/kg/min)"
+      },
+      "MinValue": {
+        "type": "number",
+        "description": "Minimum allowed value for this column"
+      },
+      "MaxValue": {
+        "type": "number",
+        "description": "Maximum allowed value for this column"
+      },
+      "WarnMinValue": {
+        "type": "number",
+        "description": "Minimum value threshold for warning"
+      },
+      "WarnMaxValue": {
+        "type": "number",
+        "description": "Maximum value threshold for warning"
+      },
+      "AllowedValues": {
+        "type": "array",
+        "items": {
+          "type": ["string", "number"]
+        },
+        "description": "List of allowed values for this column"
+      },
+      "DataType": {
+        "type": "string",
+        "enum": ["string", "integer", "float"],
+        "description": "Expected data type for this column"
       }
     },
     "required": ["Description", "Units"]

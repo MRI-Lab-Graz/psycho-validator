@@ -35,7 +35,7 @@
           "description": "Who provided the responses"
         }
       },
-      "required": ["StimulusType", "FileFormat", "SoftwarePlatform", "Language", "Respondent"]
+      "required": ["StimulusType", "FileFormat", "Language", "Respondent"]
     },
     "Study": {
       "type": "object",
@@ -107,6 +107,34 @@
       "Relevance": {
         "type": "string",
         "description": "Logic/Relevance equation for this item (e.g., Q01 == 1)"
+      },
+      "MinValue": {
+        "type": "number",
+        "description": "Minimum allowed value for this column"
+      },
+      "MaxValue": {
+        "type": "number",
+        "description": "Maximum allowed value for this column"
+      },
+      "WarnMinValue": {
+        "type": "number",
+        "description": "Minimum value threshold for warning"
+      },
+      "WarnMaxValue": {
+        "type": "number",
+        "description": "Maximum value threshold for warning"
+      },
+      "AllowedValues": {
+        "type": "array",
+        "items": {
+          "type": ["string", "number"]
+        },
+        "description": "List of allowed values for this column"
+      },
+      "DataType": {
+        "type": "string",
+        "enum": ["string", "integer", "float"],
+        "description": "Expected data type for this column"
       }
     },
     "required": ["Description"]

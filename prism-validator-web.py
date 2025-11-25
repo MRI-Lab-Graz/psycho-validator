@@ -1288,6 +1288,8 @@ def show_results(result_id):
                 "total_sessions": len(unique_sessions),
                 "modalities": getattr(stats_obj, "modalities", {}),
                 "tasks": sorted(getattr(stats_obj, "tasks", [])),
+                "surveys": sorted(getattr(stats_obj, "surveys", [])),
+                "biometrics": sorted(getattr(stats_obj, "biometrics", [])),
                 "total_files": getattr(stats_obj, "total_files", 0),
                 "sidecar_files": getattr(stats_obj, "sidecar_files", 0),
             }

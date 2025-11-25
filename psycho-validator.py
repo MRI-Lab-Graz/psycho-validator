@@ -156,6 +156,12 @@ def validate_modality_dir(
                 )
                 issues.extend(sidecar_issues)
 
+                # Validate data content
+                content_issues = validator.validate_data_content(
+                    file_path, modality, root_dir
+                )
+                issues.extend(content_issues)
+
     return issues
 
 

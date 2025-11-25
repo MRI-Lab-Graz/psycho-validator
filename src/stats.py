@@ -2,6 +2,8 @@
 Dataset statistics and consistency checking
 """
 
+import re
+
 
 class DatasetStats:
     """Collect and analyze dataset statistics"""
@@ -11,6 +13,8 @@ class DatasetStats:
         self.sessions = set()
         self.modalities = {}  # modality -> file count
         self.tasks = set()
+        self.surveys = set()
+        self.biometrics = set()
         self.total_files = 0
         self.sidecar_files = 0
         # For consistency checking
@@ -28,6 +32,17 @@ class DatasetStats:
         self.modalities[modality] += 1
         if task:
             self.tasks.add(task)
+        
+        if modality == "survey":
+            match = re.search(r"_survey-([a-zA-Z0-9]+)", filename)
+            if match:
+                self.surveys.add(match.group(1))
+
+        if modality == "biometrics":
+            match = re.search(r"_biometrics-([a-zA-Z0-9]+)", filename)
+            if match:
+                self.biometrics.add(match.group(1))
+
         self.total_files += 1
 
         # Check for sidecar

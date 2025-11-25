@@ -3,6 +3,28 @@ Output formatting and reporting utilities
 """
 
 import os
+import json
+
+
+def get_entity_description(dataset_path, prefix, name):
+    """Try to fetch OriginalName from sidecar"""
+    # Try root level first: prefix-name.json (e.g. survey-ads.json)
+    candidates = [
+        os.path.join(dataset_path, f"{prefix}-{name}.json"),
+        os.path.join(dataset_path, f"{prefix}s", f"{prefix}-{name}.json"),
+        os.path.join(dataset_path, f"{name}.json"),  # Fallback
+    ]
+
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if "Study" in data and "OriginalName" in data["Study"]:
+                        return data["Study"]["OriginalName"]
+            except Exception:
+                continue
+    return None
 
 
 def print_dataset_summary(dataset_path, stats):
@@ -49,9 +71,37 @@ def print_dataset_summary(dataset_path, stats):
     print(f"\n📝 TASKS ({len(stats.tasks)} found):")
     if stats.tasks:
         for task in sorted(stats.tasks):
-            print(f"  • {task}")
+            desc = get_entity_description(dataset_path, "task", task)
+            if desc:
+                print(f"  • {task} - {desc}")
+            else:
+                print(f"  • {task}")
     else:
         print("  No tasks detected")
+
+    # Survey breakdown
+    print(f"\n📋 SURVEYS ({len(stats.surveys)} found):")
+    if stats.surveys:
+        for survey in sorted(stats.surveys):
+            desc = get_entity_description(dataset_path, "survey", survey)
+            if desc:
+                print(f"  • {survey} - {desc}")
+            else:
+                print(f"  • {survey}")
+    else:
+        print("  No surveys detected")
+
+    # Biometrics breakdown
+    print(f"\n🧬 BIOMETRICS ({len(stats.biometrics)} found):")
+    if stats.biometrics:
+        for biometric in sorted(stats.biometrics):
+            desc = get_entity_description(dataset_path, "biometrics", biometric)
+            if desc:
+                print(f"  • {biometric} - {desc}")
+            else:
+                print(f"  • {biometric}")
+    else:
+        print("  No biometrics detected")
 
     # File statistics
     data_files = stats.total_files - stats.sidecar_files
@@ -80,19 +130,19 @@ def print_validation_results(problems):
     print("=" * 60)
 
     if errors:
-        print(f"\n🔴 ERRORS ({len(errors)}):")
+        print(f"\n\033[31m🔴 ERRORS ({len(errors)}):\033[0m")
         for i, error in enumerate(errors, 1):
-            print(f"  {i:2d}. {error}")
+            print(f"  \033[31m{i:2d}. {error}\033[0m")
 
     if warnings:
-        print(f"\n🟡 WARNINGS ({len(warnings)}):")
+        print(f"\n\033[33m🟡 WARNINGS ({len(warnings)}):\033[0m")
         for i, warning in enumerate(warnings, 1):
-            print(f"  {i:2d}. {warning}")
+            print(f"  \033[33m{i:2d}. {warning}\033[0m")
 
     if infos:
-        print(f"\n🔵 INFO ({len(infos)}):")
+        print(f"\n\033[34m🔵 INFO ({len(infos)}):\033[0m")
         for i, info in enumerate(infos, 1):
-            print(f"  {i:2d}. {info}")
+            print(f"  \033[34m{i:2d}. {info}\033[0m")
 
     # Summary line
     print(

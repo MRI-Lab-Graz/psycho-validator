@@ -5,6 +5,7 @@ Core validation logic for prism-validator
 import os
 import re
 import json
+import csv
 from jsonschema import validate, ValidationError
 from cross_platform import (
     normalize_path,
@@ -115,6 +116,123 @@ class DatasetValidator:
 
     def __init__(self, schemas=None):
         self.schemas = schemas or {}
+
+    def validate_data_content(self, file_path, modality, root_dir):
+        """Validate data content against constraints in sidecar"""
+        issues = []
+        
+        # Only validate content for tabular data modalities
+        if modality not in ["survey", "biometrics"]:
+            return issues
+
+        sidecar_path = resolve_sidecar_path(file_path, root_dir)
+        if not os.path.exists(sidecar_path):
+            # Missing sidecar is already reported by validate_sidecar
+            return issues
+
+        try:
+            # Load sidecar
+            sidecar_content = CrossPlatformFile.read_text(sidecar_path)
+            sidecar_data = json.loads(sidecar_content)
+            
+            # Read TSV file
+            with open(file_path, 'r', newline='', encoding='utf-8') as tsvfile:
+                reader = csv.DictReader(tsvfile, delimiter='\t')
+                
+                # Get column definitions from sidecar (usually in additionalProperties or root)
+                # The schema structure puts column definitions in the root object for the sidecar
+                # (The schema itself uses additionalProperties to validate the sidecar, 
+                # but the sidecar JSON just has keys like "Q1", "Q2", etc.)
+                
+                for row_idx, row in enumerate(reader, start=2): # start=2 for 1-based line number (header is 1)
+                    for col_name, value in row.items():
+                        if col_name in sidecar_data:
+                            col_def = sidecar_data[col_name]
+                            
+                            # Skip empty values
+                            if value is None or value.strip() == "" or value == "n/a":
+                                continue
+                                
+                            # Check AllowedValues or Levels
+                            allowed = None
+                            if "AllowedValues" in col_def:
+                                allowed = [str(x) for x in col_def["AllowedValues"]]
+                            elif "Levels" in col_def:
+                                allowed = list(col_def["Levels"].keys())
+                                
+                            if allowed:
+                                if value not in allowed:
+                                    issues.append(
+                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not in allowed values: {allowed}")
+                                    )
+                            
+                            # Check DataType
+                            if "DataType" in col_def:
+                                dtype = col_def["DataType"]
+                                if dtype == "integer":
+                                    try:
+                                        # Check if it's a valid integer (e.g. "5", "5.0" might be acceptable depending on strictness, but usually "5")
+                                        # Let's be strict: must be parseable as int and str representation matches or float is integer
+                                        float_val = float(value)
+                                        if not float_val.is_integer():
+                                            issues.append(
+                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer")
+                                            )
+                                    except ValueError:
+                                        issues.append(
+                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer")
+                                        )
+                                elif dtype == "float":
+                                    try:
+                                        float(value)
+                                    except ValueError:
+                                        issues.append(
+                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid float")
+                                        )
+
+                            # Check MinValue/MaxValue/WarnMinValue/WarnMaxValue
+                            if any(k in col_def for k in ["MinValue", "MaxValue", "WarnMinValue", "WarnMaxValue"]):
+                                try:
+                                    num_val = float(value)
+                                    
+                                    if "MinValue" in col_def:
+                                        min_val = float(col_def["MinValue"])
+                                        if num_val < min_val:
+                                            issues.append(
+                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than MinValue {min_val}")
+                                            )
+                                            
+                                    if "MaxValue" in col_def:
+                                        max_val = float(col_def["MaxValue"])
+                                        if num_val > max_val:
+                                            issues.append(
+                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than MaxValue {max_val}")
+                                            )
+
+                                    if "WarnMinValue" in col_def:
+                                        warn_min_val = float(col_def["WarnMinValue"])
+                                        if num_val < warn_min_val:
+                                            issues.append(
+                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than WarnMinValue {warn_min_val}")
+                                            )
+
+                                    if "WarnMaxValue" in col_def:
+                                        warn_max_val = float(col_def["WarnMaxValue"])
+                                        if num_val > warn_max_val:
+                                            issues.append(
+                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than WarnMaxValue {warn_max_val}")
+                                            )
+                                            
+                                except ValueError:
+                                    # Only report if we expected a number (Min/Max present) but got non-number
+                                    issues.append(
+                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not numeric but has numeric constraints")
+                                    )
+
+        except Exception as e:
+            issues.append(("ERROR", f"Error validating content of {os.path.basename(file_path)}: {str(e)}"))
+            
+        return issues
 
     def validate_filename(self, filename, modality):
         """Validate filename against BIDS conventions and modality patterns"""

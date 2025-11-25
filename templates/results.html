@@ -147,6 +147,12 @@
                             <li><i class="fas fa-users me-2"></i>Subjects: <strong>{{ dataset_stats.total_subjects }}</strong></li>
                             <li><i class="fas fa-calendar me-2"></i>Sessions: <strong>{{ dataset_stats.total_sessions }}</strong></li>
                             <li><i class="fas fa-tasks me-2"></i>Tasks: <strong>{{ dataset_stats.tasks|join(', ') }}</strong></li>
+                            {% if dataset_stats.surveys %}
+                            <li><i class="fas fa-clipboard-list me-2"></i>Surveys: <strong>{{ dataset_stats.surveys|join(', ') }}</strong></li>
+                            {% endif %}
+                            {% if dataset_stats.biometrics %}
+                            <li><i class="fas fa-heartbeat me-2"></i>Biometrics: <strong>{{ dataset_stats.biometrics|join(', ') }}</strong></li>
+                            {% endif %}
                         </ul>
                     </div>
                     <div class="col-md-6">
