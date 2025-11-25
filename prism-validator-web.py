@@ -966,11 +966,8 @@ def detect_dataset_prefix(all_paths):
         return None
     candidate = first_components.pop()
     restricted_names = {
-        "image",
-        "audio",
-        "movie",
         "survey",
-        "eyetracking",
+        "biometrics",
         "physiological",
         "dataset",
     }

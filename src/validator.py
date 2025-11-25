@@ -15,11 +15,8 @@ from cross_platform import (
 
 # Modality patterns
 MODALITY_PATTERNS = {
-    "movie": r".+\.mp4$",
-    "image": r".+\.(png|jpg|jpeg|tiff)$",
-    "eyetracking": r".+\.(tsv|edf)$",
-    "audio": r".+\.(wav|mp3)$",
     "survey": r".+\.tsv$",
+    "biometrics": r".+\.tsv$",
     "physiological": r".+\.(edf|bdf|txt|csv)$",
     # MRI submodalities
     "anat": r".+_(T1w|T2w|T2star|FLAIR|PD|PDw|T1map|T2map)\.nii(\.gz)?$",
@@ -32,7 +29,7 @@ MODALITY_PATTERNS = {
 BIDS_REGEX = re.compile(
     r"^sub-[a-zA-Z0-9]+"
     r"(_ses-[a-zA-Z0-9]+)?"
-    r"(_(task|survey)-[a-zA-Z0-9]+)?"
+    r"(_(task|survey|biometrics)-[a-zA-Z0-9]+)?"
     r"(_run-[0-9]+)?"
 )
 
@@ -83,17 +80,21 @@ def resolve_sidecar_path(file_path, root_dir):
         suffix = stem.split("_")[-1]
 
     survey_value = _extract_entity_value(stem, "survey")
+    biometrics_value = _extract_entity_value(stem, "biometrics")
     task_value = _extract_entity_value(stem, "task")
 
     label_candidates = []
     if survey_value:
         label_candidates.append(("survey", survey_value))
+    if biometrics_value:
+        label_candidates.append(("biometrics", biometrics_value))
     if task_value:
         label_candidates.append(("task", task_value))
-        if not survey_value:
+        if not survey_value and not biometrics_value:
             label_candidates.append(("survey", task_value))
+            label_candidates.append(("biometrics", task_value))
 
-    search_dirs = [root_dir, safe_path_join(root_dir, "surveys")]
+    search_dirs = [root_dir, safe_path_join(root_dir, "surveys"), safe_path_join(root_dir, "biometrics")]
 
     for prefix, value in label_candidates:
         base_name = f"{prefix}-{value}"

@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://psycho-validator.org/schemas/biometrics/v1.0.0",
+  "version": "1.0.0",
+  "title": "Biometrics Metadata",
+  "description": "Schema for biometric and physiological assessment data (e.g., VO2max, planks, balance)",
+  "type": "object",
+  "properties": {
+    "Technical": {
+      "type": "object",
+      "description": "Technical biometric properties",
+      "properties": {
+        "StimulusType": {
+          "type": "string",
+          "enum": ["Biometrics"],
+          "description": "Must be 'Biometrics' for biometric data"
+        },
+        "FileFormat": {
+          "type": "string",
+          "enum": ["tsv"],
+          "description": "Data file format"
+        },
+        "Equipment": {
+          "type": "string",
+          "description": "Equipment used for measurement (e.g., Stopwatch, Cycle Ergometer, Balance Board)"
+        },
+        "Supervisor": {
+          "type": "string",
+          "enum": ["investigator", "physician", "trainer", "self"],
+          "description": "Who supervised the assessment"
+        }
+      },
+      "required": ["StimulusType", "FileFormat", "Equipment"]
+    },
+    "Study": {
+      "type": "object",
+      "description": "Study-specific assessment parameters",
+      "properties": {
+        "TaskName": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]+$",
+          "description": "Short task identifier (e.g., vo2max, planks)"
+        },
+        "OriginalName": {
+          "type": "string",
+          "description": "Full name of the test (e.g., UKK Walk Test, Plank Test)"
+        },
+        "Protocol": {
+          "type": "string",
+          "description": "Reference to the protocol used"
+        }
+      },
+      "required": ["TaskName", "OriginalName"]
+    },
+    "Metadata": {
+      "type": "object",
+      "description": "Administrative metadata",
+      "properties": {
+        "SchemaVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "CreationDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "Creator": {
+          "type": "string"
+        }
+      },
+      "required": ["SchemaVersion", "CreationDate"]
+    }
+  },
+  "required": ["Technical", "Study", "Metadata"],
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "Description": {
+        "type": "string",
+        "description": "Description of the metric"
+      },
+      "Units": {
+        "type": "string",
+        "description": "Unit of measurement (e.g., kg, sec, ml/kg/min)"
+      }
+    },
+    "required": ["Description", "Units"]
+  }
+}

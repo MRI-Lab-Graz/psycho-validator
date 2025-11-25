@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+PK01/*
+PK01
 .Python
 env/
 prism_demo/*

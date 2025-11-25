@@ -1,4 +1,4 @@
-# Prism-Validator: BIDS-inspired Validation Tool
+# Prism-Validator: BIDS Extension & Validation Tool
 
 ## 🚀 Quick Start
 
@@ -15,9 +15,18 @@ The web interface will open automatically at `http://localhost:5001`. No additio
 
 ## Overview
 
-Prism-Validator validates datasets containing psychological/psychophysical stimuli and experimental data following a BIDS-inspired structure. It's designed specifically for experiments involving multiple stimulus modalities like images, videos, audio, etc.
+Prism-Validator is a **BIDS Extension** framework and validation tool designed to enrich standard BIDS datasets with psychological and physiological metadata.
+
+**Core Philosophy: Extension, not Replacement**
+- **BIDS Core**: The main architecture remains standard BIDS. Files like `participants.tsv`, `dataset_description.json`, and standard modalities (`anat`, `func`, `eeg`) are preserved and validated according to BIDS standards.
+- **PRISM Extensions**: We add structured support for modalities not yet fully standardized in BIDS, specifically **Survey** and **Biometrics**.
 
 ## ✨ Key Features
+
+### 🧬 BIDS Extensions
+- **Survey Modality (`survey/`)**: Full support for complex questionnaires (LimeSurvey integration), treating surveys as rich data with sidecar metadata.
+- **Biometrics Modality (`biometrics/`)**: Structured storage for physiological assessments (VO2max, planks, balance tests) that don't fit into standard `beh` or `physio` categories.
+- **Non-Destructive**: Your standard BIDS files (`participants.tsv`, `dataset_description.json`) remain untouched. We only validate the extensions.
 
 ### 🎯 Web Interface (Primary Method)
 - **Drag & drop dataset upload** - Just drop a folder or ZIP file
@@ -34,8 +43,8 @@ Prism-Validator validates datasets containing psychological/psychophysical stimu
 - **Responsive design** - Works on desktop and mobile browsers
 
 ### ✅ Validation Features
-- **Multi-modal validation**: Supports images, movies, audio, eye-tracking, and survey/behavioral data
-- **BIDS-App Compatibility**: Automatically updates `.bidsignore` to ensure custom modalities (like `image/`, `movie/`) are ignored by standard BIDS tools (e.g., fMRIPrep), preventing crashes.
+- **Multi-modal validation**: Supports survey, biometrics, and physiological data
+- **BIDS-App Compatibility**: Automatically updates `.bidsignore` to ensure custom modalities are ignored by standard BIDS tools (e.g., fMRIPrep), preventing crashes.
 - **BIDS-inspired naming**: Validates filenames follow the pattern `sub-<label>_[ses-<label>_]task-<label>_[run-<index>_]<suffix>`
 - **JSON schema validation**: Validates sidecar metadata against modality-specific schemas
 - **Schema versioning**: Multiple schema versions (stable, v0.1, etc.) selectable in UI
@@ -53,11 +62,13 @@ Prism-Validator validates datasets containing psychological/psychophysical stimu
 
 ```
 dataset/
-├── dataset_description.json     # Required dataset metadata
-├── participants.tsv            # Optional participant information
+├── dataset_description.json     # Standard BIDS metadata
+├── participants.tsv            # Standard BIDS participant info
 ├── sub-<label>/               # Subject directories
 │   ├── ses-<label>/          # Optional session directories
-│   │   └── <modality>/       # Modality-specific folders
+│   │   ├── survey/           # 📋 Extension: Questionnaires
+│   │   ├── biometrics/       # 💓 Extension: Physio assessments
+│   │   └── <modality>/       # Standard BIDS (anat, func, etc.)
 │   └── <modality>/           # Or direct modality folders
 ```
 
@@ -65,26 +76,22 @@ dataset/
 
 | Modality | File Extensions | Required Fields |
 |----------|----------------|-----------------|
-| `image` | .png, .jpg, .jpeg, .tiff | StimulusType, FileFormat, Resolution, TaskName |
-| `movie` | .mp4, .avi, .mov | StimulusType, FileFormat, Resolution, Duration, TaskName |
-| `audio` | .wav, .mp3, .flac | StimulusType, FileFormat, SampleRate, Duration, TaskName |
-| `eyetracking` | .tsv, .edf | (Schema not implemented yet) |
-| `survey` | .tsv | (Schema not implemented yet) |
+| `survey` | .tsv | StimulusType, FileFormat, TaskName, OriginalName |
+| `biometrics` | .tsv | StimulusType, FileFormat, Equipment, TaskName |
+| `physiological` | .edf, .bdf, .txt, .csv | (Standard BIDS physio) |
 
 ## Schema Structure
 
 Each stimulus file must have a corresponding `.json` sidecar file with the same basename. These JSON files contain metadata about the stimulus and are validated against JSON schemas in the `schemas/` directory.
 
-### Example Image Metadata (`.json` sidecar):
+### Example Survey Metadata (`.json` sidecar):
 ```json
 {
-  "StimulusType": "Image",
-  "FileFormat": "png",
-  "Resolution": [800, 600],
-  "ColorSpace": "RGB",
-  "TaskName": "facerecognition",
-  "StimulusID": "face_001",
-  "PresentedWith": "PsychoPy 2023.1"
+  "StimulusType": "Survey",
+  "FileFormat": "tsv",
+  "TaskName": "bdi",
+  "OriginalName": "Beck Depression Inventory",
+  "SchemaVersion": "1.0.0"
 }
 ```
 
@@ -114,17 +121,17 @@ For a valid dataset:
 📋 Sessions: No session structure detected
 
 🎯 MODALITIES (2 found):
-  ✅ audio: 2 files
-  ✅ image: 2 files
+  ✅ survey: 2 files
+  ✅ biometrics: 2 files
 
 📝 TASKS (2 found):
-  • listening
-  • recognition
+  • bdi
+  • vo2max
 
 📄 FILES:
-  • Data files: 2
-  • Sidecar files: 2
-  • Total files: 4
+  • Data files: 4
+  • Sidecar files: 4
+  • Total files: 8
 
 ============================================================
 ✅ VALIDATION RESULTS
@@ -247,7 +254,7 @@ See [`docs/LIMESURVEY_INTEGRATION.md`](docs/LIMESURVEY_INTEGRATION.md) for the f
 
 ## 🔮 Future Enhancements
 
-1. **Additional modalities**: Add schemas for eye-tracking and survey data
+1. **Additional modalities**: Add schemas for eye-tracking
 2. **Cross-file validation**: Validate stimulus-response timing relationships
 3. **BIDS compatibility**: Ensure full compatibility with official BIDS standard
 4. **Batch processing**: Support for validating multiple datasets via web UI

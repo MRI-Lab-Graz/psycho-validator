@@ -89,11 +89,8 @@ def load_all_schemas(schema_dir="schemas", version=None):
 
     # Standard modalities
     modalities = [
-        "image",
-        "movie",
-        "audio",
-        "eyetracking",
         "survey",
+        "biometrics",
         "physiological",
         "dataset_description",
     ]

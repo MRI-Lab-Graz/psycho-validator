@@ -90,17 +90,27 @@ Any top-level property not named `Technical`, `Study`, or `Metadata` is interpre
 Notes on question IDs / keys:
 - The top-level property name for a question can be any valid JSON key, but in practice use a short stable ID (e.g., `Q01`, `Q1`, `q_bdi_1`). Keep it ASCII and avoid spaces.
 
-## 5) Filename conventions and validator expectations
-- Recommended canonical filename pattern for survey TSVs and sidecars (BIDS-like):
+## 5) Folder + filename conventions
+- **Folder**: place survey data under `sub-<id>[/ses-<id>]/survey/`. Reserve `beh/` for other behavioral tasks (reaction-time, derivatives, etc.).
+- **Dataset-level sidecar**: `survey-<name>.json` (inside dataset root or `surveys/`).
+- **Per-subject TSV**: `sub-<label>[_ses-<label>]_survey-<name>.tsv` stored inside each `survey/` folder.
 
-  `sub-<label>[_ses-<label>]_survey-<name>_beh.tsv` (responses)
-  `survey-<name>_beh.json` (dataset-level sidecar)
+- Example layout:
 
-- Example:
-  - Sidecar: `survey-bdi_beh.json`
-  - TSV: `sub-001_survey-bdi_beh.tsv`
+```
+PK01/rawdata/
+  survey-ads.json
+  survey-psqi.json
+  sub-1291003/
+    ses-1/
+      survey/
+        sub-1291003_ses-1_survey-ads.tsv
+        sub-1291003_ses-1_survey-psqi.tsv
+      beh/
+        sub-1291003_ses-1_task-ecg_beh.tsv
+```
 
-- Rationale: `survey-<name>` makes the modality explicit, pairs naturally with dataset-level shared sidecars, and avoids confusion with experimental `task-` runs. The `_beh` suffix mirrors BIDS conventions for behavioral data. If you must stay compatible with older tooling, `task-<name>` still works — the validator now accepts both.
+- Rationale: `survey-<name>` makes the modality explicit, keeps folders semantically clean, and still passes BIDS-style validation. If you must stay compatible with legacy data, the validator continues to accept `_task-<name>_beh`, but migrating to the pure `survey` layout is preferred.
 
 ### Single-root sidecar recommendation
 
@@ -112,12 +122,12 @@ Notes on question IDs / keys:
   - Easier maintenance and clearer provenance.
 
 - Example canonical placement options:
-  - Root-level: `survey-bdi_beh.json`
-  - Under `surveys/`: `surveys/survey-bdi_beh.json`
+  - Root-level: `survey-bdi.json`
+  - Under `surveys/`: `surveys/survey-bdi.json`
 
 - Example file naming when using a root-level sidecar and per-subject TSV responses:
-  - Sidecar: `survey-bdi_beh.json`
-  - Subject responses: `sub-001_survey-bdi_beh.tsv`, `sub-002_survey-bdi_beh.tsv`, etc.
+  - Sidecar: `survey-bdi.json`
+  - Subject responses: `sub-001_ses-1_survey-bdi.tsv`, `sub-002_ses-1_survey-bdi.tsv`, etc.
 
 - How the validator typically resolves sidecars:
   - Many validators look for an exact sidecar adjacent to the data file (same folder) and then fall back to dataset-level or modality-level sidecars. Check your validator's resolution order — if the validator supports dataset-level sidecars, prefer the root-level approach.
@@ -127,26 +137,27 @@ Notes on question IDs / keys:
   1) Create a single root sidecar by copying one existing per-subject JSON (verify content first):
 
 ```bash
-cp prism_demo/sub-001/survey/sub-001_survey-bdi_beh.json prism_demo/survey-bdi_beh.json
+cp prism_demo/sub-001/survey/sub-001_survey-bdi.json prism_demo/survey-bdi.json
 ```
 
-  2) Rename per-subject TSVs from legacy `task-` names to `survey-` (if needed):
+  2) Rename/move per-subject TSVs from legacy `beh/` folders:
 
 ```bash
-for f in prism_demo/sub-*/survey/*_task-*_beh.tsv; do
-  dir=$(dirname "$f")
-  subj=$(basename "$dir")
-  suffix=$(basename "$f" | awk -F'_' '{print $(NF)}')
-  task=$(basename "$f" | sed -E 's/.*_(task-[^-_]+).*/\1/')
-  survey=${task/task-/survey-}
-  mv "$f" "${dir}/${subj}_${survey}_${suffix}"
+for beh_dir in prism_demo/sub-*/ses-*/beh; do
+  survey_dir="${beh_dir%/beh}/survey"
+  mkdir -p "$survey_dir"
+  for file in "$beh_dir"/*_survey-*_beh.tsv; do
+    [ -e "$file" ] || continue
+    base=$(basename "$file" _beh.tsv)
+    mv "$file" "$survey_dir/${base##*/}.tsv"
+  done
 done
 ```
 
   3) Remove or archive per-subject JSON sidecars (if you confirmed dataset-level resolution works):
 
 ```bash
-find prism_demo -name "sub-*_survey-*_beh.json" -type f -delete
+find prism_demo -name "sub-*_survey-*.json" -type f -delete
 ```
 
 Notes:
@@ -194,8 +205,8 @@ Minimal BDI sidecar (compact):
 
 ```bash
 python3 scripts/redact_sidecar.py \
-  prism_demo/survey-bdi_beh.json \
-  prism_demo/survey-bdi_beh.public.json \
+  prism_demo/survey-bdi.json \
+  prism_demo/survey-bdi.public.json \
   --fields Description Levels --placeholder "[CONTACT PI]" --drop-levels
 ```
 

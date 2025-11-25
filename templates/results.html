@@ -154,7 +154,7 @@
                         <ul class="list-unstyled">
                             {% for modality, count in dataset_stats.modalities.items() %}
                             <li>
-                                <i class="fas fa-{{ 'image' if modality == 'image' else 'video' if modality == 'movie' else 'volume-up' if modality == 'audio' else 'brain' if modality == 'eeg' else 'eye' if modality == 'eyetracking' else 'chart-line' }} me-2"></i>
+                                <i class="fas fa-{{ 'chart-line' if modality == 'survey' else 'heartbeat' if modality == 'biometrics' else 'wave-square' if modality == 'physiological' else 'brain' }} me-2"></i>
                                 {{ modality }}: <strong>{{ count }}</strong> files
                             </li>
                             {% endfor %}
