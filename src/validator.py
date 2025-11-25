@@ -132,6 +132,10 @@ class DatasetValidator:
             return issues
 
         try:
+            # Check for empty file
+            if os.path.getsize(file_path) == 0:
+                return [("ERROR", f"File {os.path.basename(file_path)} is empty. If data is missing, please delete the file.")]
+
             # Load sidecar
             sidecar_content = CrossPlatformFile.read_text(sidecar_path)
             sidecar_data = json.loads(sidecar_content)
@@ -140,12 +144,20 @@ class DatasetValidator:
             with open(file_path, 'r', newline='', encoding='utf-8') as tsvfile:
                 reader = csv.DictReader(tsvfile, delimiter='\t')
                 
-                # Get column definitions from sidecar (usually in additionalProperties or root)
-                # The schema structure puts column definitions in the root object for the sidecar
-                # (The schema itself uses additionalProperties to validate the sidecar, 
-                # but the sidecar JSON just has keys like "Q1", "Q2", etc.)
-                
+                if not reader.fieldnames:
+                     return [("ERROR", f"File {os.path.basename(file_path)} is not a valid TSV (no header found).")]
+
+                row_count = 0
                 for row_idx, row in enumerate(reader, start=2): # start=2 for 1-based line number (header is 1)
+                    row_count += 1
+                    
+                    # Check for completely empty row (all values are empty strings)
+                    if all(v is None or v.strip() == "" for v in row.values()):
+                        issues.append(
+                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Row contains only empty values. Use 'n/a' for missing data, or delete the file if no data exists.")
+                        )
+                        continue
+
                     for col_name, value in row.items():
                         if col_name in sidecar_data:
                             col_def = sidecar_data[col_name]
@@ -283,6 +295,11 @@ class DatasetValidator:
                                     issues.append(
                                         ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not numeric but has numeric constraints")
                                     )
+
+                if row_count == 0:
+                    issues.append(
+                        ("WARNING", f"File {os.path.basename(file_path)} contains no data rows. If data is missing, please delete the file.")
+                    )
 
         except Exception as e:
             issues.append(("ERROR", f"Error validating content of {os.path.basename(file_path)}: {str(e)}"))
