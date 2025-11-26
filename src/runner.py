@@ -10,7 +10,7 @@ import subprocess
 import json
 
 from schema_manager import load_all_schemas
-from validator import DatasetValidator, MODALITY_PATTERNS
+from validator import DatasetValidator, MODALITY_PATTERNS, resolve_sidecar_path
 from stats import DatasetStats
 from system_files import filter_system_files
 from bids_integration import check_and_update_bidsignore
@@ -254,6 +254,23 @@ def _validate_modality_dir(
                     file_path, modality, root_dir
                 )
                 issues.extend(sidecar_issues)
+                
+                # Extract OriginalName for stats
+                try:
+                    sidecar_path = resolve_sidecar_path(file_path, root_dir)
+                    if os.path.exists(sidecar_path):
+                        with open(sidecar_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                            if "Study" in data and "OriginalName" in data["Study"]:
+                                original_name = data["Study"]["OriginalName"]
+                                if modality == "survey" and task:
+                                    stats.add_description("survey", task, original_name)
+                                elif modality == "biometrics" and task:
+                                    stats.add_description("biometrics", task, original_name)
+                                elif task:
+                                    stats.add_description("task", task, original_name)
+                except Exception:
+                    pass  # Don't fail validation if stats extraction fails
 
                 # Validate data content
                 content_issues = validator.validate_data_content(

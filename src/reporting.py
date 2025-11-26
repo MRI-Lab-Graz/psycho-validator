@@ -6,8 +6,14 @@ import os
 import json
 
 
-def get_entity_description(dataset_path, prefix, name):
-    """Try to fetch OriginalName from sidecar"""
+def get_entity_description(dataset_path, prefix, name, stats=None):
+    """Try to fetch OriginalName from sidecar or stats"""
+    # Try stats first
+    if stats:
+        desc = stats.get_description(prefix, name)
+        if desc:
+            return desc
+
     # Try root level first: prefix-name.json (e.g. survey-ads.json)
     candidates = [
         os.path.join(dataset_path, f"{prefix}-{name}.json"),
@@ -67,11 +73,12 @@ def print_dataset_summary(dataset_path, stats):
     else:
         print("  No modality data found")
 
-    # Task breakdown
-    print(f"\n📝 TASKS ({len(stats.tasks)} found):")
-    if stats.tasks:
-        for task in sorted(stats.tasks):
-            desc = get_entity_description(dataset_path, "task", task)
+    # Task breakdown (exclude items that are surveys or biometrics)
+    pure_tasks = {t for t in stats.tasks if t not in stats.surveys and t not in stats.biometrics}
+    print(f"\n📝 TASKS ({len(pure_tasks)} found):")
+    if pure_tasks:
+        for task in sorted(pure_tasks):
+            desc = get_entity_description(dataset_path, "task", task, stats)
             if desc:
                 print(f"  • {task} - {desc}")
             else:
@@ -83,7 +90,7 @@ def print_dataset_summary(dataset_path, stats):
     print(f"\n📋 SURVEYS ({len(stats.surveys)} found):")
     if stats.surveys:
         for survey in sorted(stats.surveys):
-            desc = get_entity_description(dataset_path, "survey", survey)
+            desc = get_entity_description(dataset_path, "survey", survey, stats)
             if desc:
                 print(f"  • {survey} - {desc}")
             else:
@@ -95,7 +102,7 @@ def print_dataset_summary(dataset_path, stats):
     print(f"\n🧬 BIOMETRICS ({len(stats.biometrics)} found):")
     if stats.biometrics:
         for biometric in sorted(stats.biometrics):
-            desc = get_entity_description(dataset_path, "biometrics", biometric)
+            desc = get_entity_description(dataset_path, "biometrics", biometric, stats)
             if desc:
                 print(f"  • {biometric} - {desc}")
             else:
@@ -125,24 +132,61 @@ def print_validation_results(problems):
     warnings = [msg for level, msg in problems if level == "WARNING"]
     infos = [msg for level, msg in problems if level == "INFO"]
 
+    # Split BIDS vs PRISM
+    bids_errors = [e for e in errors if e.startswith("[BIDS]")]
+    prism_errors = [e for e in errors if not e.startswith("[BIDS]")]
+    
+    bids_warnings = [w for w in warnings if w.startswith("[BIDS]")]
+    prism_warnings = [w for w in warnings if not w.startswith("[BIDS]")]
+    
+    bids_infos = [i for i in infos if i.startswith("[BIDS]")]
+    prism_infos = [i for i in infos if not i.startswith("[BIDS]")]
+
     print("\n" + "=" * 60)
     print("🔍 VALIDATION RESULTS")
     print("=" * 60)
 
-    if errors:
-        print(f"\n\033[31m🔴 ERRORS ({len(errors)}):\033[0m")
-        for i, error in enumerate(errors, 1):
-            print(f"  \033[31m{i:2d}. {error}\033[0m")
+    # --- PRISM ISSUES ---
+    if prism_errors or prism_warnings or prism_infos:
+        print("\n🔸 PRISM VALIDATOR REPORT:")
+        
+        if prism_errors:
+            print(f"\n\033[31m  🔴 ERRORS ({len(prism_errors)}):\033[0m")
+            for i, error in enumerate(prism_errors, 1):
+                print(f"    \033[31m{i:2d}. {error}\033[0m")
 
-    if warnings:
-        print(f"\n\033[33m🟡 WARNINGS ({len(warnings)}):\033[0m")
-        for i, warning in enumerate(warnings, 1):
-            print(f"  \033[33m{i:2d}. {warning}\033[0m")
+        if prism_warnings:
+            print(f"\n\033[33m  🟡 WARNINGS ({len(prism_warnings)}):\033[0m")
+            for i, warning in enumerate(prism_warnings, 1):
+                print(f"    \033[33m{i:2d}. {warning}\033[0m")
 
-    if infos:
-        print(f"\n\033[34m🔵 INFO ({len(infos)}):\033[0m")
-        for i, info in enumerate(infos, 1):
-            print(f"  \033[34m{i:2d}. {info}\033[0m")
+        if prism_infos:
+            print(f"\n\033[34m  🔵 INFO ({len(prism_infos)}):\033[0m")
+            for i, info in enumerate(prism_infos, 1):
+                print(f"    \033[34m{i:2d}. {info}\033[0m")
+
+    # --- BIDS ISSUES ---
+    if bids_errors or bids_warnings or bids_infos:
+        print("\n🔹 BIDS VALIDATOR REPORT:")
+        
+        if bids_errors:
+            print(f"\n\033[31m  🔴 ERRORS ({len(bids_errors)}):\033[0m")
+            for i, error in enumerate(bids_errors, 1):
+                # Strip [BIDS] prefix for cleaner output since we are in BIDS section
+                clean_error = error.replace("[BIDS] ", "", 1)
+                print(f"    \033[31m{i:2d}. {clean_error}\033[0m")
+
+        if bids_warnings:
+            print(f"\n\033[33m  🟡 WARNINGS ({len(bids_warnings)}):\033[0m")
+            for i, warning in enumerate(bids_warnings, 1):
+                clean_warning = warning.replace("[BIDS] ", "", 1)
+                print(f"    \033[33m{i:2d}. {clean_warning}\033[0m")
+
+        if bids_infos:
+            print(f"\n\033[34m  🔵 INFO ({len(bids_infos)}):\033[0m")
+            for i, info in enumerate(bids_infos, 1):
+                clean_info = info.replace("[BIDS] ", "", 1)
+                print(f"    \033[34m{i:2d}. {clean_info}\033[0m")
 
     # Summary line
     print(

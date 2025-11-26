@@ -15,6 +15,7 @@ class DatasetStats:
         self.tasks = set()
         self.surveys = set()
         self.biometrics = set()
+        self.descriptions = {}  # type -> name -> description
         self.total_files = 0
         self.sidecar_files = 0
         # For consistency checking
@@ -34,11 +35,15 @@ class DatasetStats:
             self.tasks.add(task)
         
         if modality == "survey":
+            if task:
+                self.surveys.add(task)
             match = re.search(r"_survey-([a-zA-Z0-9]+)", filename)
             if match:
                 self.surveys.add(match.group(1))
 
         if modality == "biometrics":
+            if task:
+                self.biometrics.add(task)
             match = re.search(r"_biometrics-([a-zA-Z0-9]+)", filename)
             if match:
                 self.biometrics.add(match.group(1))
@@ -73,6 +78,19 @@ class DatasetStats:
             subject_info["session_data"][session_id]["modalities"].add(modality)
             if task:
                 subject_info["session_data"][session_id]["tasks"].add(task)
+
+    def add_description(self, entity_type, name, description):
+        """Store description (OriginalName) for an entity"""
+        if not description:
+            return
+        if entity_type not in self.descriptions:
+            self.descriptions[entity_type] = {}
+        # Only set if not already set (or overwrite? let's overwrite to be safe)
+        self.descriptions[entity_type][name] = description
+
+    def get_description(self, entity_type, name):
+        """Get stored description"""
+        return self.descriptions.get(entity_type, {}).get(name)
 
     def check_consistency(self):
         """Check for consistency across subjects and return warnings"""
