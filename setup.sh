@@ -73,15 +73,6 @@ if [ $? -ne 0 ]; then
     # Continue anyway as this is optional for direct script usage
 fi
 
-# Ensure bidsschematools is available for --bids-schema support
-echo_info "Installing optional BIDS tooling (bidsschematools)..."
-uv pip install bidsschematools
-if [ $? -ne 0 ]; then
-    echo_error "Failed to install bidsschematools (optional). You can install it later with: pip install bidsschematools"
-else
-    echo_success "bidsschematools installed."
-fi
-
 deactivate
 echo_success "Dependencies installed successfully."
 

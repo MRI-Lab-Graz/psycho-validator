@@ -19,7 +19,6 @@ from cross_platform import (
 MODALITY_PATTERNS = {
     "survey": r".+\.tsv$",
     "biometrics": r".+\.tsv$",
-    "physiological": r".+\.(edf|bdf|txt|csv)$",
     # MRI submodalities
     "anat": r".+_(T1w|T2w|T2star|FLAIR|PD|PDw|T1map|T2map)\.nii(\.gz)?$",
     "func": r".+_bold\.nii(\.gz)?$",
@@ -317,13 +316,14 @@ class DatasetValidator:
 
         base, ext = split_compound_ext(filename)
         pattern = re.compile(MODALITY_PATTERNS.get(modality, r".*"))
+        is_sidecar = filename.endswith(".json")
 
         # Check BIDS naming
         if not BIDS_REGEX.match(base):
             issues.append(("ERROR", f"Invalid BIDS filename format: {filename}"))
 
         # Check modality pattern
-        if not pattern.match(filename):
+        if not is_sidecar and not pattern.match(filename):
             issues.append(
                 (
                     "WARNING",

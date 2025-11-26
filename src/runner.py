@@ -6,6 +6,8 @@ without executing the top-level CLI script.
 
 import os
 import sys
+import subprocess
+import json
 
 from schema_manager import load_all_schemas
 from validator import DatasetValidator, MODALITY_PATTERNS
@@ -19,13 +21,14 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
 
-def validate_dataset(root_dir, verbose=False, schema_version=None):
+def validate_dataset(root_dir, verbose=False, schema_version=None, run_bids=False):
     """Main dataset validation function (refactored from prism-validator.py)
 
     Args:
         root_dir: Root directory of the dataset
         verbose: Enable verbose output
         schema_version: Schema version to use (e.g., 'stable', 'v0.1', '0.1')
+        run_bids: Whether to run the standard BIDS validator
 
     Returns: (issues, stats)
     """
@@ -82,7 +85,78 @@ def validate_dataset(root_dir, verbose=False, schema_version=None):
     consistency_warnings = stats.check_consistency()
     issues.extend(consistency_warnings)
 
+    # Run standard BIDS validator if requested
+    if run_bids:
+        bids_issues = _run_bids_validator(root_dir, verbose)
+        issues.extend(bids_issues)
+
     return issues, stats
+
+
+def _run_bids_validator(root_dir, verbose=False):
+    """Run the standard BIDS validator CLI"""
+    issues = []
+    print("\n🤖 Running standard BIDS Validator...")
+    
+    try:
+        # Check if bids-validator is installed
+        subprocess.run(
+            ["bids-validator", "--version"], 
+            check=True, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        
+        # Run validation
+        # We use --json to parse the output easily, but for now let's just run it
+        # and capture the output to show to the user or parse it.
+        # To integrate with our issue reporting, we should probably parse the JSON output.
+        
+        process = subprocess.run(
+            ["bids-validator", root_dir, "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        if process.stdout:
+            try:
+                bids_report = json.loads(process.stdout)
+                
+                # Map BIDS issues to our format ("LEVEL", "Message")
+                for issue in bids_report.get('issues', {}).get('errors', []):
+                    msg = f"[BIDS] {issue.get('reason')} ({issue.get('key')})"
+                    for file in issue.get('files', []):
+                        file_obj = file.get('file')
+                        if file_obj:
+                            file_path = file_obj.get('relativePath', '')
+                            if file_path:
+                                msg += f"\n    File: {file_path}"
+                    issues.append(("ERROR", msg))
+                    
+                for issue in bids_report.get('issues', {}).get('warnings', []):
+                    msg = f"[BIDS] {issue.get('reason')} ({issue.get('key')})"
+                    for file in issue.get('files', []):
+                        file_obj = file.get('file')
+                        if file_obj:
+                            file_path = file_obj.get('relativePath', '')
+                            if file_path:
+                                msg += f"\n    File: {file_path}"
+                    issues.append(("WARNING", msg))
+                    
+            except json.JSONDecodeError:
+                # Fallback if JSON parsing fails
+                if verbose:
+                    print("Warning: Could not parse BIDS validator JSON output.")
+                issues.append(("INFO", "BIDS Validator ran but output could not be parsed. See console for details if verbose."))
+
+        if process.returncode != 0 and not issues:
+             issues.append(("ERROR", f"BIDS Validator failed to run: {process.stderr}"))
+
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        issues.append(("WARNING", "bids-validator not found or failed to run. Is it installed?"))
+
+    return issues
 
 
 def _validate_subject(subject_dir, subject_id, validator, stats, root_dir):

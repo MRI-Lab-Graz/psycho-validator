@@ -1,3 +1,4 @@
 participant_id	age	sex	group
-sub-001	25	M	control
-sub-002	30	F	patient
+sub-01	25	M	control
+sub-02	30	F	experimental
+sub-03	22	F	control

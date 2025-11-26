@@ -91,7 +91,6 @@ def load_all_schemas(schema_dir="schemas", version=None):
     modalities = [
         "survey",
         "biometrics",
-        "physiological",
         "dataset_description",
     ]
 
