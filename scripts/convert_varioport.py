@@ -4,7 +4,6 @@ import json
 import argparse
 import numpy as np
 import pandas as pd
-from pathlib import Path
 
 def read_varioport_header(f):
     """
@@ -68,8 +67,10 @@ def read_varioport_header(f):
         # Calculate effective sampling rate
         # chscnrate = scnrate / scnfac
         # chstrrate = chscnrate / strfac
-        if scnfac == 0: scnfac = 1
-        if strfac == 0: strfac = 1
+        if scnfac == 0:
+            scnfac = 1
+        if strfac == 0:
+            strfac = 1
         fs = scnrate / (scnfac * strfac)
         
         chan_info = {
@@ -91,11 +92,32 @@ def read_varioport_header(f):
         
     return hdrlen, hdrtype, channels
 
-def convert_varioport(raw_path, output_path, sidecar_path):
+def get_default_scaling(name):
+    """
+    Returns default scaling parameters based on Varioport Toolbox (MATLAB).
+    Used if file header contains invalid values (e.g. mul=0).
+    """
+    # Defaults from Varioport_Toolbox load_channel_data.m
+    # offset = 32767
+    defaults = {
+        'EDA':   {'doffs': 32767, 'mul': 10,   'div': 6400},
+        'EMG1':  {'doffs': 32767, 'mul': 1297, 'div': 10000},
+        'EMG2':  {'doffs': 32767, 'mul': 1297, 'div': 10000},
+        'AUX':   {'doffs': 32767, 'mul': 1,    'div': 1},     # Toolbox says "no factors given... possible to omit offset", but code uses offset.
+        'UBATT': {'doffs': 0,     'mul': 127,  'div': 10000}, # Toolbox doesn't subtract offset for UBATT
+        'BATT':  {'doffs': 0,     'mul': 127,  'div': 10000}  # Alias
+    }
+    
+    # Check for partial matches (e.g. "EDA " or "EDA1")
+    for key in defaults:
+        if name.upper().startswith(key):
+            return defaults[key]
+    return None
+
+def convert_varioport(raw_path, output_path, sidecar_path, task_name="rest"):
     """
     Converts a Varioport .RAW file to BIDS .tsv.gz and .json.
     """
-    file_size = os.path.getsize(raw_path)
     
     with open(raw_path, 'rb') as f:
         hdrlen, hdrtype, channels = read_varioport_header(f)
@@ -109,45 +131,85 @@ def convert_varioport(raw_path, output_path, sidecar_path):
             print("No active channels found (all have length 0). Assuming all are active?")
             active_channels = channels
             
-        # For now, we only support the case where there is one main data stream
-        # or we assume the file is just the data for the active channels.
-        # Given the analysis, it seems the file contains only EKG data.
+        print(f"Found {len(active_channels)} active channels: {[c['name'] for c in active_channels]}")
+
+        # Check if all active channels have the same sampling rate
+        if not active_channels:
+             print("Error: No channels to process.")
+             return
+
+        fs_set = set(c['fs'] for c in active_channels)
+        if len(fs_set) > 1:
+            print(f"Warning: Multiple sampling rates detected: {fs_set}. This script currently only supports combining channels with the same sampling rate.")
+            # Filter to keep only the first channel's fs group
+            target_fs = active_channels[0]['fs']
+            active_channels = [c for c in active_channels if c['fs'] == target_fs]
+            print(f"Restricted to channels with fs={target_fs:.2f}Hz: {[c['name'] for c in active_channels]}")
         
-        # We will process the first active channel as the main signal
-        target_channel = active_channels[0]
-        print(f"Processing target channel: {target_channel['name']}")
+        target_fs = active_channels[0]['fs']
+        channel_data = {}
         
-        # Move to data start
         if hdrtype == 6:
             # Type 6: Reconfigured / Demultiplexed
             # Data for each channel is at specific offsets
             print("Detected Type 6 (Reconfigured) file. Reading channels independently.")
             
-            # We can process all active channels or just the target one
-            # For now, let's stick to the target channel logic but use correct offsets
-            
-            # The R script says:
-            # offs = readBin(..., size=4) + hdrlen
-            # seek(offs)
-            # readBin(..., n=nofdatapoints)
-            
-            data_start = target_channel['abs_offs']
-            data_len_bytes = target_channel['chlen']
-            
-            f.seek(data_start)
-            raw_bytes = f.read(data_len_bytes)
-            num_bytes = len(raw_bytes)
-            
-            dsize = target_channel['dsize']
-            num_samples = num_bytes // dsize
-            
-            print(f"Read {num_bytes} bytes from offset {data_start}. Samples: {num_samples}")
+            for ch in active_channels:
+                name = ch['name']
+                print(f"Processing channel: {name}")
+                
+                data_start = ch['abs_offs']
+                data_len_bytes = ch['chlen']
+                
+                f.seek(data_start)
+                raw_bytes = f.read(data_len_bytes)
+                
+                dsize = ch['dsize']
+                num_samples = len(raw_bytes) // dsize
+                
+                if dsize == 2:
+                    # Big Endian uint16
+                    fmt = f'>{num_samples}H'
+                    raw_values = struct.unpack(fmt, raw_bytes[:num_samples*dsize])
+                elif dsize == 1:
+                    fmt = f'>{num_samples}B'
+                    raw_values = struct.unpack(fmt, raw_bytes[:num_samples*dsize])
+                else:
+                    print(f"Skipping channel {name}: Unsupported data size {dsize}")
+                    continue
+                    
+                # Apply scaling
+                doffs = ch['doffs']
+                mul = ch['mul']
+                div = ch['div']
+                
+                # Check for invalid scaling parameters and apply defaults if needed
+                if mul == 0 or div == 0:
+                    print(f"  Warning: Invalid scaling (mul={mul}, div={div}). Checking defaults...")
+                    defaults = get_default_scaling(name)
+                    if defaults:
+                        doffs = defaults['doffs']
+                        mul = defaults['mul']
+                        div = defaults['div']
+                        print(f"  Applied defaults for {name}: doffs={doffs}, mul={mul}, div={div}")
+                    else:
+                        print(f"  No defaults found for {name}. Using raw values (mul=1, div=1, doffs=0).")
+                        doffs = 0
+                        mul = 1
+                        div = 1
+                
+                if div == 0:
+                    div = 1 # Safety
+                
+                data_array = np.array(raw_values, dtype=float)
+                data_array = (data_array - doffs) * mul / div
+                
+                channel_data[name] = data_array
             
         else:
             # Type 7: Raw / Multiplexed (or other)
             # The data starts after the header and is interleaved.
-            # We currently treat it as a single stream, which is imperfect for Type 7.
-            print(f"Detected Type {hdrtype} (Raw/Multiplexed). Warning: Data may be interleaved.")
+            print(f"Detected Type {hdrtype} (Raw/Multiplexed). Warning: Assuming interleaved data for active channels.")
             
             data_start = hdrlen
             f.seek(data_start)
@@ -156,39 +218,82 @@ def convert_varioport(raw_path, output_path, sidecar_path):
             raw_bytes = f.read()
             num_bytes = len(raw_bytes)
             
-            # Assume data is a sequence of samples for the target channel
-            dsize = target_channel['dsize']
-            num_samples = num_bytes // dsize
+            # Calculate total block size (sum of dsize of all active channels)
+            # This assumes 1 sample per channel per block (round robin)
+            block_size = sum(c['dsize'] for c in active_channels)
+            num_blocks = num_bytes // block_size
             
-            print(f"Read {num_bytes} bytes. Expected {num_samples} samples (dsize={dsize}).")
-        
-        # Decode
-        
-        # Decode
-        if dsize == 2:
-            # Big Endian uint16
-            fmt = f'>{num_samples}H'
-            raw_values = struct.unpack(fmt, raw_bytes[:num_samples*dsize])
-        elif dsize == 1:
-            fmt = f'>{num_samples}B'
-            raw_values = struct.unpack(fmt, raw_bytes[:num_samples*dsize])
-        else:
-            raise ValueError(f"Unsupported data size: {dsize}")
+            print(f"Read {num_bytes} bytes. Block size={block_size}. Expected samples per channel={num_blocks}.")
             
-        # Apply scaling
-        # value = (raw - doffs) * mul / div
-        doffs = target_channel['doffs']
-        mul = target_channel['mul']
-        div = target_channel['div']
-        if div == 0: div = 1
-        
-        data_array = np.array(raw_values, dtype=float)
-        data_array = (data_array - doffs) * mul / div
-        
+            for ch in active_channels:
+                name = ch['name']
+                dsize = ch['dsize']
+                
+                # Extract strided data
+                # This is slow in pure Python, but let's try
+                # Better: use numpy frombuffer with stride?
+                # But dsize varies.
+                
+                # If all dsize are same (e.g. 2), we can use numpy reshape
+                if all(c['dsize'] == dsize for c in active_channels):
+                     # Assuming uniform dsize
+                     # dt = np.dtype(np.uint16).newbyteorder('>') if dsize == 2 else np.dtype(np.uint8)
+                     # all_data = np.frombuffer(raw_bytes, dtype=dt)
+                     # Reshape: (num_blocks, num_channels)
+                     # But we need to know channel order. Assuming active_channels order matches file order.
+                     # active_channels is sorted by index?
+                     # We should sort active_channels by 'index' just in case
+                     pass
+                
+                # Fallback to simple extraction for now (imperfect but better than before)
+                # Actually, let's just warn and try to read as single stream if only 1 channel
+                if len(active_channels) == 1:
+                     # Same logic as before
+                     if dsize == 2:
+                        fmt = f'>{num_blocks}H'
+                        raw_values = struct.unpack(fmt, raw_bytes[:num_blocks*dsize])
+                     else:
+                        fmt = f'>{num_blocks}B'
+                        raw_values = struct.unpack(fmt, raw_bytes[:num_blocks*dsize])
+                     
+                     # Scaling logic (same as above)
+                     doffs = ch['doffs']
+                     mul = ch['mul']
+                     div = ch['div']
+                     if mul == 0 or div == 0:
+                        defaults = get_default_scaling(name)
+                        if defaults:
+                            doffs = defaults['doffs']
+                            mul = defaults['mul']
+                            div = defaults['div']
+                        else:
+                            doffs = 0
+                            mul = 1
+                            div = 1
+                     if div == 0:
+                        div = 1
+                     
+                     data_array = np.array(raw_values, dtype=float)
+                     data_array = (data_array - doffs) * mul / div
+                     channel_data[name] = data_array
+                else:
+                     print("Error: Type 7 with multiple channels not fully implemented yet. Skipping.")
+                     break
+
         # Create DataFrame
-        df = pd.DataFrame({
-            target_channel['name']: data_array
-        })
+        if not channel_data:
+            print("No data extracted.")
+            return
+
+        # Check lengths
+        lengths = [len(d) for d in channel_data.values()]
+        min_len = min(lengths)
+        if len(set(lengths)) > 1:
+            print(f"Warning: Channel lengths differ: {lengths}. Truncating to minimum {min_len}.")
+            for k in channel_data:
+                channel_data[k] = channel_data[k][:min_len]
+        
+        df = pd.DataFrame(channel_data)
         
         # Save to TSV
         print(f"Saving to {output_path}...")
@@ -196,9 +301,10 @@ def convert_varioport(raw_path, output_path, sidecar_path):
         
         # Create Sidecar JSON
         sidecar = {
-            "SamplingFrequency": target_channel['fs'],
+            "TaskName": task_name,
+            "SamplingFrequency": target_fs,
             "StartTime": 0,
-            "Columns": [target_channel['name']],
+            "Columns": list(channel_data.keys()),
             "Manufacturer": "Becker Meditec",
             "ManufacturersModelName": "Varioport",
             "Note": "Converted from VPDATA.RAW using reverse-engineered specs."

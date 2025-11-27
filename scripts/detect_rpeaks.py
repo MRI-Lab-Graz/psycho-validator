@@ -19,7 +19,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     y = filtfilt(b, a, data)
     return y
 
-def detect_rpeaks(tsv_file, json_file=None, detector_type='hamilton', fs_override=None, do_filter=False):
+def detect_rpeaks(tsv_file, json_file=None, detector_type='hamilton', fs_override=None, do_filter=False, min_dist_sec=None):
     if json_file is None:
         # Try to infer json file from tsv file
         base_path = os.path.splitext(tsv_file)[0]
@@ -89,8 +89,23 @@ def detect_rpeaks(tsv_file, json_file=None, detector_type='hamilton', fs_overrid
         print(f"Unknown detector: {detector_type}")
         return
 
-    print(f"Detected {len(r_peaks)} R-peaks.")
+    print(f"Detected {len(r_peaks)} R-peaks (raw).")
     
+    # Apply minimum distance filter
+    if min_dist_sec:
+        min_dist_samples = int(min_dist_sec * fs)
+        print(f"Applying minimum distance filter: {min_dist_sec}s ({min_dist_samples} samples)")
+        
+        filtered_peaks = []
+        if len(r_peaks) > 0:
+            filtered_peaks.append(r_peaks[0])
+            for peak in r_peaks[1:]:
+                if peak - filtered_peaks[-1] > min_dist_samples:
+                    filtered_peaks.append(peak)
+        
+        print(f"Filtered {len(r_peaks) - len(filtered_peaks)} peaks. Remaining: {len(filtered_peaks)}")
+        r_peaks = filtered_peaks
+
     # Calculate Heart Rate
     if len(r_peaks) > 1:
         r_peaks_np = np.array(r_peaks)
@@ -122,7 +137,8 @@ if __name__ == "__main__":
                         help="Detector algorithm to use")
     parser.add_argument("--fs", help="Override sampling frequency (Hz)")
     parser.add_argument("--filter", action="store_true", help="Apply bandpass filter (0.5-45Hz)")
+    parser.add_argument("--min-dist", type=float, help="Minimum distance between peaks in seconds (refractory period)")
     
     args = parser.parse_args()
     
-    detect_rpeaks(args.tsv_file, args.json, args.detector, args.fs, args.filter)
+    detect_rpeaks(args.tsv_file, args.json, args.detector, args.fs, args.filter, args.min_dist)
