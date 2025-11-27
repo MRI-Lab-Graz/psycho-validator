@@ -9,10 +9,12 @@ PK01
 env/
 prism_demo/*
 venv/
+prism_demo/
 survey_library/*
 .venv/
 .DS_Store
 psycho_validator.egg-info/
+prism_validator.egg-info/
 
 # IDE and editor files
 .vscode/
