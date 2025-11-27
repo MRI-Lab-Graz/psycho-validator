@@ -79,7 +79,33 @@ dataset/
 |----------|----------------|-----------------|
 | `survey` | .tsv | StimulusType, FileFormat, TaskName, OriginalName |
 | `biometrics` | .tsv | StimulusType, FileFormat, Equipment, BiometricName, OriginalName |
+| `events` | .tsv | StimulusPresentation (OperatingSystem, SoftwareName) |
 | `physiological` | .edf, .bdf, .txt, .csv | (Standard BIDS physio) |
+
+## Super-BIDS: Enhanced Validation
+
+Prism-Validator implements a "Super-BIDS" layer—a stricter set of validation rules that sits on top of standard BIDS to ensure higher data quality and reproducibility.
+
+### Why "Super-BIDS"?
+Standard BIDS is excellent for file organization but often permissive with metadata. "Super-BIDS" enforces mandatory fields that are critical for scientific reproducibility but optional in the base standard.
+
+### Enhanced Modalities
+
+#### 1. Biometrics (`biometrics/`)
+We enforce a rich set of metadata for physiological assessments to ensure the protocol is fully documented.
+- **Mandatory Fields**: `Description` (detailed protocol).
+- **Recommended Fields**: `Instructions`, `Author`, `DOI`, `Reference`, `EstimatedDuration`, `TargetPopulation`, `ExclusionCriteria`.
+
+#### 2. Events (`*_events.tsv`)
+Standard BIDS allows minimal event files. We enforce the `StimulusPresentation` object to ensure we know exactly how stimuli were delivered.
+- **Mandatory Object**: `StimulusPresentation`
+- **Required Fields**: 
+  - `OperatingSystem`
+  - `SoftwareName`
+  - `SoftwareRRID` (Recommended)
+  - `SoftwareVersion` (Recommended)
+
+This ensures that years later, you know exactly what software version and OS were used to run the experiment.
 
 ## Schema Structure
 

@@ -48,9 +48,41 @@
         "Protocol": {
           "type": "string",
           "description": "Reference to the protocol used"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Detailed description of the test procedure"
+        },
+        "Instructions": {
+          "type": "string",
+          "description": "Instructions given to the participant"
+        },
+        "Author": {
+          "type": "string",
+          "description": "Author(s) of the test protocol"
+        },
+        "DOI": {
+          "type": "string",
+          "description": "DOI of the reference publication"
+        },
+        "Reference": {
+          "type": "string",
+          "description": "Citation or reference for the test protocol"
+        },
+        "EstimatedDuration": {
+          "type": "string",
+          "description": "Estimated time to complete the assessment (e.g., '15 minutes')"
+        },
+        "TargetPopulation": {
+          "type": "string",
+          "description": "Intended population for the test (e.g., 'Adults 18-65', 'Children')"
+        },
+        "ExclusionCriteria": {
+          "type": "string",
+          "description": "Conditions under which the test should not be performed"
         }
       },
-      "required": ["BiometricName", "OriginalName"]
+      "required": ["BiometricName", "OriginalName", "Description"]
     },
     "Metadata": {
       "type": "object",

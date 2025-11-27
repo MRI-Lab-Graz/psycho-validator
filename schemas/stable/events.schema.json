@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://psycho-validator.org/schemas/events/v1.0.0",
+  "version": "1.0.0",
+  "title": "Events Metadata",
+  "description": "Schema for BIDS events.tsv sidecars",
+  "type": "object",
+  "properties": {
+    "StimulusPresentation": {
+      "type": "object",
+      "description": "Information describing the stimulus presentation software and hardware",
+      "properties": {
+        "OperatingSystem": {
+          "type": "string",
+          "description": "Operating system used for stimulus presentation"
+        },
+        "SoftwareName": {
+          "type": "string",
+          "description": "Name of the stimulus presentation software"
+        },
+        "SoftwareVersion": {
+          "type": "string",
+          "description": "Version of the stimulus presentation software"
+        },
+        "SoftwareRRID": {
+          "type": "string",
+          "description": "RRID of the stimulus presentation software"
+        },
+        "Code": {
+          "type": "string",
+          "description": "URL to the code used for stimulus presentation"
+        }
+      },
+      "required": ["OperatingSystem", "SoftwareName"]
+    },
+    "trial_type": {
+      "type": "object",
+      "description": "Description of the trial_type column",
+      "properties": {
+        "LongName": { "type": "string" },
+        "Description": { "type": "string" },
+        "Levels": { "type": "object" }
+      }
+    },
+    "onset": {
+      "type": "object",
+      "description": "Description of the onset column",
+      "properties": {
+        "LongName": { "type": "string" },
+        "Description": { "type": "string" },
+        "Units": { "type": "string" }
+      }
+    },
+    "duration": {
+      "type": "object",
+      "description": "Description of the duration column",
+      "properties": {
+        "LongName": { "type": "string" },
+        "Description": { "type": "string" },
+        "Units": { "type": "string" }
+      }
+    }
+  },
+  "required": ["StimulusPresentation"],
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "LongName": { "type": "string" },
+      "Description": { "type": "string" },
+      "Levels": { "type": "object" },
+      "Units": { "type": "string" },
+      "TermURL": { "type": "string", "format": "uri" }
+    }
+  }
+}
