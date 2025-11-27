@@ -7,3 +7,9 @@ Werkzeug>=2.0.0
 bidsschematools>=0.8.0
 requests>=2.25.0
 bids-validator
+
+# Documentation
+sphinx
+sphinx-rtd-theme
+myst-parser
+

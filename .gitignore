@@ -43,7 +43,11 @@ logs/
 ehthumbs.db
 Thumbs.db
 
-# Auto-generated FAIR exports (can be regenerated)
+# Documentation
+docs/_build/
+docs/build/
+docs/generated/
+
 *_datacite.xml
 *_dublin_core.xml
 fair_dataset_description.json

@@ -1,5 +1,7 @@
 # Prism-Validator: BIDS Extension & Validation Tool
 
+[![Documentation Status](https://readthedocs.org/projects/prism-validator/badge/?version=latest)](https://prism-validator.readthedocs.io/en/latest/?badge=latest)
+
 ## 🚀 Quick Start
 
 **👉 Run the web interface** (recommended for all users):
