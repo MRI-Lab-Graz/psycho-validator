@@ -243,7 +243,7 @@ The included `test_dataset/` demonstrates:
 - `src/` - Core validation and utility modules
 - `static/` - Web interface assets (CSS, JavaScript, NeuroBagel widget)
 - `templates/` - Web interface templates (HTML)
-- `archive/` - Legacy scripts
+- `archive/` - Legacy scripts (not tracked in git)
 
 ### Additional Files
 - `prism-validator.py` - Command-line tool (see footnote below)

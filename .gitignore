@@ -9,7 +9,6 @@ PK01
 env/
 prism_demo/*
 venv/
-archive/*
 archive/
 prism_demo/
 survey_library/*
@@ -60,4 +59,4 @@ fair_dataset_description.json
 *_template.json
 example_*_metadata.json
 *test*
-test*archive/
+test*
