@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Setup script for psycho-validator on UNIX-like systems (Linux, macOS)
+# Setup script for prism-validator on UNIX-like systems (Linux, macOS)
 #
 # This script will:
 # 1. Check if 'uv' is installed.
@@ -25,7 +25,7 @@ echo_success() {
 }
 
 # --- Main Script ---
-echo_info "Starting project setup for psycho-validator..."
+echo_info "Starting project setup for prism-validator..."
 
 # 1. Check for uv
 if ! command -v uv &> /dev/null; then
@@ -66,10 +66,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # Install the project in development mode (editable install)
-echo_info "Installing psycho-validator in development mode..."
+echo_info "Installing prism-validator in development mode..."
 uv pip install -e .
 if [ $? -ne 0 ]; then
-    echo_error "Failed to install psycho-validator package. Check if setup.py exists."
+    echo_error "Failed to install prism-validator package. Check if setup.py exists."
     # Continue anyway as this is optional for direct script usage
 fi
 

@@ -9,6 +9,8 @@ PK01
 env/
 prism_demo/*
 venv/
+archive/*
+archive/
 prism_demo/
 survey_library/*
 .venv/

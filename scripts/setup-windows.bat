@@ -1,6 +1,6 @@
 @echo off
 ::
-:: Simple Windows setup script for psycho-validator
+:: Simple Windows setup script for prism-validator
 :: Uses standard Python tools (no external dependencies like uv)
 ::
 
@@ -25,7 +25,7 @@ goto :eof
 
 :: --- Main Script ---
 :main
-call :echo_info "Starting project setup for psycho-validator (Windows)..."
+call :echo_info "Starting project setup for prism-validator (Windows)..."
 
 :: 1. Check for Python
 python --version >nul 2>nul
@@ -69,10 +69,10 @@ if %errorlevel% neq 0 (
 )
 
 :: Install the project in development mode
-call :echo_info "Installing psycho-validator in development mode..."
+call :echo_info "Installing prism-validator in development mode..."
 pip install -e .
 if %errorlevel% neq 0 (
-    call :echo_error "Failed to install psycho-validator package."
+    call :echo_error "Failed to install prism-validator package."
     :: Continue anyway as this is optional for direct script usage
 )
 

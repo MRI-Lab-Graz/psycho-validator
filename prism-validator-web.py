@@ -87,7 +87,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
             # Parse output for file counts and issues
             for line in stdout.split("\n") + stderr.split("\n"):
                 clean_line = strip_ansi(line).strip()
-                
+
                 # Parse file count from the new output format
                 if "Total files:" in clean_line:
                     match = re.search(r"Total files:\s*(\d+)", clean_line)
@@ -119,7 +119,7 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
                      # Remove the number and dot
                      msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
                      issues.append(("ERROR", msg, dataset_path))
-                
+
                 elif clean_line.startswith("•") and ("⚠️" in stdout or "WARNING" in stdout):
                     # This is a specific warning message
                     issues.append(
@@ -982,8 +982,11 @@ def detect_dataset_prefix(all_paths):
         return None
     candidate = first_components.pop()
     restricted_names = {
+        "image",
+        "audio",
+        "movie",
         "survey",
-        "biometrics",
+        "eyetracking",
         "physiological",
         "dataset",
     }
@@ -1304,8 +1307,6 @@ def show_results(result_id):
                 "total_sessions": len(unique_sessions),
                 "modalities": getattr(stats_obj, "modalities", {}),
                 "tasks": sorted(getattr(stats_obj, "tasks", [])),
-                "surveys": sorted(getattr(stats_obj, "surveys", [])),
-                "biometrics": sorted(getattr(stats_obj, "biometrics", [])),
                 "total_files": getattr(stats_obj, "total_files", 0),
                 "sidecar_files": getattr(stats_obj, "sidecar_files", 0),
             }
@@ -1463,6 +1464,72 @@ def main():
         browser_thread.start()
 
     app.run(host=host, port=args.port, debug=args.debug)
+
+
+@app.route("/survey-generator")
+def survey_generator():
+    """Survey generator page"""
+    return render_template("survey_generator.html")
+
+
+@app.route("/api/save-survey-template", methods=["POST"])
+def save_survey_template():
+    """Save a survey template to the templates/surveys directory"""
+    try:
+        data = request.get_json()
+        if not data or "name" not in data or "data" not in data:
+            return jsonify({"success": False, "error": "Invalid data"}), 400
+
+        name = secure_filename(data["name"])
+        if not name.endswith(".json"):
+            name += ".json"
+
+        # Ensure templates/surveys directory exists
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        os.makedirs(template_dir, exist_ok=True)
+
+        file_path = os.path.join(template_dir, name)
+        
+        with open(file_path, "w") as f:
+            json.dump(data["data"], f, indent=2)
+
+        return jsonify({"success": True, "filename": name})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/list-survey-templates")
+def list_survey_templates():
+    """List available survey templates"""
+    try:
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        if not os.path.exists(template_dir):
+            return jsonify({"templates": []})
+        
+        templates = [f for f in os.listdir(template_dir) if f.endswith(".json")]
+        return jsonify({"templates": sorted(templates)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/load-survey-template/<filename>")
+def load_survey_template(filename):
+    """Load a specific survey template"""
+    try:
+        template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
+        filename = secure_filename(filename)
+        file_path = os.path.join(template_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "Template not found"}), 404
+            
+        with open(file_path, "r") as f:
+            data = json.load(f)
+            
+        return jsonify({"data": data})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
