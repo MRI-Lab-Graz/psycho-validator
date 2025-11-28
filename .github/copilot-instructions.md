@@ -10,7 +10,7 @@ Prism-Validator is a hybrid dataset validation tool for psychological experiment
   - `runner.py`: Main entry point `validate_dataset()` used by both CLI and Web UI.
   - `bids_integration.py`: Manages `.bidsignore` to ensure compatibility with BIDS apps (fMRIPrep).
 - **Web Interface**:
-  - `online-psycho-validator.py`: Flask application. Handles uploads, session management, and invokes `runner.py`.
+  - `prism-validator-web.py`: Flask application. Handles uploads, session management, and invokes `runner.py`.
   - `templates/`: Jinja2 HTML templates. `index.html` is the SPA-like main page.
 - **Schemas (`schemas/`)**:
   - JSON Schema definitions for modalities: `image`, `movie`, `audio`, `eyetracking`, `survey`, `physiological`.
@@ -39,14 +39,14 @@ Prism-Validator is a hybrid dataset validation tool for psychological experiment
   - Uses `participants.tsv` to auto-populate categorical levels.
 
 ## Developer Workflows
-- **Running Web UI**: `python online-psycho-validator.py` (runs on port 5001).
-- **CLI Usage**: `python psycho-validator.py /path/to/dataset --strict`.
+- **Running Web UI**: `python prism-validator-web.py` (runs on port 5001).
+- **CLI Usage**: `python prism-validator.py /path/to/dataset --strict`.
 - **Schema Updates**:
   - When renaming/adding modalities, update:
     1. `schemas/` filenames.
     2. `src/schema_manager.py` (`modalities` list).
     3. `src/validator.py` (`MODALITY_PATTERNS`).
-    4. `online-psycho-validator.py` (`restricted_names`).
+    4. `prism-validator-web.py` (`restricted_names`).
     5. `templates/index.html` (UI list).
 
 ## Key Conventions

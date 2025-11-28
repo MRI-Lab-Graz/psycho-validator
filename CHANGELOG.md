@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Psycho-Validator project will be documented in this file.
+All notable changes to the Prism-Validator project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - Major Release 🎉
 
-This is the first major release of Psycho-Validator with comprehensive features for validating psychological research datasets.
+This is the first major release of Prism-Validator with comprehensive features for validating psychological research datasets.
 
 #### Schema Versioning System
 - **Docker-like schema versioning** (`stable`, `v0.1`, etc.)
@@ -80,7 +80,7 @@ For existing users:
 
 ### v1.0.0 Highlights
 
-🎉 **First Major Release** - Psycho-Validator is now production-ready!
+🎉 **First Major Release** - Prism-Validator is now production-ready!
 
 **Key Features:**
 - ✅ Schema versioning system (Docker-like)
@@ -101,10 +101,17 @@ For existing users:
 - Built for the research community ❤️
 
 ### Links
-- [GitHub Repository](https://github.com/MRI-Lab-Graz/psycho-validator)
+- [GitHub Repository](https://github.com/MRI-Lab-Graz/prism-validator)
 - [Documentation](docs/)
 - [Schema Versioning Guide](docs/SCHEMA_VERSIONING_GUIDE.md)
 
 ---
 
-[1.0.0]: https://github.com/MRI-Lab-Graz/psycho-validator/releases/tag/v1.0.0
+[1.0.0]: https://github.com/MRI-Lab-Graz/prism-validator/releases/tag/v1.0.0
+
+## [1.3.0] - 2025-11-28
+
+### Changed
+- **Project Rename**: Renamed project from `psycho-validator` to `prism-validator`.
+- **Repository Restructuring**: Moved helper scripts to `helpers/` directory.
+- **Documentation**: Updated all documentation to reflect the new name.

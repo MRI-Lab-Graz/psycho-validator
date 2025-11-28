@@ -70,8 +70,8 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
 
         # Helper to strip ANSI codes
         def strip_ansi(text):
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-            return ansi_escape.sub('', text)
+            ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+            return ansi_escape.sub("", text)
 
         # The validator script exits with 0 for success, 1 for validation errors.
         # We need to parse the output in both cases.
@@ -109,26 +109,34 @@ def run_main_validator(dataset_path, verbose=False, schema_version=None):
                         # Add a generic warning - we'll get the specific warnings from other lines
                         pass
                 # Parse specific error messages (bullet style)
-                elif clean_line.startswith("•") and ("❌" in stdout or "ERROR" in stdout):
+                elif clean_line.startswith("•") and (
+                    "❌" in stdout or "ERROR" in stdout
+                ):
                     # This is a specific error message
                     issues.append(
                         ("ERROR", clean_line.replace("•", "").strip(), dataset_path)
                     )
                 # Parse numbered error messages (reporting.py style)
-                elif re.search(r"^\d+\.\s+", clean_line) and ("❌" in stdout or "ERROR" in stdout):
-                     # Remove the number and dot
-                     msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
-                     issues.append(("ERROR", msg, dataset_path))
+                elif re.search(r"^\d+\.\s+", clean_line) and (
+                    "❌" in stdout or "ERROR" in stdout
+                ):
+                    # Remove the number and dot
+                    msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
+                    issues.append(("ERROR", msg, dataset_path))
 
-                elif clean_line.startswith("•") and ("⚠️" in stdout or "WARNING" in stdout):
+                elif clean_line.startswith("•") and (
+                    "⚠️" in stdout or "WARNING" in stdout
+                ):
                     # This is a specific warning message
                     issues.append(
                         ("WARNING", clean_line.replace("•", "").strip(), dataset_path)
                     )
                 # Parse numbered warning messages
-                elif re.search(r"^\d+\.\s+", clean_line) and ("⚠️" in stdout or "WARNING" in stdout):
-                     msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
-                     issues.append(("WARNING", msg, dataset_path))
+                elif re.search(r"^\d+\.\s+", clean_line) and (
+                    "⚠️" in stdout or "WARNING" in stdout
+                ):
+                    msg = re.sub(r"^\d+\.\s+", "", clean_line).strip()
+                    issues.append(("WARNING", msg, dataset_path))
 
             # If we got valid output, extract more detailed info
             if "✅ Dataset is valid!" in stdout:
@@ -307,7 +315,7 @@ def format_validation_results(issues, dataset_stats, dataset_path):
 
         # If dataset_path is a temp directory, strip it
         if dataset_path and file_path.startswith(dataset_path):
-            relative = file_path[len(dataset_path):].lstrip("/")
+            relative = file_path[len(dataset_path) :].lstrip("/")
             return relative if relative else file_path
 
         return file_path
@@ -570,113 +578,119 @@ def fetch_neurobagel_participants():
 
 def augment_neurobagel_data(raw_data):
     """Augment raw NeuroBagel data with standardized variable mappings and categorical details.
-    
+
     Transforms flat NeuroBagel data into a hierarchical structure with:
     - Standardized variable mappings (e.g., sex -> biological_sex)
     - Data type classification (categorical vs continuous)
     - Categorical level details with URIs and descriptions
     - Column-level metadata
     """
-    if not raw_data or not raw_data.get('properties'):
+    if not raw_data or not raw_data.get("properties"):
         return raw_data
-    
+
     # Mapping of column names to standardized variables
     standardized_mappings = {
-        'participant_id': 'participant_id',
-        'age': 'age',
-        'sex': 'biological_sex',
-        'group': 'participant_group',
-        'handedness': 'handedness',
+        "participant_id": "participant_id",
+        "age": "age",
+        "sex": "biological_sex",
+        "group": "participant_group",
+        "handedness": "handedness",
     }
-    
+
     # Categorical value mappings with controlled vocabulary URIs (SNOMED CT and PATO)
     # URIs are stored in shortened form for export (e.g., 'snomed:248153007')
     categorical_vocabularies = {
-        'sex': {
-            'M': {
-                'label': 'Male',
-                'description': 'Male biological sex',
-                'uri': 'snomed:248153007'
+        "sex": {
+            "M": {
+                "label": "Male",
+                "description": "Male biological sex",
+                "uri": "snomed:248153007",
             },
-            'F': {
-                'label': 'Female',
-                'description': 'Female biological sex',
-                'uri': 'snomed:248152002'
+            "F": {
+                "label": "Female",
+                "description": "Female biological sex",
+                "uri": "snomed:248152002",
             },
-            'O': {
-                'label': 'Other',
-                'description': 'Other biological sex',
-                'uri': 'snomed:447964000'
-            }
+            "O": {
+                "label": "Other",
+                "description": "Other biological sex",
+                "uri": "snomed:447964000",
+            },
         },
-        'handedness': {
-            'L': {
-                'label': 'Left',
-                'description': 'Left-handed',
-                'uri': 'snomed:87622008'
+        "handedness": {
+            "L": {
+                "label": "Left",
+                "description": "Left-handed",
+                "uri": "snomed:87622008",
             },
-            'R': {
-                'label': 'Right',
-                'description': 'Right-handed',
-                'uri': 'snomed:78791000'
+            "R": {
+                "label": "Right",
+                "description": "Right-handed",
+                "uri": "snomed:78791000",
             },
-            'A': {
-                'label': 'Ambidextrous',
-                'description': 'Ambidextrous',
-                'uri': 'snomed:16022009'
-            }
-        }
+            "A": {
+                "label": "Ambidextrous",
+                "description": "Ambidextrous",
+                "uri": "snomed:16022009",
+            },
+        },
     }
-    
+
     # Augmented structure
-    augmented = {'properties': {}}
-    
-    for col_name, col_data in raw_data.get('properties', {}).items():
+    augmented = {"properties": {}}
+
+    for col_name, col_data in raw_data.get("properties", {}).items():
         aug_col = {
-            'description': col_data.get('description', ''),
-            'original_data': col_data
+            "description": col_data.get("description", ""),
+            "original_data": col_data,
         }
-        
+
         # Add standardized variable mapping
         if col_name in standardized_mappings:
-            aug_col['standardized_variable'] = standardized_mappings[col_name]
-        
+            aug_col["standardized_variable"] = standardized_mappings[col_name]
+
         # Infer data type from Levels (if present, it's categorical)
-        if 'Levels' in col_data and isinstance(col_data['Levels'], dict):
-            aug_col['data_type'] = 'categorical'
-            
+        if "Levels" in col_data and isinstance(col_data["Levels"], dict):
+            aug_col["data_type"] = "categorical"
+
             # Augment with vocabulary if available
             if col_name in categorical_vocabularies:
-                aug_col['levels'] = {}
-                for level_key, level_label in col_data['Levels'].items():
+                aug_col["levels"] = {}
+                for level_key, level_label in col_data["Levels"].items():
                     if level_key in categorical_vocabularies[col_name]:
-                        aug_col['levels'][level_key] = categorical_vocabularies[col_name][level_key]
+                        aug_col["levels"][level_key] = categorical_vocabularies[
+                            col_name
+                        ][level_key]
                     else:
                         # Fallback: use provided label (no URI)
-                        aug_col['levels'][level_key] = {
-                            'label': level_label if isinstance(level_label, str) else str(level_key),
-                            'description': f"Value: {level_key}",
-                            'uri': None
+                        aug_col["levels"][level_key] = {
+                            "label": (
+                                level_label
+                                if isinstance(level_label, str)
+                                else str(level_key)
+                            ),
+                            "description": f"Value: {level_key}",
+                            "uri": None,
                         }
             else:
                 # No vocabulary available, use raw levels (no URIs)
-                aug_col['levels'] = {
-                    k: {'label': v, 'description': f"Value: {k}", 'uri': None}
-                    for k, v in col_data['Levels'].items()
+                aug_col["levels"] = {
+                    k: {"label": v, "description": f"Value: {k}", "uri": None}
+                    for k, v in col_data["Levels"].items()
                 }
-        elif col_name in ['age']:
-            aug_col['data_type'] = 'continuous'
-            if 'Units' in col_data:
-                aug_col['unit'] = col_data['Units']
+        elif col_name in ["age"]:
+            aug_col["data_type"] = "continuous"
+            if "Units" in col_data:
+                aug_col["unit"] = col_data["Units"]
         else:
-            aug_col['data_type'] = 'text'
-        
-        augmented['properties'][col_name] = aug_col
-    
+            aug_col["data_type"] = "text"
+
+        augmented["properties"][col_name] = aug_col
+
     return augmented
 
 
-@app.route('/api/neurobagel/participants')
+@app.route("/api/neurobagel/participants")
 def neurobagel_participants():
     """Return NeuroBagel participants dictionary (cached) with augmented annotations.
 
@@ -687,51 +701,44 @@ def neurobagel_participants():
     - Categorical value vocabularies with URIs
     """
     data = fetch_neurobagel_participants()
-    
+
     # If external fetch fails, use built-in dictionary
     if not data:
         # Use built-in NeuroBagel-compatible dictionary for common phenotypic variables
         data = {
             "properties": {
-                "participant_id": {
-                    "Description": "A participant ID"
-                },
-                "age": {
-                    "Description": "Age of the participant",
-                    "Units": "years"
-                },
+                "participant_id": {"Description": "A participant ID"},
+                "age": {"Description": "Age of the participant", "Units": "years"},
                 "sex": {
                     "Description": "Biological sex of the participant",
-                    "Levels": {
-                        "M": "Male",
-                        "F": "Female",
-                        "O": "Other"
-                    }
+                    "Levels": {"M": "Male", "F": "Female", "O": "Other"},
                 },
                 "group": {
                     "Description": "Participant group or experimental condition",
-                    "Levels": {}
+                    "Levels": {},
                 },
                 "handedness": {
                     "Description": "Participant handedness",
-                    "Levels": {
-                        "L": "Left",
-                        "R": "Right",
-                        "A": "Ambidextrous"
-                    }
-                }
+                    "Levels": {"L": "Left", "R": "Right", "A": "Ambidextrous"},
+                },
             }
         }
-    
+
     # Augment raw data with standardized mappings and vocabularies
     augmented = augment_neurobagel_data(data)
-    
-    return jsonify({
-        'source': 'neurobagel',
-        'raw': data,
-        'augmented': augmented,
-        'note': 'Using built-in dictionary (external fetch failed)' if not fetch_neurobagel_participants() else 'Using remote NeuroBagel dictionary'
-    })
+
+    return jsonify(
+        {
+            "source": "neurobagel",
+            "raw": data,
+            "augmented": augmented,
+            "note": (
+                "Using built-in dictionary (external fetch failed)"
+                if not fetch_neurobagel_participants()
+                else "Using remote NeuroBagel dictionary"
+            ),
+        }
+    )
 
 
 def shorten_path(file_path, max_parts=3):
@@ -1015,7 +1022,7 @@ def normalize_relative_path(path, prefix_to_strip):
     if prefix_to_strip:
         prefix = prefix_to_strip.strip("/")
         if cleaned.startswith(prefix + "/"):
-            cleaned = cleaned[len(prefix) + 1:]
+            cleaned = cleaned[len(prefix) + 1 :]
     normalized = os.path.normpath(cleaned)
     normalized = normalized.replace("\\", "/")
     if normalized in ("", "."):  # Directory only
@@ -1421,7 +1428,10 @@ def main():
         "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
     )
     parser.add_argument(
-        "--port", type=int, default=5001, help="Port to bind to (default: 5001, avoiding macOS Control Center on port 5000)"
+        "--port",
+        type=int,
+        default=5001,
+        help="Port to bind to (default: 5001, avoiding macOS Control Center on port 5000)",
     )
     parser.add_argument("--debug", action="store_true", help="Run in debug mode")
     parser.add_argument(
@@ -1450,8 +1460,10 @@ def main():
 
     # Open browser in a separate thread to avoid blocking the Flask server
     if not args.no_browser:
+
         def open_browser():
             import time
+
             time.sleep(1)  # Wait for server to start
             try:
                 webbrowser.open(url)
@@ -1489,7 +1501,7 @@ def save_survey_template():
         os.makedirs(template_dir, exist_ok=True)
 
         file_path = os.path.join(template_dir, name)
-        
+
         with open(file_path, "w") as f:
             json.dump(data["data"], f, indent=2)
 
@@ -1506,7 +1518,7 @@ def list_survey_templates():
         template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
         if not os.path.exists(template_dir):
             return jsonify({"templates": []})
-        
+
         templates = [f for f in os.listdir(template_dir) if f.endswith(".json")]
         return jsonify({"templates": sorted(templates)})
     except Exception as e:
@@ -1520,13 +1532,13 @@ def load_survey_template(filename):
         template_dir = os.path.join(os.path.dirname(__file__), "templates", "surveys")
         filename = secure_filename(filename)
         file_path = os.path.join(template_dir, filename)
-        
+
         if not os.path.exists(file_path):
             return jsonify({"error": "Template not found"}), 404
-            
+
         with open(file_path, "r") as f:
             data = json.load(f)
-            
+
         return jsonify({"data": data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

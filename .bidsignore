@@ -4,7 +4,7 @@ code/
 **/.DS_Store
 branding/
 
-# Custom modality folders (kept for psycho-validator)
+# Custom modality folders (kept for prism-validator)
 sub-*/ses-*/audio/
 sub-*/ses-*/image/
 sub-*/movie/

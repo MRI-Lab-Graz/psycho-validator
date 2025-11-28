@@ -1,6 +1,6 @@
 # Error Codes Reference
 
-This document describes all validation error codes used by Psycho-Validator and how to fix them.
+This document describes all validation error codes used by Prism-Validator and how to fix them.
 
 ## Table of Contents
 

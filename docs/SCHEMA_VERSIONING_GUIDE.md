@@ -2,7 +2,7 @@
 
 ## Overview
 
-Psycho-Validator now supports schema versioning, similar to Docker image tagging. This allows you to validate datasets against different versions of the validation schemas.
+Prism-Validator now supports schema versioning, similar to Docker image tagging. This allows you to validate datasets against different versions of the validation schemas.
 
 ## Available Versions
 

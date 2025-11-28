@@ -86,9 +86,9 @@ git push origin v1.0.0
    **Description:** (Copy from RELEASE_NOTES_v1.0.0.md or use this):
 
    ```markdown
-   # Psycho-Validator v1.0.0 - First Major Release 🎉
+   # Prism-Validator v1.0.0 - First Major Release 🎉
 
-   We're excited to announce the first major release of **Psycho-Validator**!
+   We're excited to announce the first major release of **Prism-Validator**!
 
    ## 🌟 Highlights
 
@@ -203,9 +203,9 @@ grep -r "beta" docs/
 3. **Create announcement template:**
 
    ```markdown
-   🎉 Psycho-Validator v1.0.0 Released!
+   🎉 Prism-Validator v1.0.0 Released!
 
-   We're excited to announce the first major release of Psycho-Validator,
+   We're excited to announce the first major release of Prism-Validator,
    a BIDS-inspired validation tool for psychological research datasets.
 
    New features:

@@ -96,7 +96,11 @@ def resolve_sidecar_path(file_path, root_dir):
             label_candidates.append(("survey", task_value))
             label_candidates.append(("biometrics", task_value))
 
-    search_dirs = [root_dir, safe_path_join(root_dir, "surveys"), safe_path_join(root_dir, "biometrics")]
+    search_dirs = [
+        root_dir,
+        safe_path_join(root_dir, "surveys"),
+        safe_path_join(root_dir, "biometrics"),
+    ]
 
     for prefix, value in label_candidates:
         base_name = f"{prefix}-{value}"
@@ -121,7 +125,7 @@ class DatasetValidator:
     def validate_data_content(self, file_path, modality, root_dir):
         """Validate data content against constraints in sidecar"""
         issues = []
-        
+
         # Only validate content for tabular data modalities
         if modality not in ["survey", "biometrics"]:
             return issues
@@ -134,51 +138,69 @@ class DatasetValidator:
         try:
             # Check for empty file
             if os.path.getsize(file_path) == 0:
-                return [("ERROR", f"File {os.path.basename(file_path)} is empty. If data is missing, please delete the file.")]
+                return [
+                    (
+                        "ERROR",
+                        f"File {os.path.basename(file_path)} is empty. If data is missing, please delete the file.",
+                    )
+                ]
 
             # Load sidecar
             sidecar_content = CrossPlatformFile.read_text(sidecar_path)
             sidecar_data = json.loads(sidecar_content)
-            
+
             # Read TSV file
-            with open(file_path, 'r', newline='', encoding='utf-8') as tsvfile:
-                reader = csv.DictReader(tsvfile, delimiter='\t')
-                
+            with open(file_path, "r", newline="", encoding="utf-8") as tsvfile:
+                reader = csv.DictReader(tsvfile, delimiter="\t")
+
                 if not reader.fieldnames:
-                     return [("ERROR", f"File {os.path.basename(file_path)} is not a valid TSV (no header found).")]
+                    return [
+                        (
+                            "ERROR",
+                            f"File {os.path.basename(file_path)} is not a valid TSV (no header found).",
+                        )
+                    ]
 
                 row_count = 0
-                for row_idx, row in enumerate(reader, start=2): # start=2 for 1-based line number (header is 1)
+                for row_idx, row in enumerate(
+                    reader, start=2
+                ):  # start=2 for 1-based line number (header is 1)
                     row_count += 1
-                    
+
                     # Check for completely empty row (all values are empty strings)
                     if all(v is None or v.strip() == "" for v in row.values()):
                         issues.append(
-                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Row contains only empty values. Use 'n/a' for missing data, or delete the file if no data exists.")
+                            (
+                                "WARNING",
+                                f"{os.path.basename(file_path)} line {row_idx}: Row contains only empty values. Use 'n/a' for missing data, or delete the file if no data exists.",
+                            )
                         )
                         continue
 
                     for col_name, value in row.items():
                         if col_name in sidecar_data:
                             col_def = sidecar_data[col_name]
-                            
+
                             # Skip empty values
                             if value is None or value.strip() == "" or value == "n/a":
                                 continue
-                                
+
                             # Check AllowedValues or Levels
                             allowed = None
                             if "AllowedValues" in col_def:
                                 allowed = [str(x) for x in col_def["AllowedValues"]]
                             elif "Levels" in col_def:
                                 allowed = list(col_def["Levels"].keys())
-                                
+
                             if allowed:
                                 if value not in allowed:
                                     issues.append(
-                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not in allowed values: {allowed}")
+                                        (
+                                            "ERROR",
+                                            f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not in allowed values: {allowed}",
+                                        )
                                     )
-                            
+
                             # Check DataType
                             if "DataType" in col_def:
                                 dtype = col_def["DataType"]
@@ -189,24 +211,37 @@ class DatasetValidator:
                                         float_val = float(value)
                                         if not float_val.is_integer():
                                             issues.append(
-                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer")
+                                                (
+                                                    "ERROR",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer",
+                                                )
                                             )
                                     except ValueError:
                                         issues.append(
-                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer")
+                                            (
+                                                "ERROR",
+                                                f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid integer",
+                                            )
                                         )
                                 elif dtype == "float":
                                     try:
                                         float(value)
                                     except ValueError:
                                         issues.append(
-                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid float")
+                                            (
+                                                "ERROR",
+                                                f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid float",
+                                            )
                                         )
                                 elif dtype == "date":
                                     valid_date = False
                                     date_val = None
-                                    formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
-                                    
+                                    formats = [
+                                        "%Y-%m-%d",
+                                        "%Y-%m-%d %H:%M",
+                                        "%Y-%m-%d %H:%M:%S",
+                                    ]
+
                                     for fmt in formats:
                                         try:
                                             date_val = datetime.strptime(value, fmt)
@@ -214,27 +249,40 @@ class DatasetValidator:
                                             break
                                         except ValueError:
                                             continue
-                                            
+
                                     if valid_date:
                                         if date_val > datetime.now():
                                             issues.append(
-                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future")
+                                                (
+                                                    "WARNING",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future",
+                                                )
                                             )
                                         if date_val.year < 1900:
                                             issues.append(
-                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900")
+                                                (
+                                                    "WARNING",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900",
+                                                )
                                             )
                                     else:
                                         issues.append(
-                                            ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])")
+                                            (
+                                                "ERROR",
+                                                f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])",
+                                            )
                                         )
 
                             # Check Units="date" if DataType is missing
                             elif col_def.get("Units") == "date":
                                 valid_date = False
                                 date_val = None
-                                formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
-                                
+                                formats = [
+                                    "%Y-%m-%d",
+                                    "%Y-%m-%d %H:%M",
+                                    "%Y-%m-%d %H:%M:%S",
+                                ]
+
                                 for fmt in formats:
                                     try:
                                         date_val = datetime.strptime(value, fmt)
@@ -242,68 +290,108 @@ class DatasetValidator:
                                         break
                                     except ValueError:
                                         continue
-                                        
+
                                 if valid_date:
                                     if date_val > datetime.now():
                                         issues.append(
-                                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future")
+                                            (
+                                                "WARNING",
+                                                f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is in the future",
+                                            )
                                         )
                                     if date_val.year < 1900:
                                         issues.append(
-                                            ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900")
+                                            (
+                                                "WARNING",
+                                                f"{os.path.basename(file_path)} line {row_idx}: Date '{value}' for '{col_name}' is before 1900",
+                                            )
                                         )
                                 else:
                                     issues.append(
-                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])")
+                                        (
+                                            "ERROR",
+                                            f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not a valid date (YYYY-MM-DD [HH:MM[:SS]])",
+                                        )
                                     )
 
                             # Check MinValue/MaxValue/WarnMinValue/WarnMaxValue
-                            if any(k in col_def for k in ["MinValue", "MaxValue", "WarnMinValue", "WarnMaxValue"]):
+                            if any(
+                                k in col_def
+                                for k in [
+                                    "MinValue",
+                                    "MaxValue",
+                                    "WarnMinValue",
+                                    "WarnMaxValue",
+                                ]
+                            ):
                                 try:
                                     num_val = float(value)
-                                    
+
                                     if "MinValue" in col_def:
                                         min_val = float(col_def["MinValue"])
                                         if num_val < min_val:
                                             issues.append(
-                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than MinValue {min_val}")
+                                                (
+                                                    "ERROR",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than MinValue {min_val}",
+                                                )
                                             )
-                                            
+
                                     if "MaxValue" in col_def:
                                         max_val = float(col_def["MaxValue"])
                                         if num_val > max_val:
                                             issues.append(
-                                                ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than MaxValue {max_val}")
+                                                (
+                                                    "ERROR",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than MaxValue {max_val}",
+                                                )
                                             )
 
                                     if "WarnMinValue" in col_def:
                                         warn_min_val = float(col_def["WarnMinValue"])
                                         if num_val < warn_min_val:
                                             issues.append(
-                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than WarnMinValue {warn_min_val}")
+                                                (
+                                                    "WARNING",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is less than WarnMinValue {warn_min_val}",
+                                                )
                                             )
 
                                     if "WarnMaxValue" in col_def:
                                         warn_max_val = float(col_def["WarnMaxValue"])
                                         if num_val > warn_max_val:
                                             issues.append(
-                                                ("WARNING", f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than WarnMaxValue {warn_max_val}")
+                                                (
+                                                    "WARNING",
+                                                    f"{os.path.basename(file_path)} line {row_idx}: Value {num_val} for '{col_name}' is greater than WarnMaxValue {warn_max_val}",
+                                                )
                                             )
-                                            
+
                                 except ValueError:
                                     # Only report if we expected a number (Min/Max present) but got non-number
                                     issues.append(
-                                        ("ERROR", f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not numeric but has numeric constraints")
+                                        (
+                                            "ERROR",
+                                            f"{os.path.basename(file_path)} line {row_idx}: Value '{value}' for '{col_name}' is not numeric but has numeric constraints",
+                                        )
                                     )
 
                 if row_count == 0:
                     issues.append(
-                        ("WARNING", f"File {os.path.basename(file_path)} contains no data rows. If data is missing, please delete the file.")
+                        (
+                            "WARNING",
+                            f"File {os.path.basename(file_path)} contains no data rows. If data is missing, please delete the file.",
+                        )
                     )
 
         except Exception as e:
-            issues.append(("ERROR", f"Error validating content of {os.path.basename(file_path)}: {str(e)}"))
-            
+            issues.append(
+                (
+                    "ERROR",
+                    f"Error validating content of {os.path.basename(file_path)}: {str(e)}",
+                )
+            )
+
         return issues
 
     def validate_filename(self, filename, modality, subject_id=None, session_id=None):
@@ -343,7 +431,10 @@ class DatasetValidator:
         if subject_id:
             if not filename.startswith(subject_id + "_"):
                 issues.append(
-                    ("ERROR", f"Filename {filename} does not start with subject ID {subject_id}")
+                    (
+                        "ERROR",
+                        f"Filename {filename} does not start with subject ID {subject_id}",
+                    )
                 )
 
         # Check session consistency
@@ -352,7 +443,10 @@ class DatasetValidator:
             expected_prefix = f"{subject_id}_{session_id}_"
             if not filename.startswith(expected_prefix):
                 issues.append(
-                    ("ERROR", f"Filename {filename} does not match session directory {session_id}")
+                    (
+                        "ERROR",
+                        f"Filename {filename} does not match session directory {session_id}",
+                    )
                 )
         elif subject_id:
             # If no session directory, filename should not contain session entity
@@ -360,7 +454,10 @@ class DatasetValidator:
             # BIDS session entity is always "_ses-<label>"
             if "_ses-" in filename:
                 issues.append(
-                    ("ERROR", f"Filename {filename} contains session entity but is not in a session directory")
+                    (
+                        "ERROR",
+                        f"Filename {filename} contains session entity but is not in a session directory",
+                    )
                 )
 
         return issues

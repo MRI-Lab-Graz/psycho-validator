@@ -74,7 +74,9 @@ def print_dataset_summary(dataset_path, stats):
         print("  No modality data found")
 
     # Task breakdown (exclude items that are surveys or biometrics)
-    pure_tasks = {t for t in stats.tasks if t not in stats.surveys and t not in stats.biometrics}
+    pure_tasks = {
+        t for t in stats.tasks if t not in stats.surveys and t not in stats.biometrics
+    }
     print(f"\n📝 TASKS ({len(pure_tasks)} found):")
     if pure_tasks:
         for task in sorted(pure_tasks):
@@ -135,10 +137,10 @@ def print_validation_results(problems):
     # Split BIDS vs PRISM
     bids_errors = [e for e in errors if e.startswith("[BIDS]")]
     prism_errors = [e for e in errors if not e.startswith("[BIDS]")]
-    
+
     bids_warnings = [w for w in warnings if w.startswith("[BIDS]")]
     prism_warnings = [w for w in warnings if not w.startswith("[BIDS]")]
-    
+
     bids_infos = [i for i in infos if i.startswith("[BIDS]")]
     prism_infos = [i for i in infos if not i.startswith("[BIDS]")]
 
@@ -149,7 +151,7 @@ def print_validation_results(problems):
     # --- PRISM ISSUES ---
     if prism_errors or prism_warnings or prism_infos:
         print("\n🔸 PRISM VALIDATOR REPORT:")
-        
+
         if prism_errors:
             print(f"\n\033[31m  🔴 ERRORS ({len(prism_errors)}):\033[0m")
             for i, error in enumerate(prism_errors, 1):
@@ -168,7 +170,7 @@ def print_validation_results(problems):
     # --- BIDS ISSUES ---
     if bids_errors or bids_warnings or bids_infos:
         print("\n🔹 BIDS VALIDATOR REPORT:")
-        
+
         if bids_errors:
             print(f"\n\033[31m  🔴 ERRORS ({len(bids_errors)}):\033[0m")
             for i, error in enumerate(bids_errors, 1):

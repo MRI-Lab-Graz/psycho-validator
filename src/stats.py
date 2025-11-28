@@ -33,7 +33,7 @@ class DatasetStats:
         self.modalities[modality] += 1
         if task:
             self.tasks.add(task)
-        
+
         if modality == "survey":
             if task:
                 self.surveys.add(task)

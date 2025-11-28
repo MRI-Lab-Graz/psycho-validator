@@ -97,12 +97,20 @@ def create_app(bids_folder=None):
             is_valid, errors = validator.validate(json_type, data, app.schema)
             if not is_valid:
                 return (
-                    jsonify({"success": False, "error": "Validation failed", "errors": errors}),
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Validation failed",
+                            "errors": errors,
+                        }
+                    ),
                     400,
                 )
 
             file_manager.save_file(json_type, data)
-            return jsonify({"success": True, "message": f"{json_type} saved successfully"})
+            return jsonify(
+                {"success": True, "message": f"{json_type} saved successfully"}
+            )
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 400
 
@@ -128,7 +136,9 @@ def create_app(bids_folder=None):
     def get_bids_folder():
         """Get current BIDS folder path"""
         folder_path = (
-            str(file_manager.bids_folder) if file_manager.bids_folder else "No folder loaded"
+            str(file_manager.bids_folder)
+            if file_manager.bids_folder
+            else "No folder loaded"
         )
         return jsonify({"success": True, "folder": folder_path})
 

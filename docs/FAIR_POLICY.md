@@ -1,6 +1,6 @@
 # FAIR Data Principles Compliance
 
-## Psycho-Validator FAIR Data Policy
+## Prism-Validator FAIR Data Policy
 
 This document outlines how the prism-validator project implements the FAIR (Findable, Accessible, Interoperable, Reusable) data principles for psychological research data management.
 

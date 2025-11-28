@@ -97,64 +97,71 @@ def _run_bids_validator(root_dir, verbose=False):
     """Run the standard BIDS validator CLI"""
     issues = []
     print("\n🤖 Running standard BIDS Validator...")
-    
+
     try:
         # Check if bids-validator is installed
         subprocess.run(
-            ["bids-validator", "--version"], 
-            check=True, 
-            stdout=subprocess.PIPE, 
-            stderr=subprocess.PIPE
+            ["bids-validator", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        
+
         # Run validation
         # We use --json to parse the output easily, but for now let's just run it
         # and capture the output to show to the user or parse it.
         # To integrate with our issue reporting, we should probably parse the JSON output.
-        
+
         process = subprocess.run(
             ["bids-validator", root_dir, "--json"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
         )
-        
+
         if process.stdout:
             try:
                 bids_report = json.loads(process.stdout)
-                
+
                 # Map BIDS issues to our format ("LEVEL", "Message")
-                for issue in bids_report.get('issues', {}).get('errors', []):
+                for issue in bids_report.get("issues", {}).get("errors", []):
                     msg = f"[BIDS] {issue.get('reason')} ({issue.get('key')})"
-                    for file in issue.get('files', []):
-                        file_obj = file.get('file')
+                    for file in issue.get("files", []):
+                        file_obj = file.get("file")
                         if file_obj:
-                            file_path = file_obj.get('relativePath', '')
+                            file_path = file_obj.get("relativePath", "")
                             if file_path:
                                 msg += f"\n    File: {file_path}"
                     issues.append(("ERROR", msg))
-                    
-                for issue in bids_report.get('issues', {}).get('warnings', []):
+
+                for issue in bids_report.get("issues", {}).get("warnings", []):
                     msg = f"[BIDS] {issue.get('reason')} ({issue.get('key')})"
-                    for file in issue.get('files', []):
-                        file_obj = file.get('file')
+                    for file in issue.get("files", []):
+                        file_obj = file.get("file")
                         if file_obj:
-                            file_path = file_obj.get('relativePath', '')
+                            file_path = file_obj.get("relativePath", "")
                             if file_path:
                                 msg += f"\n    File: {file_path}"
                     issues.append(("WARNING", msg))
-                    
+
             except json.JSONDecodeError:
                 # Fallback if JSON parsing fails
                 if verbose:
                     print("Warning: Could not parse BIDS validator JSON output.")
-                issues.append(("INFO", "BIDS Validator ran but output could not be parsed. See console for details if verbose."))
+                issues.append(
+                    (
+                        "INFO",
+                        "BIDS Validator ran but output could not be parsed. See console for details if verbose.",
+                    )
+                )
 
         if process.returncode != 0 and not issues:
-             issues.append(("ERROR", f"BIDS Validator failed to run: {process.stderr}"))
+            issues.append(("ERROR", f"BIDS Validator failed to run: {process.stderr}"))
 
     except (subprocess.CalledProcessError, FileNotFoundError):
-        issues.append(("WARNING", "bids-validator not found or failed to run. Is it installed?"))
+        issues.append(
+            ("WARNING", "bids-validator not found or failed to run. Is it installed?")
+        )
 
     return issues
 
@@ -212,7 +219,13 @@ def _validate_session(session_dir, subject_id, session_id, validator, stats, roo
             if item in MODALITY_PATTERNS:
                 issues.extend(
                     _validate_modality_dir(
-                        item_path, subject_id, session_id, item, validator, stats, root_dir
+                        item_path,
+                        subject_id,
+                        session_id,
+                        item,
+                        validator,
+                        stats,
+                        root_dir,
                     )
                 )
 
@@ -254,19 +267,21 @@ def _validate_modality_dir(
                     file_path, modality, root_dir
                 )
                 issues.extend(sidecar_issues)
-                
+
                 # Extract OriginalName for stats
                 try:
                     sidecar_path = resolve_sidecar_path(file_path, root_dir)
                     if os.path.exists(sidecar_path):
-                        with open(sidecar_path, 'r', encoding='utf-8') as f:
+                        with open(sidecar_path, "r", encoding="utf-8") as f:
                             data = json.load(f)
                             if "Study" in data and "OriginalName" in data["Study"]:
                                 original_name = data["Study"]["OriginalName"]
                                 if modality == "survey" and task:
                                     stats.add_description("survey", task, original_name)
                                 elif modality == "biometrics" and task:
-                                    stats.add_description("biometrics", task, original_name)
+                                    stats.add_description(
+                                        "biometrics", task, original_name
+                                    )
                                 elif task:
                                     stats.add_description("task", task, original_name)
                 except Exception:

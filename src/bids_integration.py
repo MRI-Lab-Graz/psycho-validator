@@ -8,9 +8,14 @@ import os
 # Standard BIDS modalities (folders)
 # Based on BIDS Specification v1.9.0
 STANDARD_BIDS_FOLDERS = {
-    "anat", "func", "dwi", "fmap",  # MRI
+    "anat",
+    "func",
+    "dwi",
+    "fmap",  # MRI
     "beh",  # Behavior
-    "eeg", "ieeg", "meg",  # Electrophysiology
+    "eeg",
+    "ieeg",
+    "meg",  # Electrophysiology
     "pet",  # PET
     "micr",  # Microscopy
     "nirs",  # fNIRS
@@ -60,7 +65,7 @@ def check_and_update_bidsignore(dataset_root, supported_modalities):
     if rules_to_add:
         try:
             mode = "a" if os.path.exists(bidsignore_path) else "w"
-            
+
             # Check if we need a newline prefix
             needs_newline = False
             if mode == "a" and os.path.getsize(bidsignore_path) > 0:
@@ -83,14 +88,14 @@ def check_and_update_bidsignore(dataset_root, supported_modalities):
                     )
                 elif needs_newline:
                     f.write("\n")
-                
+
                 if mode == "a":
-                     f.write("\n# Added by prism-validator\n")
+                    f.write("\n# Added by prism-validator\n")
 
                 for rule in sorted(rules_to_add):
                     f.write(f"{rule}\n")
                     added_rules.append(rule)
-                    
+
         except IOError as e:
             print(f"⚠️ Warning: Could not update .bidsignore: {e}")
 

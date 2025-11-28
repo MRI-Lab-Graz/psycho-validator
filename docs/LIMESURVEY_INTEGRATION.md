@@ -44,10 +44,10 @@ We provide a script to automatically generate the JSON sidecar from your `.lss` 
 
 ```bash
 # Basic usage
-python scripts/limesurvey_to_prism.py my_survey.lss
+python helpers/surveys/limesurvey_to_prism.py my_survey.lss
 
 # Specify output filename
-python scripts/limesurvey_to_prism.py my_survey.lss task-mysurvey_beh.json
+python helpers/surveys/limesurvey_to_prism.py my_survey.lss task-mysurvey_beh.json
 ```
 
 This script will:
@@ -71,7 +71,7 @@ This script will:
 If you prefer to define your questionnaires in JSON first (or have existing BIDS sidecars), you can generate a LimeSurvey structure file (`.lss`) from them.
 
 ```bash
-python scripts/prism_to_limesurvey.py task-bdi_beh.json bdi.lss
+python helpers/surveys/prism_to_limesurvey.py task-bdi_beh.json bdi.lss
 ```
 
 **Features:**
@@ -119,7 +119,7 @@ If you are generating the survey from JSON, you can add a `Relevance` key to you
 1.  You create a survey "Depression Scale" with code `ADS`.
 2.  Question 1 code: `Q01`, Answer options: `0=Rarely`, `1=Sometimes`.
 3.  Export `ads.lss`.
-4.  Run: `python scripts/limesurvey_to_prism.py ads.lss task-ads_beh.json`.
+4.  Run: `python helpers/surveys/limesurvey_to_prism.py ads.lss task-ads_beh.json`.
 5.  The generated JSON will look like:
 
 ```json

@@ -13,9 +13,11 @@ import argparse
 # Check if running inside the venv
 venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv")
 if not sys.prefix.startswith(venv_path):
-    print("❌ Error: You are not running inside the prism-validator virtual environment!")
+    print(
+        "❌ Error: You are not running inside the prism-validator virtual environment!"
+    )
     print("   Please activate the venv first:")
-    if os.name == 'nt':  # Windows
+    if os.name == "nt":  # Windows
         print(f"     {venv_path}\\Scripts\\activate")
     else:  # Unix/Mac
         print(f"     source {venv_path}/bin/activate")
@@ -118,10 +120,10 @@ Examples:
 
     try:
         issues, stats = validate_dataset(
-            args.dataset, 
-            verbose=args.verbose, 
+            args.dataset,
+            verbose=args.verbose,
             schema_version=schema_version,
-            run_bids=args.bids
+            run_bids=args.bids,
         )
 
         # Print results

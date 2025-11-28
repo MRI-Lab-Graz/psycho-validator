@@ -111,7 +111,9 @@ class JSONValidator:
             # Extract from schema if available
             if schema and "objects" in schema:
                 schema_def = (
-                    schema.get("objects", {}).get("metadata", {}).get("dataset_description", {})
+                    schema.get("objects", {})
+                    .get("metadata", {})
+                    .get("dataset_description", {})
                 )
                 if schema_def:
                     for field_name, field_def in schema_def.items():
