@@ -44,6 +44,14 @@ Prism-Validator is a **BIDS Extension** framework and validation tool designed t
 - **Cross-platform** - Works on Windows, macOS, and Linux
 - **Responsive design** - Works on desktop and mobile browsers
 
+### 🛠️ Survey Data Import Workflow
+A complete toolset for converting external survey data (CSV/Excel) into PRISM-compliant datasets:
+1.  **Excel to Library**: Convert data dictionaries into a "Golden Master" JSON library (`scripts/excel_to_library.py`).
+2.  **Library Validation**: Ensure variable uniqueness and generate catalogs (`scripts/check_survey_library.py`).
+3.  **Data Import**: Automatically extract data from raw CSVs and generate BIDS file structures (`scripts/csv_to_prism.py`).
+
+[Read the full guide here](docs/SURVEY_DATA_IMPORT.md).
+
 ### ✅ Validation Features
 - **Multi-modal validation**: Supports survey, biometrics, and physiological data
 - **BIDS-App Compatibility**: Automatically updates `.bidsignore` to ensure custom modalities are ignored by standard BIDS tools (e.g., fMRIPrep), preventing crashes.
